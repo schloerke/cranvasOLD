@@ -117,11 +117,11 @@ draw_grid_with_positions <- function(plotObj, dataRanges, horiPos=NULL, vertPos=
 #' @examples
 #'  dataRanges <- c(0,1,2,3)
 #'  draw_x_axes(make_new_plot(make_window_ranges(dataRanges)), dataRanges)
-draw_x_axes <- function(plotObj, dataRanges)
+draw_x_axes <- function(plotObj, dataRanges, name)
 {
   xRangeLabels <- make_pretty_axes(dataRanges[1:2], dataRanges[1], dataRanges[2])
   
-  draw_x_axes_with_labels(plotObj, dataRanges, xRangeLabels, xRangeLabels)
+  draw_x_axes_with_labels(plotObj, dataRanges, xRangeLabels, xRangeLabels, name)
 
 }
 
@@ -134,7 +134,7 @@ draw_x_axes <- function(plotObj, dataRanges)
 #' @param labelHoriPos horizontal position of the axisLabels
 #' @author Barret Schloerke \email{bigbear@@iastate.edu}
 #' @keywords hplot
-draw_x_axes_with_labels <- function(plotObj, dataRanges, axisLabels, labelHoriPos)
+draw_x_axes_with_labels <- function(plotObj, dataRanges, axisLabels, labelHoriPos, name = NULL)
 {
   #  X label
   x_left <- range(dataRanges[1:2])
@@ -154,11 +154,26 @@ draw_x_axes_with_labels <- function(plotObj, dataRanges, axisLabels, labelHoriPo
     )
   )
   
+  if(!is.null(name))
+    plotObj$add_layer(
+      text(
+        text = name,
+        left = x_left[1] + 0.5 * diff(x_left),
+        bottom = dataRanges[3] - 0.13 * diff(dataRanges[3:4]),
+        stroke = "black",
+        valign = "center"
+        
+      )
+    )  
+  
+  
+  
   bprint(x_left)
   bprint(x_bottom)
   bprint(x_labelpos)
   x_axisLabels <- axisLabels
   bprint(x_axisLabels)
+  bprint(labelHoriPos)
 
 }
 
@@ -172,7 +187,7 @@ draw_x_axes_with_labels <- function(plotObj, dataRanges, axisLabels, labelHoriPo
 #' @examples
 #'  dataRanges <- c(0,1,2,3)
 #'  draw_y_axes(make_new_plot(make_window_ranges(dataRanges)), dataRanges)
-draw_y_axes <- function(plotObj, dataRanges)
+draw_y_axes <- function(plotObj, dataRanges, name = NULL)
 {
   yRangeLabels <- pretty(dataRanges[3:4])
   yRangeLabels <- make_pretty_axes(dataRanges[3:4], dataRanges[3], dataRanges[4])
@@ -180,7 +195,7 @@ draw_y_axes <- function(plotObj, dataRanges)
 #  yRangeLabels <- yRangeLabels[yRangeLabels > x_labelpos]
 #  yRangeLabels <- c(0, yRangeLabels[yRangeLabels > dataRanges[3] & yRangeLabels <= dataRanges[4]])
   
-  draw_y_axes_with_labels(plotObj, dataRanges, as.character(yRangeLabels), yRangeLabels)
+  draw_y_axes_with_labels(plotObj, dataRanges, as.character(yRangeLabels), yRangeLabels, name)
 }
 
 #' draw y axes
@@ -192,7 +207,7 @@ draw_y_axes <- function(plotObj, dataRanges)
 #' @param labelVertPos vertical position of the axisLabels
 #' @author Barret Schloerke \email{bigbear@@iastate.edu}
 #' @keywords hplot
-draw_y_axes_with_labels <- function(plotObj, dataRanges, axisLabels, labelVertPos)
+draw_y_axes_with_labels <- function(plotObj, dataRanges, axisLabels, labelVertPos, name = NULL)
 {
   #  Y label
   y_left <- dataRanges[1] - 0.03 * diff(dataRanges[1:2])
@@ -214,11 +229,25 @@ draw_y_axes_with_labels <- function(plotObj, dataRanges, axisLabels, labelVertPo
       halign = "right"
     )
   )
+  
+  if(!is.null(name))
+    plotObj$add_layer(
+      text(
+        text = name,
+        left = dataRanges[1] - 0.13 * diff(dataRanges[1:2]),
+        bottom = y_bottom[1] + 0.5 * diff(y_bottom),
+        stroke = "black",
+        valign = "center"
+        
+      )
+    )  
+
 
   bprint(y_left)
   bprint(y_bottom)
   bprint(y_labelpos)
   y_axisLabels <- axisLabels
   bprint(y_axisLabels)
+  bprint(labelVertPos)
 
 }

@@ -37,6 +37,7 @@ bprint <- function(...) {
 #'  make_data_ranges(mtcars$disp)
 make_data_ranges<-function(dataColumn){
   return(c(min(dataColumn)-0.25, max(dataColumn)+0.25))
+#  return(range(dataColumn))
 }
 
 
@@ -59,23 +60,39 @@ make_new_plot <- function(windowRanges){
 #' make the window ranges
 #'
 #' @param dataRanges ranges of the data so a buffer of space may be added
+#' @param xlab if xlab is replaced with somthing other than null, it will be assumed that an axis label will be used
+#' @param ylab if ylab is replaced with somthing other than null, it will be assumed that an axis label will be used
 #' @return returns a vector of four variables containing xmin, xmax, ymin, ymax
 #' @author Barret Schloerke \email{bigbear@@iastate.edu}
 #' @keywords hplot
 #' @examples
 #'  make_window_ranges(c(0,1,2,3))
-make_window_ranges <- function(dataRanges)
+make_window_ranges <- function(dataRanges, xlab=NULL, ylab=NULL)
 {
-  windowRanges <- c( 
-    c(
-      dataRanges[1] - 0.2*diff(dataRanges[1:2]),
-      dataRanges[2]+0.1*diff(dataRanges[1:2])
-    ),
-    c(
-      dataRanges[3]-0.1*diff(dataRanges[3:4]),
-      dataRanges[4]+0.1*diff(dataRanges[3:4])
-    )
+  
+  if(!is.null(ylab))
+    xmin = dataRanges[1] - 0.2*diff(dataRanges[1:2])
+  else
+    xmin = dataRanges[1] - 0.13*diff(dataRanges[1:2])
+
+  xmax = dataRanges[2]+0.1*diff(dataRanges[1:2])
+
+
+  if(!is.null(xlab))
+    ymin = dataRanges[3]-0.2*diff(dataRanges[3:4])
+  else
+    ymin = dataRanges[3]-0.13*diff(dataRanges[3:4])
+    
+  ymax = dataRanges[4]+0.1*diff(dataRanges[3:4])
+  
+  
+  windowRanges <- c(
+      xmin,
+      xmax,
+      ymin,
+      ymax
   )
+  
   
   if(if_bprint())
     cat("Window Range: x=c(", windowRanges[1],", ",windowRanges[2],")  y=(",windowRanges[3],", ",windowRanges[4],")\n")
