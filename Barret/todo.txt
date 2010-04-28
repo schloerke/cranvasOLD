@@ -1,0 +1,10 @@
+#Split bars by color
+
+#Spine plot
+#  bar plot with width as count
+
+#Spin-o-gram
+#  hist plot with width as count
+
+
+

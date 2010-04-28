@@ -56,13 +56,13 @@ rect <- function(top = NULL, left = NULL, bottom = NULL, right = NULL, fill = "b
     stroke = stroke), class = c("cranvas", "rect"))
 }
 
-hbar <- function(width = NULL, top = NULL, bottom = NULL, fill = "black", stroke = NULL) {
-  rect(top = top, right = width, bottom = bottom, left = 0,
+hbar <- function(width = NULL, top = NULL, bottom = NULL, left = 0, fill = "black", stroke = NULL) {
+  rect(top = top, right = width, bottom = bottom, left = left,
     fill = fill, stroke = stroke)
 }
 
-vbar <- function(height = NULL, left = NULL, right = NULL, fill = "black", stroke = NULL) {
-  rect(top = height, bottom = 0, left = left, right = right, 
+vbar <- function(height = NULL, left = NULL, right = NULL, bottom = 0, fill = "black", stroke = NULL) {
+  rect(top = height, bottom = bottom, left = left, right = right, 
     fill = fill, stroke = stroke)
 }
 
