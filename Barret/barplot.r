@@ -73,9 +73,9 @@ qthist <- function(data, horizontal = FALSE, ..., title=NULL, name = names(data)
   
   # contains c(x_min, x_max, y_min, y_max)
   if(horizontal)
-    ranges <- c(make_data_ranges(c(0,counts)), make_data_ranges(d$breaks))
+    ranges <- c(make_data_ranges(c(0,counts*1.1)), make_data_ranges(d$breaks))
   else
-    ranges <- c(make_data_ranges(d$breaks), make_data_ranges( c(0,counts)))
+    ranges <- c(make_data_ranges(d$breaks), make_data_ranges( c(0,counts*1.1)))
   bprint(ranges)
 
 
