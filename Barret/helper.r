@@ -36,7 +36,8 @@ bprint <- function(...) {
 #' @examples
 #'  make_data_ranges(mtcars$disp)
 make_data_ranges<-function(dataColumn){
-  return(c(min(dataColumn)-0.25, max(dataColumn)+0.25))
+#  return(c(min(dataColumn)-0.25, max(dataColumn)+0.25))
+  return(c(min(dataColumn)-0.01, max(dataColumn)+0.01))
 #  return(range(dataColumn))
 }
 
