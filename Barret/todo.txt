@@ -2,6 +2,8 @@
 
 #Spine plot
 #  bar plot with width as count
+#   height of bar is determined by the counts
+#   wrapper to a horizontal with position == relative
 
 #Spin-o-gram
 #  hist plot with width as count

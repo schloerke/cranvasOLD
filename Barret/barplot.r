@@ -50,7 +50,7 @@ qtscat <- function(x, y, ...,title=NULL, xlab = NULL, ylab = NULL, color=NULL, f
 #' @examples
 #'  qthist(rnorm(100000))
 #'  qthist(mtcars$disp, TRUE, fill = "gold", stroke = "red4")
-qthist <- function(data, horizontal = FALSE, ..., title=NULL, name = names(data))
+qthist <- function(data, splitBy = rep(1,length(data)), horizontal = FALSE, position = "none", color = rainbow(length(unique(splitBy))), title=NULL, name = names(data), ...)
 {
 
 #  aesStuff <- aes(...)
@@ -59,23 +59,75 @@ qthist <- function(data, horizontal = FALSE, ..., title=NULL, name = names(data)
   d <- suppressWarnings(hist(data,plot=FALSE,...))
 #  d <- hist(data,plot=FALSE,...)
   bLength <- length(d$breaks)
+  counts <- table(cut(data, breaks = d$breaks), splitBy)
   
+#  counts <- table(d$counts, splitBy)
+  bprint(counts)
+  print(counts)
+  bottoms <- array(0, dim(counts))
+  labelNames <- dimnames(counts)[[1]]
+  colorNames <- dimnames(counts)[[2]]
+
+  if (position == "dodge")
+  {
+    start <- make_dodge_start( d$breaks, length(colorNames) )
+    end <-   make_dodge_end( d$breaks, length(colorNames) )
+    counts <- apply(counts, 1, rbind)
+#    labelNames <- rep(labelNames, length(colorNames))
+   #counts <- counts
+    #color <- color
+  }
+#  else if(position == "stack" || position == "relative")
+  else
+  {
+    #(position = "stack")
+    
+    start <- d$breaks[1:(bLength-1)]
+    end <- d$breaks[2:bLength] 
+    
+    # make the counts be stacked (cumulative)
+    for(i in 1:nrow(counts))
+      counts[i,] <- cumsum(counts[i,])
+    
+    #make the bottoms "stack"
+    if(ncol(bottoms) > 1)
+      bottoms[,2:ncol(bottoms)] <- counts[,1:(ncol(counts) - 1)]
+      
+    bottoms[,1] <- 0
+    color <- rep(color, each = length(labelNames))
+    
+    if(position == "relative")
+    {
+      #spine-o-gram
+      
+      for(i in 1:nrow(bottoms))
+        bottoms[i,] <- bottoms[i,] / max(counts[i,])
+
+      for(i in 1:nrow(counts))
+        counts[i,] <- counts[i,] / max(counts[i,])
+
+        
+      print(counts)
+      print(bottoms)
+    }
+    
+
+  }
   
-  counts <- d$counts  
-  start <- d$breaks[1:(bLength-1)]
-  end <- d$breaks[2:bLength] 
-  
+    
   bprint(start)
   bprint(end)
   bprint(counts)
 
-  
+  if(length(colorNames) == 1)
+    color <- "grey20"
+
   
   # contains c(x_min, x_max, y_min, y_max)
   if(horizontal)
-    ranges <- c(make_data_ranges(c(0,counts)), make_data_ranges(d$breaks))
+    ranges <- c(make_data_ranges(c(0,counts*1.1)), make_data_ranges(d$breaks))
   else
-    ranges <- c(make_data_ranges(d$breaks), make_data_ranges( c(0,counts)))
+    ranges <- c(make_data_ranges(d$breaks), make_data_ranges( c(0,counts*1.1)))
   bprint(ranges)
 
 
@@ -104,10 +156,14 @@ qthist <- function(data, horizontal = FALSE, ..., title=NULL, name = names(data)
     
   
   #for different representations of the data (shape, color, etc) pass vecor arguments for shape, color, x, y
+#  if(horizontal)
+#    plot1$add_layer(hbar(bottom = start, top = end, width = counts, ...))
+#  else
+#    plot1$add_layer(vbar(left = start, right = end, height = counts, ...))
   if(horizontal)
-    plot1$add_layer(hbar(bottom = start, top = end, width = counts, ...))
+    plot1$add_layer(hbar(bottom = start, top = end, width = counts,left = bottoms, fill=color))
   else
-    plot1$add_layer(vbar(left = start, right = end, height = counts, ...))
+    plot1$add_layer(vbar(left = start, right = end, height = counts, bottom = bottoms, fill=color))
 
 
   draw_x_axes(plot1, ranges, xlab)
@@ -122,7 +178,8 @@ qthist <- function(data, horizontal = FALSE, ..., title=NULL, name = names(data)
 
 make_dodge_start <- function(startVect, n)
 {
-  relPos <- seq(from = .1, to = 0.9, length.out = n+1)[1:n]
+  gap <- diff(startVect[1:2])
+  relPos <- seq(from = gap*.1, to = gap*.9, length.out = n+1)[1:n]
   
   finalVect <- rep(0, length(relPos) * n)
   
@@ -139,7 +196,8 @@ make_dodge_start <- function(startVect, n)
 
 make_dodge_end <- function(endVect, n)
 {
-  relPos <- seq(from = .9, to = 0.1, length.out = n+1)[n:1]
+  gap <- diff(endVect[1:2])
+  relPos <- seq(from = gap*.9, to = gap*.1, length.out = n+1)[n:1]
   
   finalVect <- rep(0, length(relPos) * n)
   
@@ -173,25 +231,29 @@ make_dodge_end <- function(endVect, n)
 #'  qtbar(diamonds$color, title="Diamonds",splitBy=diamonds$cut)
 #'  qtbar(diamonds$color, title="Diamonds",name = "color", splitBy=diamonds$cut,position="dodge")
 
-qtbar <- function(data, splitBy = rep(1,length(data)), horizontal = FALSE, position = "stack", color = rainbow(length(unique(splitBy))), title=NULL, name = names(data))
+qtbar <- function(data, splitBy = rep(1,length(data)), horizontal = FALSE, position = "none", color = rainbow(length(unique(splitBy))), title=NULL, name = names(data))
 {
   
   counts <- table(data,splitBy)
-  print(counts)
+  bprint(counts)
   bottoms <- array(0, dim(counts))
   labelNames <- dimnames(counts)[[1]]
   colorNames <- dimnames(counts)[[2]]
-
+ 
   bLength <- nrow(counts)
-  
+  labelPos <- 1:bLength - 0.5
+ 
+ 
   if (position == "dodge")
   {
     start <- make_dodge_start( 0:(bLength-1), length(colorNames) )
     end <-   make_dodge_end( 0:(bLength-1), length(colorNames) )
     counts <- apply(counts, 1, rbind)
+#    labelNames <- rep(labelNames, length(colorNames))
    #counts <- counts
     #color <- color
   }
+#  else if(position == "stack" || position == "relative")
   else
   {
     #(position = "stack")
@@ -209,6 +271,22 @@ qtbar <- function(data, splitBy = rep(1,length(data)), horizontal = FALSE, posit
       
     bottoms[,1] <- 0
     color <- rep(color, each = length(labelNames))
+    
+    if(position == "relative")
+    {
+      #spine-o-gram
+      
+      for(i in 1:nrow(bottoms))
+        bottoms[i,] <- bottoms[i,] / max(counts[i,])
+
+      for(i in 1:nrow(counts))
+        counts[i,] <- counts[i,] / max(counts[i,])
+
+        
+      print(counts)
+      print(bottoms)
+    }
+    
 
   }
   
@@ -263,11 +341,11 @@ qtbar <- function(data, splitBy = rep(1,length(data)), horizontal = FALSE, posit
   if(horizontal)
   {
     draw_x_axes(plot1, ranges, xlab)
-    draw_y_axes_with_labels(plot1, ranges, labelNames, end - 0.5, ylab)
+    draw_y_axes_with_labels(plot1, ranges, labelNames, labelPos, ylab)
   }
   else
   {
-    draw_x_axes_with_labels(plot1, ranges, labelNames, end - 0.5, xlab)
+    draw_x_axes_with_labels(plot1, ranges, labelNames, labelPos, xlab)
     draw_y_axes(plot1, ranges, ylab)    
   }
   
