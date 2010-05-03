@@ -1,24 +1,42 @@
 library(qtutils)
 library(qtpaint)
+# rm(list=ls(all=TRUE))
 
-qparallel = function(data, scale = I, col = "black", 
-    horizontal = TRUE, axes = !is.null(colnames(data)), mar = c(0, 
-        0, 0, 0)) {
+qparallel = function(data, vars = names(data), scale = "range", 
+    col = "black", horizontal = TRUE, mar = c(0.1, 0.1, 0.1, 
+        0.1)) {
     ## parameters for the brush
     # brush status
     .brushed = FALSE
     # brush color
-    .bcolor = "black"
-    # brush range: horizontal and vertical
-    .brange = c(0.05, 0.05)
+    .bcolor = "yellow"
+    # background color
+    .bgcolor = "grey80"
     # mouse position
     .bpos = c(NA, NA)
     # drag start
     .bstart = c(NA, NA)
     # move brush?
     .bmove = FALSE
-    
-    data = apply(data, 2, scale)
+    mar = rep(mar, length.out = 4)
+    scale = switch(scale, range = function(x) {
+        xna = x[!is.na(x)]
+        (x - min(xna))/(max(xna) - min(xna))
+    }, var = base:::scale, I = base:::I)
+    data = as.data.frame(data)
+    if (!is.null(vars)) {
+        if (class(vars) == "formula") 
+            vars = all.vars(vars)
+        if ("." %in% vars) 
+            vars = names(data)
+        data = subset(data, select = vars)
+    }
+    else vars = names(data)
+    # omit NA's
+    data=na.omit(data)
+    # back up original data
+    odata = data
+    data = apply(sapply(data, as.numeric), 2, scale)
     p = ncol(data)
     n = nrow(data)
     col = rep(col, length.out = nrow(data))
@@ -33,6 +51,8 @@ qparallel = function(data, scale = I, col = "black",
     }
     xr = diff(range(x))
     yr = diff(range(y))
+    # brush range: horizontal and vertical
+    .brange = c(xr, yr)/20
     lims = qrect(c(min(x) - xr * mar[2], max(x) + xr * mar[4]), 
         c(min(y) - yr * mar[1], max(y) + yr * mar[3]))
     # given x, calculate y
@@ -49,7 +69,13 @@ qparallel = function(data, scale = I, col = "black",
         }
     }
     qpcp = function(item, painter, exposed) {
-        for (i in 1:nrow(data)) {
+	#qlineWidth(painter) = 1
+        qdrawRect(painter,min(x),min(y),max(x),max(y),stroke=.bgcolor,fill=.bgcolor)
+        xpretty=pretty(x)
+        ypretty=pretty(y)
+        qdrawSegment(painter, xpretty,min(y),xpretty,max(y),stroke='white')
+        qdrawSegment(painter, min(x),ypretty,max(x),ypretty,stroke='white')
+        for (i in 1:n) {
             qdrawLine(painter, x[i, ], y[i, ], stroke = col[i])
         }
     }
@@ -59,6 +85,7 @@ qparallel = function(data, scale = I, col = "black",
     }
     pcpMove = function(item, event) {
         .bmove <<- !.bmove
+        message("Brush status: ", ifelse(.bmove, "MOVE", "DRAW"))
     }
     pcpIdentify = function(item, event) {
         pos = as.numeric(event$pos())
@@ -67,10 +94,6 @@ qparallel = function(data, scale = I, col = "black",
             .brange <<- pos - .bstart
         .brushed <<- rep(FALSE, n)
         if (horizontal) {
-            #             xi = which.min(abs(x[1, ] - pos[1]))
-            #             if (abs(xi - pos[1]) <= abs(.brange[1])) {
-            #                 .brushed <<- abs(y[, xi] - pos[2]) <= abs(.brange[2])
-            #             }
             # the brush covers any x's?
             xi = which(abs(x[1, ] - pos[1]) <= abs(.brange[1]))
             # x on the boundary of the brush
@@ -87,10 +110,6 @@ qparallel = function(data, scale = I, col = "black",
                 abs(.brange[2])))
         }
         else {
-            #             yi = which.min(abs(y[1, ] - pos[2]))
-            #             if (abs(yi - pos[2]) <= abs(.brange[2])) {
-            #                 .brushed <<- abs(x[, yi] - pos[1]) <= abs(.brange[1])
-            #             }
             yi = which(abs(y[1, ] - pos[2]) <= abs(.brange[2]))
             # x on the boundary of the brush
             yb = pos[2] + c(-1, 1) * abs(.brange[2])
@@ -111,9 +130,10 @@ qparallel = function(data, scale = I, col = "black",
     pcpBrush = function(item, painter) {
         if (!any(is.na(.bpos))) {
             qlineWidth(painter) = 2
+            qdash(painter)=c(1,3,1,3)
             qdrawRect(painter, .bpos[1] - .brange[1], .bpos[2] - 
                 .brange[2], .bpos[1] + .brange[1], .bpos[2] + 
-                .brange[2], stroke = "green")
+                .brange[2], stroke = .bcolor)
         }
         if (sum(.brushed) >= 1) {
             qlineWidth(painter) = 3
@@ -125,25 +145,34 @@ qparallel = function(data, scale = I, col = "black",
                 qdrawLine(painter, x[i, ], y[i, ], stroke = .bcolor)
             }
         }
-        
+        # qdrawText(painter, "hi, brush", .bpos[1], .bpos[2])
+        # qupdate(pcp.axes)
     }
-    #    pcpAxes=function(item, painter) {
-    #       qfont(painter) <- qfont(pointsize=12)
-    #
-    # if(is.null(colnames(data))) colnames(data)=sprintf('V%d',1:ncol(data))
-    # if(horizontal) qdrawText(painter,colnames(data),1:ncol(data),.5,'center','center')
-    # else qdrawText(painter,colnames(data),min(data)- xr * mar[2]/2,1:ncol(data),'center','center')
-    #     }
+    pcpAxes = function(item, painter) {
+        qfont(painter) = qfont(pointsize = 10)
+        if (horizontal) {
+            qdrawText(painter, colnames(data), 1:p - seq(-mar[2], 
+                mar[4], length.out = p)/(1 + mar[2] + mar[4]) * 
+                xr, min(data) - (-mar[1]/(1 + mar[1] + mar[3])) * 
+                yr/2, "center", "center")
+        }
+        else {
+            qdrawText(painter, colnames(data), min(data) - (-mar[2]/(1 + 
+                mar[2] + mar[4])) * xr/2, 1:p - seq(-mar[1], 
+                mar[3], length.out = p)/(1 + mar[1] + mar[3]) * 
+                yr, "center", "center")
+        }
+    }
     scene = qscene()
     
     pcp = qlayer(scene, qpcp, cache = TRUE, limits = lims)
     pcp.brush = qlayer(scene, pcpBrush, mousePressFun = pcpBrushStart, 
         mouseReleaseFun = pcpIdentify, mouseDoubleClickFun = pcpMove, 
         mouseMove = pcpIdentify, cache = FALSE, limits = lims)
-    #     qlayer(scene,pcpAxes,cache=TRUE,limits=lims)
-    view = qplotView(scene = scene, opengl = TRUE)
-    #overlay <- view$overlay()
-    #if(axes) qlayer(overlay, pcpAxes)
     
+    pcp.axes = qlayer(scene, pcpAxes, cache = TRUE, limits = qrect(range(x), 
+        range(y)))
+    
+    view = qplotView(scene = scene)
     view
 }
