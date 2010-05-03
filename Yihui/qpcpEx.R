@@ -6,25 +6,39 @@ library(RColorBrewer)
 source('qparellel.R')
 
 ## old iris...
-qparallel(iris, col = brewer.pal(3,"Set1")[as.integer(iris$Species)])
+qparallel(iris, col = brewer.pal(3, "Set1")[as.integer(iris$Species)])
+qparallel(iris, scale = "I")
+qparallel(iris, scale = "var")
 
-qparallel(iris, ~Sepal.Length+Sepal.Width)
+## formula interface
+qparallel(iris, ~ Sepal.Length + Sepal.Width)
 
 ## vertical
-qparallel(iris, col=brewer.pal(3,"Set1")[as.integer(iris$Species)], 
-    horizontal = FALSE, mar=c(0.1,.15,0.1,0))
+qparallel(iris, col=brewer.pal(3, "Set1")[as.integer(iris$Species)], horizontal = FALSE, mar=c(0.1,.15,0.1,0.05))
 
 ## test speed
-qparallel(matrix(runif(1000 * 10), ncol = 10), col = rgb(1, 
-    0, 0, 0.1), mar = c(.2,.1,.1,.1))
+qparallel(matrix(runif(1000 * 10), ncol = 10), col = rgb(1, 0, 0, 0.2), mar = c(.2,.1,.1,.1))
+qparallel(matrix(runif(1000 * 10), ncol = 10), col = rgb(1, 0, 0, 0.2), scale="var", mar = c(.2,.1,.1,.1))
+
 
 ## residential data: 18221x8
 library(YaleToolkit)
 data(NewHavenResidential)
 qparallel(NewHavenResidential, col = rgb(1, 0, 0, 0.1))
 
-#qparallel(nhr.sd, col = c(rgb(1, 0, 0, 0.1), rgb(0, 0, 1, 0.1))[nhr[,
-#    'acType']], horizontal = FALSE)
+qparallel(NewHavenResidential, col = brewer.pal(3,"Set1")[as.integer(NewHavenResidential$zone)])
+
+qparallel(NewHavenResidential, col = rgb(1, 0, 0, 0.1), horizontal = FALSE)
+
+
+## Tengfei's Data
+chrom2=read.csv('~/Downloads/chrom2.csv')
+qparallel(chrom2)
+qparallel(chrom2, col=rgb(1,0,0,.2))
+
+ld=read.csv('~/Downloads/ld.csv')
+qparallel(ld, col=rgb(0,1,0,.2))
+
 
 
 ## speed for segments and lines? R loops?...
@@ -65,3 +79,5 @@ print(system.time({
 	    1:(p-1); test[i, 1:(p-1)]; 2:p; test[i, 2:p]; col[i]
         }
 }))
+
+# git pull cranvas master

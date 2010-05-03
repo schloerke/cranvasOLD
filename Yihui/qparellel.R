@@ -22,7 +22,7 @@ qparallel = function(data, vars = names(data), scale = "range",
     scale = switch(scale, range = function(x) {
         xna = x[!is.na(x)]
         (x - min(xna))/(max(xna) - min(xna))
-    }, var = base:::scale, I = base:::I)
+    }, var = base:::scale, I = function(x) x)
     data = as.data.frame(data)
     if (!is.null(vars)) {
         if (class(vars) == "formula") 
@@ -51,6 +51,8 @@ qparallel = function(data, vars = names(data), scale = "range",
     }
     xr = diff(range(x))
     yr = diff(range(y))
+    xpretty = pretty(x)
+    ypretty = pretty(y)
     # brush range: horizontal and vertical
     .brange = c(xr, yr)/20
     lims = qrect(c(min(x) - xr * mar[2], max(x) + xr * mar[4]), 
@@ -69,10 +71,7 @@ qparallel = function(data, vars = names(data), scale = "range",
         }
     }
     qpcp = function(item, painter, exposed) {
-	#qlineWidth(painter) = 1
         qdrawRect(painter,min(x),min(y),max(x),max(y),stroke=.bgcolor,fill=.bgcolor)
-        xpretty=pretty(x)
-        ypretty=pretty(y)
         qdrawSegment(painter, xpretty,min(y),xpretty,max(y),stroke='white')
         qdrawSegment(painter, min(x),ypretty,max(x),ypretty,stroke='white')
         for (i in 1:n) {
@@ -145,8 +144,6 @@ qparallel = function(data, vars = names(data), scale = "range",
                 qdrawLine(painter, x[i, ], y[i, ], stroke = .bcolor)
             }
         }
-        # qdrawText(painter, "hi, brush", .bpos[1], .bpos[2])
-        # qupdate(pcp.axes)
     }
     pcpAxes = function(item, painter) {
         qfont(painter) = qfont(pointsize = 10)
@@ -155,12 +152,17 @@ qparallel = function(data, vars = names(data), scale = "range",
                 mar[4], length.out = p)/(1 + mar[2] + mar[4]) * 
                 xr, min(data) - (-mar[1]/(1 + mar[1] + mar[3])) * 
                 yr/2, "center", "center")
+            ytrans = ypretty - seq(-mar[1], mar[3], length.out = length(ypretty))/(1 + mar[1] + mar[3]) * yr
+            qdrawText(painter, ifelse(ypretty<=max(y) & ypretty>=min(y), as.character(ypretty),''), 1+mar[2]/(1+mar[2]+mar[4])/2*xr, ytrans, "center", "center")
+            # qdrawSegment(painter, 1+mar[2]/(1+mar[2]+mar[4])*3/4*xr, ytrans, 1+mar[2]/(1+mar[2]+mar[4])*xr, ytrans, stroke='black')
         }
         else {
             qdrawText(painter, colnames(data), min(data) - (-mar[2]/(1 + 
                 mar[2] + mar[4])) * xr/2, 1:p - seq(-mar[1], 
                 mar[3], length.out = p)/(1 + mar[1] + mar[3]) * 
                 yr, "center", "center")
+            xtrans = xpretty - seq(-mar[2], mar[4], length.out = length(xpretty))/(1 + mar[2] + mar[4]) * xr
+            qdrawText(painter, ifelse(xpretty<=max(x) & xpretty>=min(x),as.character(xpretty),''), xtrans, min(y)+mar[1]/(1+mar[1]+mar[3])/2*yr,  "center", "center")
         }
     }
     scene = qscene()
