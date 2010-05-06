@@ -153,7 +153,7 @@ qparallel = function(data, vars = names(data), scale = "range",
                 xr, min(data) - (-mar[1]/(1 + mar[1] + mar[3])) * 
                 yr/2, "center", "center")
             ytrans = ypretty - seq(-mar[1], mar[3], length.out = length(ypretty))/(1 + mar[1] + mar[3]) * yr
-            qdrawText(painter, ifelse(ypretty<=max(y) & ypretty>=min(y), as.character(ypretty),''), 1+mar[2]/(1+mar[2]+mar[4])/2*xr, ytrans, "center", "center")
+            # qdrawText(painter, ifelse(ypretty<=max(y) & ypretty>=min(y), as.character(ypretty),''), 1+mar[2]/(1+mar[2]+mar[4])/2*xr, ytrans, "center", "center")
             # qdrawSegment(painter, 1+mar[2]/(1+mar[2]+mar[4])*3/4*xr, ytrans, 1+mar[2]/(1+mar[2]+mar[4])*xr, ytrans, stroke='black')
         }
         else {

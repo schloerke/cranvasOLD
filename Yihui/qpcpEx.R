@@ -3,7 +3,7 @@
 ## color palette
 library(RColorBrewer)
 
-source('qparellel.R')
+source('qparallel.R')
 
 ## old iris...
 qparallel(iris, col = brewer.pal(3, "Set1")[as.integer(iris$Species)])
@@ -33,11 +33,12 @@ qparallel(NewHavenResidential, col = rgb(1, 0, 0, 0.1), horizontal = FALSE)
 
 ## Tengfei's Data
 chrom2=read.csv('~/Downloads/chrom2.csv')
-qparallel(chrom2)
-qparallel(chrom2, col=rgb(1,0,0,.2))
+qparallel(chrom2, mar=c(.1,.1,.05,.1))
+qparallel(chrom2, col=rgb(1,0,0,.2), mar=c(.1,.1,.05,.1))
+qparallel(chrom2, horizontal=FALSE,mar=c(.1,.1,.05,.1))
 
 ld=read.csv('~/Downloads/ld.csv')
-qparallel(ld, col=rgb(0,1,0,.2))
+qparallel(ld, col=rgb(0,1,0,.2), mar=c(.1,.1,.05,.1))
 
 
 
