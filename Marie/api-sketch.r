@@ -145,7 +145,7 @@ invisible(self)
 modify_layer <- function(i,new_mark,new_limit,...) {
 old <- marks[[i]]
 #new <- update(old, ...)
-marks[[i]] <<- new_markprin
+marks[[i]] <<- new_mark
 #layer <- qlayer(root, function(item, painter, exposed) {
 #  draw(marks[[i]], painter)})
 #layer$setLimits(new_limit)
