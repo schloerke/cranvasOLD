@@ -14,7 +14,7 @@ qtscat <- function(x, y, ...,title=NULL, xlab = NULL, ylab = NULL, color="black"
 	plot1$add_layer(glyph(left = x, bottom = y, fill=color, stroke=stroke))  #layer 2 - data
 #	draw_x_axes(plot1, ranges, xlab)
 #	draw_y_axes(plot1, ranges, ylab) 
-	print(plot1)
+	return(plot1)
 	
 	
 }
@@ -39,26 +39,32 @@ make_pretty_axes <- function(dataRange, minimum, maximum)
 
 #draws grid background as a single layer
 draw_grid_with_positions <- function(plotObj, dataRange, horiPos=NULL, vertPos=NULL){
+    linewidthX<-round(0.002*(dataRange[2]-dataRange[1]),3)
+	linewidthY<-round(0.002*(dataRange[4]-dataRange[3]),3)
 	intervalX<-(dataRange[2]-dataRange[1])/(length(horiPos)+1)
 	intervalY<-(dataRange[4]-dataRange[3])/(length(vertPos)+1)
+
 	
 	left<-round(rep(seq(from=dataRange[1],to=dataRange[2]-intervalX,by=intervalX),length(horiPos)+1),3)
-	right<-round(rep(seq(from=dataRange[1]+intervalX-.002,to=dataRange[2],by=intervalX),length(horiPos)+1),3)
+	right<-round(rep(seq(from=dataRange[1]+intervalX-linewidthX,to=dataRange[2],by=intervalX),length(horiPos)+1),3)
 	
-	bottom_temp<-seq(from=dataRange[3], to=dataRange[4]-intervalY,by=intervalY)
+	temp<-seq(from=dataRange[3], to=dataRange[4]-intervalY,by=intervalY)
 	bottom<-NULL
-	for (i in 1:length(bottom_temp)){
-		bottom<-c(bottom,rep(bottom_temp[i],(length(vertPos)+1)))
+	for (i in 1:length(temp)){
+		bottom<-c(bottom,rep(temp[i],(length(vertPos)+1)))
 	}
 	bottom<-round(bottom,3)
 	
-	top_temp<-seq(from=dataRange[3]+intervalY-.002,to=dataRange[4],by=intervalY)
+	temp<-seq(from=dataRange[3]+intervalY-linewidthY,to=dataRange[4],by=intervalY)
 	top<-NULL
-	for(i in 1:length(top_temp)){
-		top<-c(top,rep(top_temp[i],(length(vertPos)+1)))
+	for(i in 1:length(temp)){
+		top<-c(top,rep(temp[i],(length(vertPos)+1)))
 	}
 	top<-round(top,3)
-	
+print(length(top))
+print(length(bottom))
+print(length(left))
+print(length(right))
 	plotObj$add_layer(rect(left=left,right=right,bottom=bottom,top=top,fill="grey80",stroke="grey80"))
 	
 }
