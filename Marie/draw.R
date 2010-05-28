@@ -45,28 +45,27 @@ draw_grid_with_positions <- function(plotObj, dataRange, horiPos=NULL, vertPos=N
 	intervalY<-(dataRange[4]-dataRange[3])/(length(vertPos)+1)
 
 	
-	left<-round(rep(seq(from=dataRange[1],to=dataRange[2]-intervalX,by=intervalX),length(horiPos)+1),3)
-	right<-round(rep(seq(from=dataRange[1]+intervalX-linewidthX,to=dataRange[2],by=intervalX),length(horiPos)+1),3)
+	left<-round(rep(seq(from=dataRange[1],to=dataRange[2]-intervalX,by=intervalX),length(vertPos)+1),3)
+	right<-round(rep(seq(from=dataRange[1]+intervalX-linewidthX,to=dataRange[2],by=intervalX),length(vertPos)+1),3)
 	
 	temp<-seq(from=dataRange[3], to=dataRange[4]-intervalY,by=intervalY)
 	bottom<-NULL
 	for (i in 1:length(temp)){
-		bottom<-c(bottom,rep(temp[i],(length(vertPos)+1)))
+		bottom<-c(bottom,rep(temp[i],(length(horiPos)+1)))
 	}
 	bottom<-round(bottom,3)
 	
 	temp<-seq(from=dataRange[3]+intervalY-linewidthY,to=dataRange[4],by=intervalY)
 	top<-NULL
 	for(i in 1:length(temp)){
-		top<-c(top,rep(temp[i],(length(vertPos)+1)))
+		top<-c(top,rep(temp[i],(length(horiPos)+1)))
 	}
 	top<-round(top,3)
-print(length(top))
-print(length(bottom))
-print(length(left))
-print(length(right))
 	plotObj$add_layer(rect(left=left,right=right,bottom=bottom,top=top,fill="grey80",stroke="grey80"))
-	
+assign("top",top, pos=1)
+assign("bottom",bottom,pos=1)
+assign("left",left,pos=1)
+assign("right",right,pos=1)
 }
 
 #no changes
