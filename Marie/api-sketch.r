@@ -131,12 +131,31 @@ scene <- Qt$QGraphicsScene()
 root <- qlayer(scene)
 root$geometry<-qrect(0,0,width,height)
 
-add_layer <- function(mark) {
+add_layer <- function(mark,keyPressFun = NULL, 
+keyReleaseFun = NULL, mouseDoubleClickFun = NULL, mouseMoveFun = NULL, 
+mousePressFun = NULL, mouseReleaseFun = NULL, wheelFun = NULL, 
+hoverMoveEvent = NULL, hoverEnterEvent = NULL, hoverLeaveEvent = NULL, 
+contextMenuEvent = NULL, dragEnterEvent = NULL, dragLeaveEvent = NULL, 
+dragMoveEvent = NULL, dropEvent = NULL, focusInEvent = NULL, 
+focusOutEvent = NULL, sizeHintFun = NULL) {
 i <- length(marks) + 1
 marks[[i]] <<- mark
 
-layer <- qlayer(root, function(item, painter, exposed) {
-  draw(marks[[i]], painter)})
+if(class(mark)[1]=="function"){
+  paintFun<-marks[[1]]
+ }else{
+  paintFun<-function(item, painter, exposed) { draw(marks[[i]], painter)}
+}
+
+
+
+layer <- qlayer(parent=root, paintFun=paintFun,keyPressFun=keyPressFun,
+  keyReleaseFun=keyReleaseFun,mouseDoubleClickFun=mouseDoubleClickFun,
+  mouseMoveFun=mouseMoveFun,mousePressFun=mousePressFun,mouseReleaseFun=mouseReleaseFun,
+  wheelFun=wheelFun,hoverMoveEvent=hoverMoveEvent,hoverEnterEvent=hoverEnterEvent,
+  hoverLeaveEvent=hoverLeaveEvent,contextMenuEvent=contextMenuEvent,dragEnterEvent=dragEnterEvent,
+  dragLeaveEvent=dragLeaveEvent,dragMoveEvent=dragMoveEvent,dropEvent=dropEvent,focusInEvent=focusInEvent,
+  focusOutEvent=focusOutEvent,sizeHintFun=sizeHintFun)
 layer$setLimits(limits)
 layers[[i]] <<- layer    
 invisible(self)
@@ -150,9 +169,7 @@ marks[[i]] <<- new_mark
 #  draw(marks[[i]], painter)})
 #layer$setLimits(new_limit)
 #layers[[i]] <<- layer    
-print(layers[[i]])
 layers[[i]]$setLimits(new_limit)
-print(new_limit)
 qupdate(layers[[i]])
 invisible(self)
 }
