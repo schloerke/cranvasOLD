@@ -155,20 +155,18 @@ layer <- qlayer(parent=root, paintFun=paintFun,keyPressFun=keyPressFun,
   wheelFun=wheelFun,hoverMoveEvent=hoverMoveEvent,hoverEnterEvent=hoverEnterEvent,
   hoverLeaveEvent=hoverLeaveEvent,contextMenuEvent=contextMenuEvent,dragEnterEvent=dragEnterEvent,
   dragLeaveEvent=dragLeaveEvent,dragMoveEvent=dragMoveEvent,dropEvent=dropEvent,focusInEvent=focusInEvent,
-  focusOutEvent=focusOutEvent,sizeHintFun=sizeHintFun)
+  focusOutEvent=focusOutEvent,sizeHintFun=sizeHintFun,clip=F)
 layer$setLimits(limits)
-layers[[i]] <<- layer    
+
+layers[[i]] <<- layer   
+assign("layers",layers, pos=1) #there has to be a better way for tracking this value, but I don't know what
 invisible(self)
+
 }
 
 modify_layer <- function(i,new_mark,new_limit,...) {
 old <- marks[[i]]
-#new <- update(old, ...)
 marks[[i]] <<- new_mark
-#layer <- qlayer(root, function(item, painter, exposed) {
-#  draw(marks[[i]], painter)})
-#layer$setLimits(new_limit)
-#layers[[i]] <<- layer    
 layers[[i]]$setLimits(new_limit)
 qupdate(layers[[i]])
 invisible(self)
@@ -176,8 +174,10 @@ invisible(self)
 
 view <- qplotView(scene = scene)
 
+
 self <- structure(list(
 root=root,
+layers=layers,
 view = view,
 add_layer = add_layer,
 modify_layer = modify_layer
