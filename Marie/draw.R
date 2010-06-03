@@ -1,5 +1,5 @@
 #source("api-sketch.r")
-#source("helper.r")
+
 
 qtscat <- function(x, y, ...,title=NULL, xlab = NULL, ylab = NULL, color="black", fill = NULL, stroke = "black")
 {
@@ -62,10 +62,7 @@ draw_grid_with_positions <- function(plotObj, dataRange, horiPos=NULL, vertPos=N
 	}
 	top<-round(top,3)
 	plotObj$add_layer(rect(left=left,right=right,bottom=bottom,top=top,fill="grey80",stroke="grey80"))
-assign("top",top, pos=1)
-assign("bottom",bottom,pos=1)
-assign("left",left,pos=1)
-assign("right",right,pos=1)
+
 }
 
 #no changes
@@ -173,7 +170,10 @@ draw_y_axes_with_labels <- function(plotObj, dataRanges, axisLabels, labelVertPo
 	
 }
 
-	
+#allows plotsize to be designated
+make_new_plot <- function(x=600,y=600,windowRanges){
+	new_plot(x,y, xrange=windowRanges[1:2], yrange=windowRanges[3:4])
+}	
 		
 	
 	
