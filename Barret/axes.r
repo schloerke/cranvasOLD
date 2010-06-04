@@ -55,52 +55,48 @@ draw_grid_with_positions <- function(plotObj, dataRanges, horiPos=NULL, vertPos=
   #horizontal
   if(!is.null(vertPos))
   {
-# Doesn't work!
-#    plotObj$add_layer(
-#      line(
-#        left    = rep(dataRanges[1:2], length(vertPos)),
-#        bottom  = c(vertPos,vertPos),
-#        stroke  = "blue"
-#      )
-#    )
-
-    for(i in 1:length(vertPos))
-    {
-      plotObj$add_layer(
-        line(
-          left    = dataRanges[1:2],
-          bottom  = c(vertPos[i],vertPos[i]),
-          stroke  = "white"
-        )
+    plotObj$add_layer(
+      line(
+        left    = rep(c(dataRanges[1:2],NA), length(vertPos)),
+        bottom  = rep(vertPos,each=3),
+        stroke  = "white"
       )
-    }
+    )
+
+#    for(i in 1:length(vertPos))
+#    {
+#      plotObj$add_layer(
+#        line(
+#          left    = dataRanges[1:2],
+#          bottom  = c(vertPos[i],vertPos[i]),
+#          stroke  = "white"
+#        )
+#      )
+#    }
   }
 
   #vertical
   if(!is.null(horiPos))
   {
  
-#    plotObj$add_layer(
-#      line(
-#        left    = horiPos,
-#        right   = horiPos,
-#        bottom  = dataRanges[3],
-#        top     = dataRanges[4],
-#        stroke  = "blue",
-#        fill    = "blue"
-#      )
-#    )
-
-    for(i in 1:length(horiPos))
-    {
-      plotObj$add_layer(
-        line(
-          left    = c(horiPos[i], horiPos[i]),
-          bottom  = dataRanges[3:4],
-          stroke  = "white"
-        )
+    plotObj$add_layer(
+      line(
+        left    = rep(horiPos,each=3),
+        bottom  = rep(c(dataRanges[3:4],NA), length(horiPos)),
+        stroke  = "white",
       )
-    }
+    )
+
+#    for(i in 1:length(horiPos))
+#    {
+#      plotObj$add_layer(
+#        line(
+#          left    = c(horiPos[i], horiPos[i]),
+#          bottom  = dataRanges[3:4],
+#          stroke  = "white"
+#        )
+#      )
+#    }
 
 
   }
