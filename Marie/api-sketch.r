@@ -137,7 +137,7 @@ mousePressFun = NULL, mouseReleaseFun = NULL, wheelFun = NULL,
 hoverMoveEvent = NULL, hoverEnterEvent = NULL, hoverLeaveEvent = NULL, 
 contextMenuEvent = NULL, dragEnterEvent = NULL, dragLeaveEvent = NULL, 
 dragMoveEvent = NULL, dropEvent = NULL, focusInEvent = NULL, 
-focusOutEvent = NULL, sizeHintFun = NULL) {
+focusOutEvent = NULL, sizeHintFun = NULL,row=0L,col=0L) {
 i <- length(marks) + 1
 marks[[i]] <<- mark
 
@@ -155,7 +155,7 @@ layer <- qlayer(parent=root, paintFun=paintFun,keyPressFun=keyPressFun,
   wheelFun=wheelFun,hoverMoveEvent=hoverMoveEvent,hoverEnterEvent=hoverEnterEvent,
   hoverLeaveEvent=hoverLeaveEvent,contextMenuEvent=contextMenuEvent,dragEnterEvent=dragEnterEvent,
   dragLeaveEvent=dragLeaveEvent,dragMoveEvent=dragMoveEvent,dropEvent=dropEvent,focusInEvent=focusInEvent,
-  focusOutEvent=focusOutEvent,sizeHintFun=sizeHintFun,clip=F)
+  focusOutEvent=focusOutEvent,sizeHintFun=sizeHintFun,clip=F, row=row,col=col)
 layer$setLimits(limits)
 
 layers[[i]] <<- layer   
