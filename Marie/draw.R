@@ -20,11 +20,11 @@ qtscat <- function(x, y, ...,title=NULL, xlab = NULL, ylab = NULL, color="black"
 }
 
 #no changes
-draw_grid <- function(plotObj, dataRanges)
+draw_grid <- function(plotObj, dataRanges,row=0L,col=0L)
 {
 	xGridLines <- make_pretty_axes(dataRanges[1:2], dataRanges[1], dataRanges[2])
 	yGridLines <- make_pretty_axes(dataRanges[3:4], dataRanges[3], dataRanges[4])
-	draw_grid_with_positions(plotObj, dataRanges, xGridLines, yGridLines)
+	draw_grid_with_positions(plotObj, dataRanges, xGridLines, yGridLines,row,col)
 	
 }
 
@@ -38,14 +38,17 @@ make_pretty_axes <- function(dataRange, minimum, maximum)
 }
 
 #draws grid background as a single layer
-draw_grid_with_positions <- function(plotObj, dataRange, horiPos=NULL, vertPos=NULL){
+draw_grid_with_positions <- function(plotObj, dataRange, horiPos=NULL, vertPos=NULL,row=0L,col=0L){
 	dims<-get_dims(dataRange,size=0.002,horiPos,vertPos)
     left<-get_left(dataRange,dims[3],vertPos)
+print(length(left))
 	right<-get_right(dataRange,dims[3],dims[1],vertPos)
-	bottom<-get_bottom(dataRange,dims[4],horiPos)	
-	top<-get_top(dataRange,dims[3],dims[2],horiPos)
-	print(left)
-	plotObj$add_layer(rect(left=left,right=right,bottom=bottom,top=top,fill="grey80",stroke="grey80"))
+	print(length(right))
+	bottom<-get_bottom(dataRange,dims[4],horiPos)
+	print(length(bottom))
+	top<-get_top(dataRange,dims[4],dims[2],horiPos)
+	print(length(top))
+	plotObj$add_layer(rect(left=left,right=right,bottom=bottom,top=top,fill="grey80",stroke="grey80"),row=row,col=col)
 
 }
 
