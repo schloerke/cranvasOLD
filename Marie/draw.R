@@ -41,14 +41,10 @@ make_pretty_axes <- function(dataRange, minimum, maximum)
 draw_grid_with_positions <- function(plotObj, dataRange, horiPos=NULL, vertPos=NULL,row=0L,col=0L){
 	dims<-get_dims(dataRange,size=0.002,horiPos,vertPos)
     left<-get_left(dataRange,dims[3],vertPos)
-print(length(left))
 	right<-get_right(dataRange,dims[3],dims[1],vertPos)
-	print(length(right))
 	bottom<-get_bottom(dataRange,dims[4],horiPos)
-	print(length(bottom))
 	top<-get_top(dataRange,dims[4],dims[2],horiPos)
-	print(length(top))
-	plotObj$add_layer(rect(left=left,right=right,bottom=bottom,top=top,fill="grey80",stroke="grey80"),row=row,col=col)
+	plotObj$add_layer(rect(left=left,right=right,bottom=bottom,top=top,fill="grey90",stroke="grey90"),row=row,col=col)
 
 }
 
