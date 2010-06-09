@@ -136,8 +136,8 @@ keyReleaseFun = NULL, mouseDoubleClickFun = NULL, mouseMoveFun = NULL,
 mousePressFun = NULL, mouseReleaseFun = NULL, wheelFun = NULL, 
 hoverMoveEvent = NULL, hoverEnterEvent = NULL, hoverLeaveEvent = NULL, 
 contextMenuEvent = NULL, dragEnterEvent = NULL, dragLeaveEvent = NULL, 
-dragMoveEvent = NULL, dropEvent = NULL, focusInEvent = NULL, 
-focusOutEvent = NULL, sizeHintFun = NULL,row=0L,col=0L) {
+dragMoveEvent = NULL, dropEvent = NULL, focusInEvent= NULL, 
+focusOutEvent = NULL, sizeHintFun = NULL,row=0L,col=0L, userlimits=NULL) {
 i <- length(marks) + 1
 marks[[i]] <<- mark
 
@@ -156,7 +156,12 @@ layer <- qlayer(parent=root, paintFun=paintFun,keyPressFun=keyPressFun,
   hoverLeaveEvent=hoverLeaveEvent,contextMenuEvent=contextMenuEvent,dragEnterEvent=dragEnterEvent,
   dragLeaveEvent=dragLeaveEvent,dragMoveEvent=dragMoveEvent,dropEvent=dropEvent,focusInEvent=focusInEvent,
   focusOutEvent=focusOutEvent,sizeHintFun=sizeHintFun,clip=F, row=row,col=col)
-layer$setLimits(limits)
+
+if(is.null(userlimits)){
+	layer$setLimits(limits)
+}else {
+layer$setLimits(userlimits)
+}
 
 layers[[i]] <<- layer   
 assign("layers",layers, pos=1) #there has to be a better way for tracking this value, but I don't know what
