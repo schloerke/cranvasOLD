@@ -63,7 +63,7 @@ draw_grid_with_positions <- function(plotObj, dataRanges, horiPos=NULL, vertPos=
       )
     )
 
-	minor.vertPos <- vertPos + diff(vertPos[1:2])/2
+	minor.vertPos <- vertPos[-length(vertPos)] + diff(vertPos)/2
   }
 
   #vertical
@@ -78,7 +78,7 @@ draw_grid_with_positions <- function(plotObj, dataRanges, horiPos=NULL, vertPos=
       )
     )
 
-	minor.horiPos <- horiPos + diff(horiPos[1:2])/2
+	minor.horiPos <- horiPos[-length(horiPos)] + diff(horiPos)/2
   }
 
   #minor horizontal
