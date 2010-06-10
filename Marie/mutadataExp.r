@@ -1,7 +1,10 @@
 library(qtpaint)
 library(plumbr)
 
-setwd("/Users/marie/Documents/cranvas/Marie/")
+#mac
+#setwd("/Users/marie/Documents/cranvas/Marie/")
+#linux
+setwd("/home/marie/Documents/cranvas/Marie/")
 #source("faceting.R")
 source("api-sketch.r")
 source("draw.R")
