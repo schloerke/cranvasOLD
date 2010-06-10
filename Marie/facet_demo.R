@@ -1,7 +1,10 @@
 library(qtpaint)
 library(ggplot2)
 
-setwd("/Users/marie/")
+#mac path
+#setwd("/Users/marie/")
+#linux path
+setwd("/home/marie/")
 source("Documents/cranvas/Marie/faceting.R")
 source("Documents/cranvas/Marie/api-sketch.r")
 source("Documents/cranvas/Marie/draw.R")
