@@ -65,7 +65,7 @@ qtfacet<-function(x,y,data,facets){
 #add axis as an overlay layer	
     overlay<-plot1$view$overlay()
 	axesOverlay<-qlayer(overlay,axes,limits=qrect(c(0,1),c(0,1)))
-	print(plot1)
+	return(plot1)
 	
 }
 
