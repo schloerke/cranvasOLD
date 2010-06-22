@@ -163,9 +163,8 @@ if(is.null(userlimits)){
 }else {
 layer$setLimits(userlimits)
 }
-print(layers)
-print(layer)
-layers<<-rbind(layers, layer)
+
+layers[[i]]<<- layer
 assign("layers",layers, pos=1) #there has to be a better way for tracking this value, but I don't know what
 invisible(self)
 
