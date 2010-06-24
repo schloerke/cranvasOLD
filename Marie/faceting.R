@@ -55,7 +55,7 @@ qtfacet<-function(x,y,data,facets){
 		qfillColor(painter)<-"black"
 		qdrawText(painter,text=levels(factor(data[,facets[1]])), x=getfacetpos(Ygrids),
 				  y=1-(.75*(.15/Xgrids)),halign="center",valign="center")
-		qdrawText(painter,text=levels(factor(data[,facets[2]])),x=1-(.75*(.15/Ygrids)),
+		qdrawText(painter,text=levels(factor(data[,facets[2]])),x=1-(.45*(.15/Ygrids)),
 					y=1-getfacetpos(Xgrids),halign="right",valign="top",rot=-90)
 		qdrawText(painter,text=colnames(data)[x],x=.5, y=.15/(2*Xgrids),halign="center",valign="center")
 		qdrawText(painter,text=colnames(data)[y],x=.15/(2*Ygrids),y=.5,halign="center",valign="center",rot=90)
