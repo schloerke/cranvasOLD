@@ -14,13 +14,15 @@ qtfacet<-function(x,y,data,facets){
     ranges<-c(make_data_ranges(data[,x]),make_data_ranges(data[,y]))
 	windowranges<-make_window_ranges(ranges)
 	plot1<-make_new_plot(windowRanges=windowranges)
-	print(make_window_ranges(windowranges))
+
 	
 	
 #determine the number of factoring grids
 	Ygrids<-length(levels(factor(data[,facets[1]])))
 	Xgrids<-length(levels(factor(data[,facets[2]])))
+
 	
+
 	xspan<-windowranges[2]-windowranges[1]
 	yspan<-windowranges[4]-windowranges[3]
 	
@@ -30,6 +32,7 @@ qtfacet<-function(x,y,data,facets){
 			margin<-getMargins(i,j,value=0.15,Xgrids,Ygrids,xspan,yspan)
 		    						
 #draw the grids
+#BUG: does not draw same number of rows/columns for all plots in facet
 			draw_grid(plot1,dataRanges=c(windowranges[1]+margin[1],
 										 windowranges[2]-(.003*xspan)-margin[2],
 										 windowranges[3]+margin[3],
@@ -93,6 +96,5 @@ getfacetpos<-function(grids){
 		pos<-c(pos,((i-1)*(1/grids)+(.5*(1/grids))))
 	}
 	
-	print(pos)
 	return(pos)
 }
