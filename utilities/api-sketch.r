@@ -1,4 +1,5 @@
 library(qtpaint)
+library(plumbr)
 #library(plyr)
 # Marks: glyph, text, line, rect, poly
 # Position: top, right, bottom, left
@@ -127,7 +128,7 @@ structure(defaults(new, object), class = class(object))
 new_plot <- function(width, height, xrange = c(0, 1), yrange = c(0, 1)) {
 limits <- qrect(xrange, yrange)
 marks <- list()
-layers <- list()
+layers <- mutaframe()
 scene <- Qt$QGraphicsScene()
 root <- qlayer(scene)
 root$geometry<-qrect(0,0,width,height)
@@ -138,7 +139,7 @@ mousePressFun = NULL, mouseReleaseFun = NULL, wheelFun = NULL,
 hoverMoveEvent = NULL, hoverEnterEvent = NULL, hoverLeaveEvent = NULL, 
 contextMenuEvent = NULL, dragEnterEvent = NULL, dragLeaveEvent = NULL, 
 dragMoveEvent = NULL, dropEvent = NULL, focusInEvent = NULL, 
-focusOutEvent = NULL, sizeHintFun = NULL) {
+focusOutEvent = NULL, sizeHintFun = NULL,row=0L,col=0L, userlimits=NULL) {
 i <- length(marks) + 1
 marks[[i]] <<- mark
 
@@ -156,8 +157,14 @@ layer <- qlayer(parent=root, paintFun=paintFun,keyPressFun=keyPressFun,
   wheelFun=wheelFun,hoverMoveEvent=hoverMoveEvent,hoverEnterEvent=hoverEnterEvent,
   hoverLeaveEvent=hoverLeaveEvent,contextMenuEvent=contextMenuEvent,dragEnterEvent=dragEnterEvent,
   dragLeaveEvent=dragLeaveEvent,dragMoveEvent=dragMoveEvent,dropEvent=dropEvent,focusInEvent=focusInEvent,
-  focusOutEvent=focusOutEvent,sizeHintFun=sizeHintFun,clip=F)
-layer$setLimits(limits)
+  focusOutEvent=focusOutEvent,sizeHintFun=sizeHintFun,clip=F, row=row,col=col)
+
+#set layer limits by external argument
+if(is.null(userlimits)){
+	layer$setLimits(limits)
+}else {
+layer$setLimits(userlimits)
+}
 
 layers[[i]] <<- layer   
 assign("layers",layers, pos=1) #there has to be a better way for tracking this value, but I don't know what

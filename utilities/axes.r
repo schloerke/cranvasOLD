@@ -18,16 +18,16 @@ make_pretty_axes <- function(dataRange, minimum, maximum)
 #' @examples
 #'  dataRanges <- c(0,1,2,3)
 #'  draw_grid(make_new_plot(make_window_ranges(dataRanges)), dataRanges)
-draw_grid <- function(plotObj, dataRanges)
+draw_grid <- function(plotObj, dataRanges, row=0L,col=0L)
 {
+
   xGridLines <- make_pretty_axes(dataRanges[1:2], dataRanges[1], dataRanges[2])
   
   yGridLines <- make_pretty_axes(dataRanges[3:4], dataRanges[3], dataRanges[4])
   
   bprint(xGridLines)
   bprint(yGridLines)
-  
-  draw_grid_with_positions(plotObj, dataRanges, xGridLines, yGridLines)
+  draw_grid_with_positions(plotObj, dataRanges, xGridLines, yGridLines, row=row, col=col)
 
 }
 
@@ -38,8 +38,9 @@ draw_grid <- function(plotObj, dataRanges)
 #' @param dataRanges ranges of the data so a buffer of space may be added
 #' @author Barret Schloerke \email{bigbear@@iastate.edu}
 #' @keywords hplot
-draw_grid_with_positions <- function(plotObj, dataRanges, horiPos=NULL, vertPos=NULL, minor.horiPos=NULL, minor.vertPos=NULL)
+draw_grid_with_positions <- function(plotObj, dataRanges, horiPos=NULL, vertPos=NULL, minor.horiPos=NULL, minor.vertPos=NULL, row,col)
 {
+
   #background  
   plotObj$add_layer(
     rect(
@@ -49,7 +50,7 @@ draw_grid_with_positions <- function(plotObj, dataRanges, horiPos=NULL, vertPos=
       top     = dataRanges[4],
       fill    = "grey80",
       stroke  = "grey80"
-    )
+    ),row=row,col=col
   )
 
   #horizontal
@@ -60,7 +61,7 @@ draw_grid_with_positions <- function(plotObj, dataRanges, horiPos=NULL, vertPos=
         left    = rep(c(dataRanges[1:2],NA), length(vertPos)),
         bottom  = rep(vertPos,each=3),
         stroke  = "white"
-      )
+      ), row=row,col=col
     )
 
 	minor.vertPos <- vertPos[-length(vertPos)] + diff(vertPos)/2
@@ -75,7 +76,7 @@ draw_grid_with_positions <- function(plotObj, dataRanges, horiPos=NULL, vertPos=
         left    = rep(horiPos,each=3),
         bottom  = rep(c(dataRanges[3:4],NA), length(horiPos)),
         stroke  = "white"
-      )
+      ),row=row,col=col
     )
 
 	minor.horiPos <- horiPos[-length(horiPos)] + diff(horiPos)/2
@@ -91,7 +92,7 @@ draw_grid_with_positions <- function(plotObj, dataRanges, horiPos=NULL, vertPos=
         bottom  = rep(minor.vertPos,each=3),
         stroke  = "white",
         width   = 0.1
-      )
+      ),row=row, col=col
     )
 
   }
@@ -107,7 +108,7 @@ draw_grid_with_positions <- function(plotObj, dataRanges, horiPos=NULL, vertPos=
         bottom  = rep(c(dataRanges[3:4],NA), length(minor.horiPos)),
         stroke  = "white",
         width   = 0.1
-      )
+      ), row=row,col=col
     )
   }
 
