@@ -39,12 +39,26 @@ make_pretty_axes <- function(dataRange, minimum, maximum)
 
 #draws grid background as a single layer
 draw_grid_with_positions <- function(plotObj, dataRange, horiPos=NULL, vertPos=NULL,row=0L,col=0L){
+print(dataRange)
 	dims<-get_dims(dataRange,size=0.002,horiPos,vertPos)
-    left<-get_left(dataRange,dims[3],vertPos)
+print("dims")
+print(dims)
+    	left<-get_left(dataRange,dims[3],vertPos)
 	right<-get_right(dataRange,dims[3],dims[1],vertPos)
 	bottom<-get_bottom(dataRange,dims[4],horiPos)
 	top<-get_top(dataRange,dims[4],dims[2],horiPos)
+
+#print statements show how many rectangles are in the background grid 
+print("left")
+print(length(left))
+#print("right")
+#print(length(right))
+#print("bottom")
+#print(length(bottom))
+#print("top")
+#print(length(top))
 	plotObj$add_layer(rect(left=left,right=right,bottom=bottom,top=top,fill="grey90",stroke="grey90"),row=row,col=col)
+        plotObj$add_layer(text(text=right, left=right, bottom=bottom, stroke="black"), row=row, col=col)
 
 }
 
