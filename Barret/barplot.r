@@ -119,9 +119,10 @@ qthist <- function(data, splitBy = rep(1,length(data)), horizontal = FALSE, posi
   bprint(end)
   bprint(counts)
 
-  if(length(colorNames) == 1)
+  if(length(colorNames) == 1 &&  identical(color, rainbow(length(unique(splitBy)))) )
     color <- "grey20"
 
+  bprint(color)
   
   # contains c(x_min, x_max, y_min, y_max)
   if(horizontal)
