@@ -10,6 +10,6 @@
 3. transient layer
     * temporary brushing, colors, etc.
 4. NULL (empty)
-5+ can be used for special plots.
+5. others can be used for special plots.
 
 
