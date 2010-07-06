@@ -45,9 +45,9 @@ if (FALSE) {
 # glyph(x = 1:10)
 # glyph(x = .(mpg), y = .(cyl), data = mtcars)
 
-glyph <- function(top = NULL, left = NULL, bottom = NULL, right = NULL, fill = "black", stroke = NULL) {
+glyph <- function(top = NULL, left = NULL, bottom = NULL, right = NULL, fill = "black", stroke = NULL, size= 5) {
 structure(list(top = top, left = left, right = right, bottom = bottom,
-fill = fill, stroke = stroke), 
+fill = fill, stroke = stroke,size=size), 
 class = c("cranvas", "glyph"))
 }
 
@@ -85,8 +85,8 @@ halign = halign, valign = valign, rot = rot), class = c("cranvas", "text"))
 # temporarily worked around). 
 draw <- function(mark, canvas) UseMethod("draw")
 
-draw.glyph <- function(mark, canvas,size=2) {
-#circle <- qpathCircle(0, 0, size)
+draw.glyph <- function(mark, canvas) {
+#circle <- qpathCircle(0, 0, mark$size)
 circle <- qglyphCircle()
 qdrawGlyph(canvas, circle, x=mark$left, y=mark$bottom, cex = mark$size, 
 stroke = mark$stroke, fill = mark$fill)
