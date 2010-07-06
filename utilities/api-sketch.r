@@ -161,8 +161,8 @@ layer$setLimits(limits)
 
 layers[[i]] <<- layer   
 assign("layers",layers, pos=1) #there has to be a better way for tracking this value, but I don't know what
-invisible(self)
 
+invisible(self)
 }
 
 modify_layer <- function(i,new_mark,new_limit,...) {
