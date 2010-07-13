@@ -18,19 +18,20 @@ expStruc.display<-function(wd=NULL,...){
 # each row represents a treatment (e.g. control, condition_1, condition_2, etc)
 # number of elements in each row is the number of datafiles for that condition
   facet_structure<-getFacetStructure(wd)
-print(facet_structure)
   
 # 1.B Format the CDF data
-  df<-formatAllData(facet_structure)
+  df1<-formatAllData(facet_structure)
  
 ###PART 2
 # draw the background and axes
 
 #2.A determine data limits
 
-    ranges<-c(getAllRanges(facet_structure, df, 1),getAllRanges(facet_structure,df,2))
+    ranges<-c(getAllRanges(facet_structure, df1, 1),getAllRanges(facet_structure,df1,2))
     windowranges<-make_window_ranges(ranges)
-    plot1<-make_new_plot(width=1200,height=1200,windowRanges=windowranges)
+
+
+    plot1<-make_new_plot(width=1200,height=1200,windowRanges=c(windowranges[1]-1000,windowranges[2],windowranges[3]-150,windowranges[4]))
     xspan<-windowranges[2]-windowranges[1]
     yspan<-windowranges[4]-windowranges[3]
     Ygrids<-max(facet_structure$treatments.numExp)
@@ -39,42 +40,66 @@ print(facet_structure)
 #2.B draw the factoring 
 	for (i in 1:Xgrids){
 		for (j in 1:Ygrids){
-			margin<-getMargins(i,j,value=6.6,Xgrids,Ygrids,xspan,yspan)
 
 #2.C draw the grids
-			draw_grid_with_positions(plot1,dataRanges=c(windowranges[1]+margin[1],
-						     windowranges[2]-(.02*xspan)-margin[2],
-						     windowranges[3]+margin[3],
-						     windowranges[4]-(0.01*yspan)- margin[4]),horiPos=getfacetPrettyRangesX(i,j,Xgrids,Ygrids,windowranges,xspan,yspan,margin=.02),vertPos=getfacetPrettyRangesY(i,j,Xgrids,Ygrids,windowranges,xspan,yspan,marigin=0.02), row=as.integer(i),col=as.integer(j))
-   			draw_grid_axes(plot1,dataRanges=c(windowranges[1]+margin[1],
-						     windowranges[2]-(.01*xspan)-margin[2],
-						     windowranges[3]+margin[3],
-						     windowranges[4]-(0.005*yspan)- margin[4]),row=as.integer(i),col=as.integer(j),
+			draw_grid_with_positions(plot1,dataRanges=c(windowranges[1],
+						     windowranges[2]-(.02*xspan),
+						     windowranges[3],
+						     windowranges[4]-(0.02*yspan)),horiPos=getfacetPrettyRangesX(i,j,Xgrids,Ygrids,windowranges,xspan,yspan,margin=.02),vertPos=getfacetPrettyRangesY(i,j,Xgrids,Ygrids,windowranges,xspan,yspan,marigin=0.02), row=as.integer(i),col=as.integer(j))
+   			draw_grid_axes(plot1,dataRanges=c(windowranges[1],
+						     windowranges[2]-(.02*xspan),
+						     windowranges[3],
+						     windowranges[4]-(0.02*yspan)),row=as.integer(i),col=as.integer(j),
                                          maxRows=Xgrids,maxCols=Ygrids,xspan=xspan,yspan=yspan)
+
+
+
 temp<-getwd()
 setwd(paste(facet_structure$dir,facet_structure$treatments[i],sep="/"))
-if(j<=length(list.files())){
-df1<-data.frame(rawMat(loadSample(paste(facet_structure$dir,facet_structure$treatments[i],list.files()[j],sep="/"))))
+if(j<=length(list.files() ) ){
+  data<-matrix(nrow=round(dim(df1[[i]][[j]])[1]/100)-1,ncol=3)
+  for (k in 1:dim(data)[1]){
+    data[k,1]<-df1[[i]][[j]][100*k,1]
+    data[k,2]<-df1[[i]][[j]][100*k,2]
+    data[k,3]<-df1[[i]][[j]][100*k,3]
+  }
+  plot1$add_layer(glyph(
+                      left=data[,1],
+                      bottom=data[,2],
+                      fill=col2rgb(rgb(1-(log(data[,3])-min(log(data[,3])))/(max(log(data[,3]))-min(log(data[,3]))) ,
+   					1- (log(data[,3])-min(log(data[,3])))/(max(log(data[,3]))-min(log(data[,3]))) ,
+                                          0,
+                                          0.25),
+                                   T),
+                      stroke=col2rgb(rgb(1-(log(data[,3])-min(log(data[,3])))/(max(log(data[,3]))-min(log(data[,3]))) ,
+   					 1-(log(data[,3])-min(log(data[,3])))/(max(log(data[,3]))-min(log(data[,3]))) ,
+                                          0,
+                                          0.25),
+                                     T),
+                      size=1),
+                  row=as.integer(i),col=as.integer(j))
 
- plot1$add_layer(glyph(left=df1[,1],bottom=df1[,2],fill=col2rgb(rgb((1-((log(df1[,3]))-min(log(df1[,3])))/(max(log(df1[,3]))-min(log(df1[,3])))),(1-((log(df1[,3]))-min(log(df1[,3])))/(max(log(df1[,3]))-min(log(df1[,3])))), 0, 0.25), TRUE),stroke=col2rgb(rgb((1-((log(df1[,3]))-min(log(df1[,3])))/(max(log(df1[,3]))-min(log(df1[,3])))),(1-((log(df1[,3]))-min(log(df1[,3])))/(max(log(df1[,3]))-min(log(df1[,3])))), 0, 0.25), TRUE),size=1),row=as.integer(i),col=as.integer(j))
-
+  setwd(temp)
+}
+}
 
 }
-}}
+
+
 
 	
 #draw the axes layer
 	axes<-function(item,painter){
-     	qdrawRect(painter,xleft=1-(.15/Ygrids),ybottom=.15/Xgrids,xright=1-(.15/(2*Ygrids)),
+     		qdrawRect(painter,xleft=1-(.15/Ygrids),ybottom=.15/Xgrids+.01,xright=1-(.15/(2*Ygrids)),
 				  ytop=1-(.15/(Xgrids)),stroke="grey80",fill="grey80")	
-		qdrawRect(painter,xleft=.15/Ygrids,xright=1-(.15/Ygrids),ybottom=1-(.15/(2*Xgrids)),
+		qdrawRect(painter,xleft=.0635,xright=.96,ybottom=1-(.15/(2*Xgrids)),
 				  ytop=1-(.15/(Xgrids)),stroke="grey80",fill="grey80")
 		qstrokeColor(painter)<-"black"
 		qfillColor(painter)<-"black"
-		qdrawText(painter,text=c(1,2,3,4), x=c(.125,.33,.6,.8),
+		qdrawText(painter,text=c(1,2,3,4), x=c(.15,.39,.63,.865),
 				  y=1-(.75*(.15/Xgrids)),halign="center",valign="center")
 		qdrawText(painter,text=facet_structure$treatments,x=1-(.45*(.15/Ygrids)),
-					y=1-c(.3,.6,.85),halign="right",valign="center",rot=-90)
+					y=c(.73,.41,.1),halign="right",valign="center",rot=-90)
 		qdrawText(painter,text="time",x=.5, y=.15/(3*Xgrids),halign="center",valign="center")
 		qdrawText(painter,text= "m/z",x=.15/(15*Ygrids),y=.5,halign="center",valign="center",rot=90)
 		
@@ -82,8 +107,10 @@ df1<-data.frame(rawMat(loadSample(paste(facet_structure$dir,facet_structure$trea
 	
 #add axis as an overlay layer	
     overlay<-plot1$view$overlay()
-	axesOverlay<-qlayer(overlay,axes,limits=qrect(c(0,1),c(0,1)))
-	return(plot1)
+    axesOverlay<-qlayer(overlay,axes,limits=qrect(c(0,1),c(0,1)))
+    print(plot1)
+    plot1$root$geometry<-qrect(15,26,822,525)
+    return(plot1)
 
 
 ###Part 3
@@ -159,8 +186,9 @@ getMargins<-function(i,j,value,Xgrids,Ygrids,xspan,yspan){
 
 draw_grid_axes<-function(plotObj,dataRanges, row,maxRows,col,maxCols,xspan,yspan){
 	if(row==maxRows){	
-           draw_x_axes_with_labels(plotObj,dataRanges=dataRanges,axisLabels=getfacetPrettyRangesX(i=row,j=col,Xgrids=maxRows,Ygrids=maxCols,windowranges=dataRanges,xspan=xspan,yspan=yspan),labelHoriPos=getfacetPrettyRangesX(i=row,j=col,Xgrids=maxRows,Ygrids=maxCols,windowranges=dataRanges,xspan=xspan,yspan=yspan),name=NULL,row=row,col=col)
-
+           print("row=max_start")
+           draw_x_axes_with_labels(plotObj,dataRanges=dataRanges,axisLabels=c(0,1000,2000,3000),labelHoriPos=c(0,1000,2000,3000),name=NULL,row=row,col=col)
+print("row=max_end")
 	}
         if(col==1){
    	   draw_y_axes_with_labels(plotObj,dataRanges=dataRanges,axisLabels=c(0,200,400,600,800),labelVertPos=c(0,200,400,600,800), name=NULL,row=row,col=col)
@@ -168,26 +196,8 @@ draw_grid_axes<-function(plotObj,dataRanges, row,maxRows,col,maxCols,xspan,yspan
 }
 
 getfacetPrettyRangesX<-function(i,j,Xgrids,Ygrids,windowranges,xspan,yspan,margin=.04,...){
-#  print("xspan")
-#  print(xspan)
-#  print("yspan")
-#  print(yspan)
-#  if(j==1){
-#    print(paste("col=",j,sep=","))
-#    print(pretty(windowranges)[pretty(windowranges)> (.15*xspan) & pretty(windowranges)< ((1-margin)*xspan) ])
-#    return(pretty(windowranges)[pretty(windowranges)> (.15*xspan) & pretty(windowranges)< ((1-margin)*xspan) ])
-#  }
-#  else if(j==Ygrids){
-#    print(paste("col=",j,sep=","))
-#    print(pretty(windowranges)[pretty(windowranges)> (.15*xspan) & pretty(windowranges)< ((1-margin -.15)*xspan) ])
-#    return(pretty(windowranges)[pretty(windowranges)> (.15*xspan) & pretty(windowranges)< ((1-margin -.15)*xspan) ])
-#  }
-#  else{
-#    print(paste(i,j,sep=":"))
-#    print(pretty(windowranges)[pretty(windowranges)< ((1-margin-.15)*xspan) ])
-#    return(pretty(windowranges)[pretty(windowranges)< ((1-margin-.15)*xspan) ])
-#  }
-return(c(0,1000,2000,3000))
+
+return(c(0,1000,2000,3000,4000))
 }
 
 getfacetPrettyRangesY<-function(i,j,Xgrids,Ygrids,windowranges,xspan,yspan,margin=.04,...){
