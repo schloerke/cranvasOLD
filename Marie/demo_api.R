@@ -1,8 +1,8 @@
 
 library(qtpaint)
-source("/Users/marie/Documents/cranvas/Marie/api-sketch.r")
+source("/home/marie/Documents/cranvas/utilities/api-sketch.r")
 
-n<-1000
+n<-1000000
 x<-rnorm(n,50,25)
 y<-rnorm(n,50,25)
 df<-data.frame(X=x,Y=y)
@@ -35,8 +35,8 @@ axes <- function(item, painter) {
 
 plot1<-new_plot(600,400,xrange=range(df[,1]),yrange=range(df[,2]))
 plot1$add_layer(mark=glyph(left=df[,1],bottom=df[,2],stroke=NA,
-        fill=col2rgb(rgb(1,seq(0,1,length=nrow(df)),0,0.5),T)),hoverMove=pointIdentifier)
-plot1$add_layer(glyph(left=labeled_df[,1],bottom=labeled_df[,2],fill="black"))
+        fill=col2rgb(rgb(1,seq(0,1,length=nrow(df)),0,0.5),T),size=1),hoverMove=pointIdentifier)
+plot1$add_layer(glyph(left=labeled_df[,1],bottom=labeled_df[,2],fill="black",size=1))
 overlay<-plot1$view$overlay()
 axesOverlay<-qlayer(overlay,axes)
 
