@@ -29,8 +29,6 @@ expStruc.display<-function(wd=NULL,...){
 
     ranges<-c(getAllRanges(facet_structure, df1, 1),getAllRanges(facet_structure,df1,2))
     windowranges<-make_window_ranges(ranges)
-
-
     plot1<-make_new_plot(width=1200,height=1200,windowRanges=c(windowranges[1]-1000,windowranges[2],windowranges[3]-150,windowranges[4]))
     xspan<-windowranges[2]-windowranges[1]
     yspan<-windowranges[4]-windowranges[3]
@@ -52,72 +50,61 @@ expStruc.display<-function(wd=NULL,...){
 						     windowranges[4]-(0.02*yspan)),row=as.integer(i),col=as.integer(j),
                                          maxRows=Xgrids,maxCols=Ygrids,xspan=xspan,yspan=yspan)
 
-
-
-temp<-getwd()
-setwd(paste(facet_structure$dir,facet_structure$treatments[i],sep="/"))
-if(j<=length(list.files() ) ){
-  data<-matrix(nrow=round(dim(df1[[i]][[j]])[1]/100)-1,ncol=3)
-  for (k in 1:dim(data)[1]){
-    data[k,1]<-df1[[i]][[j]][100*k,1]
-    data[k,2]<-df1[[i]][[j]][100*k,2]
-    data[k,3]<-df1[[i]][[j]][100*k,3]
-  }
-  plot1$add_layer(glyph(
-                      left=data[,1],
-                      bottom=data[,2],
-                      fill=col2rgb(rgb(1-(log(data[,3])-min(log(data[,3])))/(max(log(data[,3]))-min(log(data[,3]))) ,
-   					1- (log(data[,3])-min(log(data[,3])))/(max(log(data[,3]))-min(log(data[,3]))) ,
-                                          0,
-                                          0.25),
-                                   T),
-                      stroke=col2rgb(rgb(1-(log(data[,3])-min(log(data[,3])))/(max(log(data[,3]))-min(log(data[,3]))) ,
-   					 1-(log(data[,3])-min(log(data[,3])))/(max(log(data[,3]))-min(log(data[,3]))) ,
-                                          0,
-                                          0.25),
-                                     T),
-                      size=1),
-                  row=as.integer(i),col=as.integer(j))
-
-  setwd(temp)
-}
-}
-
-}
-
-
-
-	
-#draw the axes layer
-	axes<-function(item,painter){
-     		qdrawRect(painter,xleft=1-(.15/Ygrids),ybottom=.15/Xgrids+.01,xright=1-(.15/(2*Ygrids)),
-				  ytop=1-(.15/(Xgrids)),stroke="grey80",fill="grey80")	
-		qdrawRect(painter,xleft=.0635,xright=.96,ybottom=1-(.15/(2*Xgrids)),
-				  ytop=1-(.15/(Xgrids)),stroke="grey80",fill="grey80")
-		qstrokeColor(painter)<-"black"
-		qfillColor(painter)<-"black"
-		qdrawText(painter,text=c(1,2,3,4), x=c(.15,.39,.63,.865),
-				  y=1-(.75*(.15/Xgrids)),halign="center",valign="center")
-		qdrawText(painter,text=facet_structure$treatments,x=1-(.45*(.15/Ygrids)),
-					y=c(.73,.41,.1),halign="right",valign="center",rot=-90)
-		qdrawText(painter,text="time",x=.5, y=.15/(3*Xgrids),halign="center",valign="center")
-		qdrawText(painter,text= "m/z",x=.15/(15*Ygrids),y=.5,halign="center",valign="center",rot=90)
-		
+			temp<-getwd()
+			setwd(paste(facet_structure$dir,facet_structure$treatments[i],sep="/"))
+			if(j<=length(list.files() ) ){
+	  			data<-matrix(nrow=round(dim(df1[[i]][[j]])[1]/100)-1,ncol=3)
+				  for (k in 1:dim(data)[1]){
+					data[k,1]<-df1[[i]][[j]][100*k,1]
+    					data[k,2]<-df1[[i]][[j]][100*k,2]
+    					data[k,3]<-df1[[i]][[j]][100*k,3]
+  			}
+  			plot1$add_layer(glyph(
+                      			left=data[,1],
+                      			bottom=data[,2],
+                      			fill=col2rgb(rgb(1-(log(data[,3])-min(log(data[,3])))/(max(log(data[,3]))-min(log(data[,3]))) ,
+   							1- (log(data[,3])-min(log(data[,3])))/(max(log(data[,3]))-min(log(data[,3]))) ,
+                                        		0,
+                                          		0.25),
+                                   		T),
+                      			stroke=col2rgb(rgb(1-(log(data[,3])-min(log(data[,3])))/(max(log(data[,3]))-min(log(data[,3]))) ,
+   					 		1-(log(data[,3])-min(log(data[,3])))/(max(log(data[,3]))-min(log(data[,3]))) ,
+                                         		0,
+                                          		0.25),
+                                     		T),
+                      			size=1),
+                  			row=as.integer(i),col=as.integer(j),
+					mouseclick=drawZoomed(data)),          
+ 			setwd(temp)
+		}
 	}
+}
 	
-#add axis as an overlay layer	
-    overlay<-plot1$view$overlay()
+#the axes layer
+#TODO: generalize for all expDesign structure
+axes<-function(item,painter){
+	qdrawRect(painter,xleft=1-(.15/Ygrids),ybottom=.15/Xgrids+.01,xright=1-(.15/(2*Ygrids)),
+			  ytop=1-(.15/(Xgrids)),stroke="grey80",fill="grey80")	
+	qdrawRect(painter,xleft=.0635,xright=.96,ybottom=1-(.15/(2*Xgrids)),
+			  ytop=1-(.15/(Xgrids)),stroke="grey80",fill="grey80")
+	qstrokeColor(painter)<-"black"
+	qfillColor(painter)<-"black"
+	qdrawText(painter,text=c(1,2,3,4), x=c(.15,.39,.63,.865),
+		  y=1-(.75*(.15/Xgrids)),halign="center",valign="center")
+	qdrawText(painter,text=facet_structure$treatments,x=1-(.45*(.15/Ygrids)),
+			y=c(.73,.41,.1),halign="right",valign="center",rot=-90)
+	qdrawText(painter,text="time",x=.5, y=.15/(3*Xgrids),halign="center",valign="center")
+	qdrawText(painter,text= "m/z",x=.15/(15*Ygrids),y=.5,halign="center",valign="center",rot=90)
+}
+	
+#add axis as an overlay layer and size plotting area
+#TODO: generalize for all expDesigns	
+overlay<-plot1$view$overlay()
     axesOverlay<-qlayer(overlay,axes,limits=qrect(c(0,1),c(0,1)))
     print(plot1)
     plot1$root$geometry<-qrect(15,26,822,525)
     return(plot1)
-
-
-###Part 3
-# draw the data
 }
-
-
 
 getFacetStructure<-function(wd,...){
   temp.1<-getwd()
@@ -183,7 +170,7 @@ getMargins<-function(i,j,value,Xgrids,Ygrids,xspan,yspan){
 	return(margin)
 }
 
-
+#TODO: generalize for all data ranges
 draw_grid_axes<-function(plotObj,dataRanges, row,maxRows,col,maxCols,xspan,yspan){
 	if(row==maxRows){	
            print("row=max_start")
@@ -195,11 +182,13 @@ print("row=max_end")
 	}
 }
 
+#TODO: generalize for all data ranges
 getfacetPrettyRangesX<-function(i,j,Xgrids,Ygrids,windowranges,xspan,yspan,margin=.04,...){
 
 return(c(0,1000,2000,3000,4000))
 }
 
+#TODO: generalize for all data ranges
 getfacetPrettyRangesY<-function(i,j,Xgrids,Ygrids,windowranges,xspan,yspan,margin=.04,...){
 return(c(0,200,400,600,800))
 }
