@@ -87,9 +87,10 @@ draw <- function(mark, canvas) UseMethod("draw")
 
 draw.glyph <- function(mark, canvas) {
 #circle <- qpathCircle(0, 0, mark$size)
-circle <- qglyphCircle()
-qdrawGlyph(canvas, circle, x=mark$left, y=mark$bottom, cex = mark$size, 
-stroke = mark$stroke, fill = mark$fill)
+circle <- qglyphCircle(r=mark$size)
+qdrawGlyph(canvas, circle, x=mark$left, y=mark$bottom,stroke = mark$stroke, fill = mark$fill)
+print("size")
+print(mark$size)
 }
 
 draw.rect <- function(mark, canvas) {
@@ -139,7 +140,7 @@ mousePressFun = NULL, mouseReleaseFun = NULL, wheelFun = NULL,
 hoverMoveEvent = NULL, hoverEnterEvent = NULL, hoverLeaveEvent = NULL, 
 contextMenuEvent = NULL, dragEnterEvent = NULL, dragLeaveEvent = NULL, 
 dragMoveEvent = NULL, dropEvent = NULL, focusInEvent = NULL, 
-focusOutEvent = NULL, sizeHintFun = NULL,row=0L,col=0L, userlimits=NULL) {
+focusOutEvent = NULL, sizeHintFun = NULL,row=0L,col=0L, userlimits=NULL,geometry=qrect(0,0,600,400)) {
 i <- length(marks) + 1
 marks[[i]] <<- mark
 
@@ -157,7 +158,7 @@ layer <- qlayer(parent=root, paintFun=paintFun,keyPressFun=keyPressFun,
   wheelFun=wheelFun,hoverMoveEvent=hoverMoveEvent,hoverEnterEvent=hoverEnterEvent,
   hoverLeaveEvent=hoverLeaveEvent,contextMenuEvent=contextMenuEvent,dragEnterEvent=dragEnterEvent,
   dragLeaveEvent=dragLeaveEvent,dragMoveEvent=dragMoveEvent,dropEvent=dropEvent,focusInEvent=focusInEvent,
-  focusOutEvent=focusOutEvent,sizeHintFun=sizeHintFun,clip=F, row=row,col=col)
+  focusOutEvent=focusOutEvent,sizeHintFun=sizeHintFun,clip=F, row=row,col=col,geometry=geometry)
 
 #set layer limits by external argument
 if(is.null(userlimits)){
