@@ -7,7 +7,11 @@ source("/home/marie/Documents/cranvas/utilities/api-sketch.r")
 source("/home/marie/Documents/cranvas/utilities/helper.r")
 source("/home/marie/Documents/cranvas/utilities/axes.r")
 
+#source("/home/marie/Documents/cranvas/Marie/facet_chromatoplots.R")
+#expStruc.display(wd="/home/marie/Documents/cranvas/Marie/expDesign")
 
+
+#
 # @param wd root directory of experimental design
 expStruc.display<-function(wd=NULL,...){
 
@@ -74,12 +78,12 @@ expStruc.display<-function(wd=NULL,...){
                                      		T),
                       			size=1),
                   			row=as.integer(i),col=as.integer(j),
-					mouseclick=drawZoomed(data)),          
+					mousePressFun=function(...){drawZoomed(df1[[i]][[j]])})          
  			setwd(temp)
 		}
 	}
 }
-	
+
 #the axes layer
 #TODO: generalize for all expDesign structure
 axes<-function(item,painter){
@@ -99,7 +103,7 @@ axes<-function(item,painter){
 	
 #add axis as an overlay layer and size plotting area
 #TODO: generalize for all expDesigns	
-overlay<-plot1$view$overlay()
+    overlay<-plot1$view$overlay()
     axesOverlay<-qlayer(overlay,axes,limits=qrect(c(0,1),c(0,1)))
     print(plot1)
     plot1$root$geometry<-qrect(15,26,822,525)
@@ -173,9 +177,8 @@ getMargins<-function(i,j,value,Xgrids,Ygrids,xspan,yspan){
 #TODO: generalize for all data ranges
 draw_grid_axes<-function(plotObj,dataRanges, row,maxRows,col,maxCols,xspan,yspan){
 	if(row==maxRows){	
-           print("row=max_start")
+
            draw_x_axes_with_labels(plotObj,dataRanges=dataRanges,axisLabels=c(0,1000,2000,3000),labelHoriPos=c(0,1000,2000,3000),name=NULL,row=row,col=col)
-print("row=max_end")
 	}
         if(col==1){
    	   draw_y_axes_with_labels(plotObj,dataRanges=dataRanges,axisLabels=c(0,200,400,600,800),labelVertPos=c(0,200,400,600,800), name=NULL,row=row,col=col)
@@ -192,4 +195,73 @@ return(c(0,1000,2000,3000,4000))
 getfacetPrettyRangesY<-function(i,j,Xgrids,Ygrids,windowranges,xspan,yspan,margin=.04,...){
 return(c(0,200,400,600,800))
 }
+
+
+drawZoomed<-function(data,...){
+	ranges<-c(range(data[,1]),range(data[,2]))
+        windowranges<-make_window_ranges(ranges)
+    	xspan<-windowranges[2]-windowranges[1]
+	yspan<-windowranges[4]-windowranges[3]
+  
+	plot2<-make_new_plot(	width=1200,
+				height=1200,
+				windowRanges=c(windowranges[1]-450,
+				windowranges[2],
+				windowranges[3]-100,
+				windowranges[4]))
+	draw_grid_with_positions(	plot2,
+					dataRanges=c(windowranges[1],
+					windowranges[2]-(.02*xspan),
+					windowranges[3],
+					windowranges[4]-(0.02*yspan)),
+					horiPos=c(0,1000,2000,3000,4000),
+					vertPos=c(0,200,400,600,800),
+					row=0L, col=0L)
+	draw_x_axes_with_labels(plot2,dataRanges=c(	windowranges[1],
+						     	windowranges[2]-(.02*xspan),
+						     	windowranges[3],
+						     	windowranges[4]-(0.02*yspan)),
+				axisLabels=c(0,1000,2000,3000),
+				labelHoriPos=c(0,1000,2000,3000),
+				name=NULL,row=0L,col=0L)
+	draw_y_axes_with_labels(plot2,dataRanges=c(	windowranges[1],
+						     	windowranges[2]-(.02*xspan),
+						     	windowranges[3],
+						     	windowranges[4]-(0.02*yspan)),
+				axisLabels=c(0,200,400,600,800),
+				labelVertPos=c(0,200,400,600,800),
+				name=NULL,row=0L,col=0L)
+	plot2$add_layer(glyph(	left=data[,1],
+                      		bottom=data[,2],
+                      		fill=col2rgb(rgb(1-(log(data[,3])-min(log(data[,3])))/(max(log(data[,3]))-min(log(data[,3]))) ,
+   						1- (log(data[,3])-min(log(data[,3])))/(max(log(data[,3]))-min(log(data[,3]))) ,
+                                       		0,
+                                      		0.25),
+                                	T),
+                      		stroke=col2rgb(rgb(1-(log(data[,3])-min(log(data[,3])))/(max(log(data[,3]))-min(log(data[,3]))) ,
+   				 		1-(log(data[,3])-min(log(data[,3])))/(max(log(data[,3]))-min(log(data[,3]))) ,
+                                       		0,
+                                       		0.25),
+                                	T),
+                      		size=1),
+                  		row=0L,col=0L,
+				mousePressFun=function(event,...){	
+					print(ls(event))
+					#plot2$root$geometry<-qrect(85,53,770,480)
+					plot2$root$geometry<-qrect(	(plot2$root$geometry$left()-0.1*plot2$root$geometry$width()),
+									(plot2$root$geometry$top()-0.1*plot2$root$geometry$height()),
+									(plot2$root$geometry$right()+0.1*plot2$root$geometry$width()),
+									(plot2$root$geometry$bottom()+0.1*plot2$root$geometry$height()))
+				})     
+	axes<-function(item,painter){
+		qstrokeColor(painter)<-"black"
+		qfillColor(painter)<-"black"
+		qdrawText(painter,text="time",x=.5, y=.025,halign="center",valign="center")
+		qdrawText(painter,text= "m/z",x=.01,y=.5,halign="center",valign="center",rot=90)
+	}
+	overlay<-plot2$view$overlay()
+    	axesOverlay<-qlayer(overlay,axes,limits=qrect(c(0,1),c(0,1)))
+	print(plot2)
+}
+	
 
