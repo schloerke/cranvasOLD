@@ -1,7 +1,7 @@
-# export LDFLAGS="/home/marie/qtsdk-2010.02/qt/lib"
+export LDFLAGS="/home/marie/qtsdk-2010.02/qt/lib"
 
-# export LIBS="/home/marie/qtsdk-2010.02/qt/lib"
-# export LD_LIBRARY_PATH=/home/marie/qtsdk-2010.02/qt/lib
+ export LIBS="/home/marie/qtsdk-2010.02/qt/lib"
+ export LD_LIBRARY_PATH=/home/marie/qtsdk-2010.02/qt/lib
 
 
 library(qtpaint)
