@@ -1,4 +1,5 @@
 library(qtpaint)
+library(plumbr)
 #library(plyr)
 # Marks: glyph, text, line, rect, poly
 # Position: top, right, bottom, left
@@ -44,9 +45,9 @@ if (FALSE) {
 # glyph(x = 1:10)
 # glyph(x = .(mpg), y = .(cyl), data = mtcars)
 
-glyph <- function(top = NULL, left = NULL, bottom = NULL, right = NULL, fill = "black", stroke = NULL) {
+glyph <- function(top = NULL, left = NULL, bottom = NULL, right = NULL, fill = "black", stroke = NULL, size= 5) {
 structure(list(top = top, left = left, right = right, bottom = bottom,
-fill = fill, stroke = stroke), 
+fill = fill, stroke = stroke,size=size), 
 class = c("cranvas", "glyph"))
 }
 
@@ -84,11 +85,12 @@ halign = halign, valign = valign, rot = rot), class = c("cranvas", "text"))
 # temporarily worked around). 
 draw <- function(mark, canvas) UseMethod("draw")
 
-draw.glyph <- function(mark, canvas,size=2) {
-#circle <- qpathCircle(0, 0, size)
-circle <- qglyphCircle()
-qdrawGlyph(canvas, circle, x=mark$left, y=mark$bottom, cex = mark$size, 
-stroke = mark$stroke, fill = mark$fill)
+draw.glyph <- function(mark, canvas) {
+#circle <- qpathCircle(0, 0, mark$size)
+circle <- qglyphCircle(r=mark$size)
+qdrawGlyph(canvas, circle, x=mark$left, y=mark$bottom,stroke = mark$stroke, fill = mark$fill)
+print("size")
+print(mark$size)
 }
 
 draw.rect <- function(mark, canvas) {
@@ -127,7 +129,7 @@ structure(defaults(new, object), class = class(object))
 new_plot <- function(width, height, xrange = c(0, 1), yrange = c(0, 1)) {
 limits <- qrect(xrange, yrange)
 marks <- list()
-layers <- list()
+layers <- mutaframe()
 scene <- Qt$QGraphicsScene()
 root <- qlayer(scene)
 root$geometry<-qrect(0,0,width,height)
@@ -138,7 +140,7 @@ mousePressFun = NULL, mouseReleaseFun = NULL, wheelFun = NULL,
 hoverMoveEvent = NULL, hoverEnterEvent = NULL, hoverLeaveEvent = NULL, 
 contextMenuEvent = NULL, dragEnterEvent = NULL, dragLeaveEvent = NULL, 
 dragMoveEvent = NULL, dropEvent = NULL, focusInEvent = NULL, 
-focusOutEvent = NULL, sizeHintFun = NULL) {
+focusOutEvent = NULL, sizeHintFun = NULL,row=0L,col=0L, userlimits=NULL,geometry=qrect(0,0,600,400)) {
 i <- length(marks) + 1
 marks[[i]] <<- mark
 
@@ -156,8 +158,14 @@ layer <- qlayer(parent=root, paintFun=paintFun,keyPressFun=keyPressFun,
   wheelFun=wheelFun,hoverMoveEvent=hoverMoveEvent,hoverEnterEvent=hoverEnterEvent,
   hoverLeaveEvent=hoverLeaveEvent,contextMenuEvent=contextMenuEvent,dragEnterEvent=dragEnterEvent,
   dragLeaveEvent=dragLeaveEvent,dragMoveEvent=dragMoveEvent,dropEvent=dropEvent,focusInEvent=focusInEvent,
-  focusOutEvent=focusOutEvent,sizeHintFun=sizeHintFun,clip=F)
-layer$setLimits(limits)
+  focusOutEvent=focusOutEvent,sizeHintFun=sizeHintFun,clip=F, row=row,col=col,geometry=geometry)
+
+#set layer limits by external argument
+if(is.null(userlimits)){
+	layer$setLimits(limits)
+}else {
+layer$setLimits(userlimits)
+}
 
 layers[[i]] <<- layer   
 assign("layers",layers, pos=1) #there has to be a better way for tracking this value, but I don't know what
