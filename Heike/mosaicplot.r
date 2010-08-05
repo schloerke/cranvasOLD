@@ -13,3 +13,8 @@ qtmosaic(happy, ~ health+sex+happy, c("vspine","hspine","hspine"), subset=level=
 
 qtmosaic(happy, ~ health, c("vbar"))  
 qtmosaic(happy, ~ sex+health, flucts())  
+
+
+
+qmosaic(happy, ~ health, c("vbar"))  
+qmosaic(happy, ~ health, c("vbar"))  
