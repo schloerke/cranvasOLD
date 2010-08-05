@@ -3,22 +3,29 @@
 ## color palette
 library(RColorBrewer)
 
-source('qparallel.R')
+source('Yihui/qparallel.R')
 
 ## old iris...
 qparallel(iris, col = brewer.pal(3, "Set1")[as.integer(iris$Species)])
 qparallel(iris, scale = "I")
 qparallel(iris, scale = "var")
+# try other standardizing methods
+st2 = function(x) ((x - min(x)) / (max(x) - min(x)))^2
+qparallel(iris, scale = "st2")
 
 ## formula interface
 qparallel(iris, ~ Sepal.Length + Sepal.Width)
+# . means all variables in the data frame as usual
+qparallel(iris, ~ .)
 
 ## vertical
 qparallel(iris, col=brewer.pal(3, "Set1")[as.integer(iris$Species)], horizontal = FALSE, mar=c(0.1,.15,0.1,0.05))
+formula
+qparallel(mtcars)
 
 ## test speed
-qparallel(matrix(runif(1000 * 10), ncol = 10), col = rgb(1, 0, 0, 0.2), mar = c(.2,.1,.1,.1))
-qparallel(matrix(runif(1000 * 10), ncol = 10), col = rgb(1, 0, 0, 0.2), scale="var", mar = c(.2,.1,.1,.1))
+qparallel(matrix(rnorm(1000 * 10), ncol = 10), col = rgb(1, 0, 0, 0.2), mar = c(.2,.1,.1,.1))
+qparallel(matrix(runif(10000 * 10), ncol = 10), col = rgb(1, 0, 0, 0.2), scale="var", mar = c(.2,.1,.1,.1))
 
 
 ## residential data: 18221x8
@@ -64,12 +71,12 @@ print(system.time({
 }))
 }
 
-rm(scene)
+if (exists('scene')) rm(scene)
 scene=qscene()
 qlayer(scene, qtest1, limits = qrect(c(1,p),c(0,1)))
 qplotView(scene = scene)
 
-rm(scene)
+if (exists('scene')) rm(scene)
 scene=qscene()
 qlayer(scene, qtest2, limits = qrect(c(1,p),c(0,1)))
 qplotView(scene = scene)
@@ -82,3 +89,12 @@ print(system.time({
 }))
 
 # git pull cranvas master
+
+
+# 'vars' handles formula more accurately: only takes the rhs
+# 'scale' accepts custom standardizing functions
+# better draw axes with layout() functionalities, but unclear how qtpaint works
+# speed up drawing lines?
+
+
+# draw by group
