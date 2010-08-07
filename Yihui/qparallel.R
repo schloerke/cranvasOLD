@@ -1,4 +1,3 @@
-library(qtutils)
 library(qtpaint)
 # rm(list=ls(all=TRUE))
 
@@ -22,13 +21,11 @@ qparallel = function(data, vars = names(data), scale = "range",
     scale = switch(scale, range = function(x) {
         xna = x[!is.na(x)]
         (x - min(xna))/(max(xna) - min(xna))
-    }, var = base:::scale, I = function(x) x)
+    }, var = base:::scale, I = function(x) x, get(scale))
     data = as.data.frame(data)
     if (!is.null(vars)) {
         if (class(vars) == "formula") 
-            vars = all.vars(vars)
-        if ("." %in% vars) 
-            vars = names(data)
+            vars = attr(terms(vars, data = data), "term.labels")
         data = subset(data, select = vars)
     }
     else vars = names(data)
