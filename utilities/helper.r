@@ -72,7 +72,7 @@ make_new_plot <- function(windowRanges,width=600,height=600){
 #' @keywords hplot
 #' @examples
 #'  make_window_ranges(c(0,1,2,3))
-make_window_ranges <- function(dataRanges, xlab=NULL, ylab=NULL, xtickmarks=NULL, ytickmarks=NULL)
+make_window_ranges <- function(dataRanges, xlab=NULL, ylab=NULL, xtickmarks=NULL, ytickmarks=NULL, main=NULL)
 {
 	if(!is.null(ylab))
     	xmin = dataRanges[1] - 0.1*diff(dataRanges[1:2])
@@ -100,6 +100,11 @@ make_window_ranges <- function(dataRanges, xlab=NULL, ylab=NULL, xtickmarks=NULL
     	xmin = dataRanges[1] - 0.0075*xwidth*diff(dataRanges[1:2])		
     }
 
+# extra space for window title
+    if (!is.null(main)) {
+    	if (length(main)>0)
+    	   ymax = ymax+0.05*diff(dataRanges[3:4])
+    }
 
 	
 	windowRanges <- c(
@@ -116,6 +121,18 @@ make_window_ranges <- function(dataRanges, xlab=NULL, ylab=NULL, xtickmarks=NULL
 	windowRanges  
 }
 
+add_title_fun <- function(plotObj, dataRanges, title)
+{
+  if (!is.null(title)) {
+	qstrokeColor(plotObj) <- "black"
+    qdrawText(plotObj,
+        text = title,
+        x = dataRanges[1] + 0.5*diff(dataRanges[1:2]),
+        y = dataRanges[4] + 0.05*diff(dataRanges[3:4]),
+        valign = "top"
+      )
+    }    
+}
 
 add_title <- function(plotObj, dataRanges, title)
 {

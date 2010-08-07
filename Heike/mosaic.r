@@ -4,8 +4,6 @@ source("utilities/axes.r")
 require(stringr)
 require(productplots)
 
-source("../Heike/hadley-productplots-83f5772/R/parse.r")
-
 find_x_label <- function(df) {
   vars <- setdiff(names(df), c(".wt", "l", "r", "t", "b", "level"))
 
@@ -23,7 +21,7 @@ find_y_label <- function(df) {
 }
 
 
-qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = TRUE, na.rm = FALSE, subset=NULL, colour="grey30", ...) {
+qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = TRUE, na.rm = FALSE, subset=NULL, colour="grey30", main=NULL, ...) {
   odata <- data
   data <- productplots:::prodcalc(odata, formula, divider, cascade, scale_max, na.rm = na.rm)
   if (is.null(data$hilite)) data$hilite <- FALSE
@@ -41,13 +39,15 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
   .startBrush <- NULL
   .endBrush <- NULL
   .level <- max(data$level)
+  .df.title <- FALSE
+  .clevel <- 0
 
   top <- data$t
   bottom <- data$b
   left <- data$l
   right <- data$r
 
-  
+  if (is.null(main)) .df.title <- TRUE
   xlab <- find_x_label(data)
   ylab <- find_y_label(data)
 
@@ -63,9 +63,8 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
   if (!is.na(row))
   	ylabels <- productplots:::row_labels(data[data$level == row, ])
 
-#  if (is.null(main)) main <- as.character(formula)
-  
-  windowRanges <- make_window_ranges(dataRanges, xlab, ylab, ytickmarks=ylabels)
+  if (.df.title) main <- as.character(formula)
+  windowRanges <- make_window_ranges(dataRanges, xlab, ylab, ytickmarks=ylabels, main=main)
 
   lims <- qrect(windowRanges[c(1,2)], windowRanges[c(3,4)])
 
@@ -93,6 +92,8 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 	} else {
 	  draw_y_axes_with_labels_fun(painter, dataRanges, axisLabel=rep("",length(sy$breaks)), labelVertPos=sy$breaks, name=ylab)
 	}
+	
+	if (!is.null(main)) add_title_fun(painter, dataRanges, main)
   }
 
   mosaic.all <- function(item, painter, exposed) {
@@ -233,60 +234,61 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
   keyPressFun <- function(item, event, ...) {
 	print(event$key())
 	key <- event$key()
-	# up - arrow: 16777235
-	# down - arrow: 16777237
-	# right: 16777236
-	# left: 16777234
 
 	datachanged <- FALSE
 	formulachanged <- FALSE
 	form <- parse_product_formula(formula)
 	
-	if (key == 16777235) {		# arrow up
+	if (key == Qt$Qt$Key_Up) {		# arrow up
 	  if (.level > 1) .level <<- .level - 1
 	}
-	if (key == 16777237) {		# arrow down
+	if (key == Qt$Qt$Key_Down) {		# arrow down
 	  if (.level < max(data$level)) .level <<- .level + 1
 	}
-	if (key == 16777234) {		# arrow left
+	if (key == Qt$Qt$Key_Left) {		# arrow left
 	# move variable into mosaic plot from left
 	  if (.level < max(data$level)) {
 	    lindx <- max(data$level)-.level+1
 	 
-	    vars <- form$marg
-		form$marg <- rev(c(rev(vars[-lindx]),vars[lindx]))
+		marg_n <- length(form$marg)
+	    vars <- c(form$marg, form$cond)
+		vars <- rev(c(rev(vars[-lindx]),vars[lindx]))
+		form$marg <- vars[1:marg_n]
+		form$cond <- setdiff(vars, form$marg)
 
 		formulachanged <- TRUE
 	  }
 	}
 
-	if (key == 67) { 	# 'c' or 'C' for 'condition'
-		lindx <- max(data$level)-.level +1
-	#  if (.level < max(data$level)) {
-	    bprint(formula)
-	    vars <- form$marg[1:lindx]
-	    form$cond <- c(setdiff(form$marg, vars),form$cond)
-		form$marg <- vars
+	if (key == Qt$Qt$Key_C) { 	# 'c' or 'C' for 'condition'
+	  if (.clevel < max(data$level)) {
+	  	.clevel <<- .clevel+1
 
-		bprint(formula)
+	    vars <- c(form$marg, form$cond)
+		form$cond <- rev(rev(vars)[1:.clevel])
+	    form$marg <- setdiff(vars, form$cond)	  	
 		formulachanged <- TRUE
-	#  }
-
-#browser()
+	  }
 	}
 
-	if (key == 85) { 	# 'u' or 'U' for 'unconditioning'
+	if (key == Qt$Qt$Key_U) { 	# 'u' or 'U' for 'unconditioning'
 	#  if (lindx < max(data$level)) {
-	    form$marg <- c(form$marg, form$cond)
-	    form$cond <- character(0)
+	  if (.clevel > 0) {
+	  	.clevel <<- .clevel-1
+	    vars <- c(form$marg, form$cond)
+	    if (.clevel == 0) {
+	    	form$cond <- character(0)
+	    	form$marg <- vars
+	    } else {
+			form$cond <- rev(rev(vars)[1:.clevel])
+		    form$marg <- setdiff(vars, form$cond)	  	
+	    }
 
 		formulachanged <- TRUE
-	#  }
-
-#browser()
+	  }
 	}
 
-	if (key == 82) { 	# 'r' or 'R' for 'rotate'
+	if (key == Qt$Qt$Key_R) { 	# 'r' or 'R' for 'rotate'
 		lindx <- max(data$level)-.level + 1
 
 	  if (divider[lindx] %in% c('hbar','vbar')) 
@@ -298,7 +300,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 
 #browser()
 	}
-	if (key == 83) { 	# 's' or 'S' for 'spine'
+	if (key == Qt$Qt$Key_S) { 	# 's' or 'S' for 'spine'
 			lindx <- max(data$level)-.level + 1
 	
 	  if (divider[lindx] == 'vbar') 
@@ -309,7 +311,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 		datachanged <- TRUE
 	}
 
-	if (key == 66) { 	# 'b' or 'B' for 'bar'
+	if (key == Qt$Qt$Key_B) { 	# 'b' or 'B' for 'bar'
 			lindx <- max(data$level)-.level + 1
 	
 	  if (divider[lindx] == 'vspine') 
@@ -321,12 +323,12 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 	}
 
 	if (formulachanged) {
-		bprint(formula)
-		print(paste(form$wt,collapse= "+"))
-		print(paste(form$marg,collapse= "+"))
-		print(paste(form$cond,collapse= "+"))
-		formstring <- paste(form$wt,"~", paste(form$marg, collapse= "+"))
+		formstring <- paste(form$wt,"~")
+		if (length(form$marg) > 0) formstring <- paste(formstring, paste(form$marg, collapse= "+"))
+		else formstring <- paste(formstring,"1")
+		
 		if (length(form$cond) > 0) formstring <- paste(formstring, "|", paste(form$cond, collapse= "+"))
+		
 		formula <<- as.formula(formstring)
 		bprint(formula)
 
