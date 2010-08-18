@@ -1,0 +1,10 @@
+#create a QGraphicsScene instance, where parent=NULL
+#scene is parent of root and ancestor of subsequent layers
+#Qt documentation: http://doc.qt.nokia.com/4.6/graphicsview.html 
+qscene() #qtpaint
+Qt$QGraphicsScene() #qtbase
+
+#to set limits of a layer
+#limits designates the max and min of what is displayed, in data coordinates
+qlimits(layer) #depreciated
+layer$setLimits(limits)#qtbase, "limits" is qrect object
