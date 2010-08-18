@@ -10,3 +10,9 @@ Qt$QGraphicsScene() #qtbase
 qlimits(layer) #depreciated
 layer$setLimits(limits)#qtbase, 
 qlayer(....,limits,...)#qtpaint
+
+#to set the portion of a canvas that the layer plots to
+layer$setGeometry(qrect(minX,minY,maxX,maxY))#minX, etc in data units
+
+#to resize the window
+view$setFixedSize(width,height)#width,height in pixels
