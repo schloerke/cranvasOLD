@@ -1,35 +1,5 @@
 library(qtpaint)
 library(plumbr)
-#library(plyr)
-# Marks: glyph, text, line, rect, poly
-# Position: top, right, bottom, left
-
-
-if (FALSE) {
-#source("/home/marie/cranvas/R/api-sketch.r")
-	plot1 <- new_plot(500, 500, xrange = c(0, 1), yrange = c(0, 1))
-	
-	x <- runif(1000)
-	y <- runif(1000)
-	plot1$add_layer(glyph(bottom = y, left = x))
-	for(i in 1:1000) {
-		x <- x + runif(1000, min = -0.005, max = 0.005)
-		y <- y + runif(1000, min = -0.005, max = 0.005)
-		plot1$modify_layer(1, bottom = y, left = x) 
-		Sys.sleep(1 / 60)
-	}
-}
-
-# How should units work?  Definitely need both pixel and data coordinates.
-# Some resolution independence with physical units would be desirable 
-# long term.
-
-#MV~
-# Is there a way to retrieve dpi for the display system? 
-# should be able to write a function that translates desired size (eg 4 x 6 in) to pixels and can adjust the plot size accordingly
-#~MV
-
-
 
 # Mark constructions
 # ---------------------
@@ -89,8 +59,6 @@ draw.glyph <- function(mark, canvas) {
 #circle <- qpathCircle(0, 0, mark$size)
 circle <- qglyphCircle(r=mark$size)
 qdrawGlyph(canvas, circle, x=mark$left, y=mark$bottom,stroke = mark$stroke, fill = mark$fill)
-print("size")
-print(mark$size)
 }
 
 draw.rect <- function(mark, canvas) {
@@ -168,9 +136,8 @@ layer$setLimits(userlimits)
 }
 
 layers[[i]] <<- layer   
-assign("layers",layers, pos=1) #there has to be a better way for tracking this value, but I don't know what
-
 invisible(self)
+
 }
 
 modify_layer <- function(i,new_mark,new_limit,...) {
