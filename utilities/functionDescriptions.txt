@@ -6,5 +6,7 @@ Qt$QGraphicsScene() #qtbase
 
 #to set limits of a layer
 #limits designates the max and min of what is displayed, in data coordinates
+#"limits" is qrect object
 qlimits(layer) #depreciated
-layer$setLimits(limits)#qtbase, "limits" is qrect object
+layer$setLimits(limits)#qtbase, 
+qlayer(....,limits,...)#qtpaint
