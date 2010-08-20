@@ -36,12 +36,12 @@ options(error=recover)
 #
 #plot1<-new_plot(width,height,xrange=range(df1[,1]),yrange=range(df1[,2]))
 #
-#mark<- glyph(left=df1[,1],bottom=df1[,2],stroke=NA,fill='black',size=5,parent=plot1)
-#mark2<-rect(left=df1[,1]-0.5*rectW,bottom=df1[,2]-0.5*rectH,height=rectH, width=rectW,stroke=NA,fill=col2rgb(rgb(1,seq(0,1,length=nrow(df1)),0,0.5),T),parent=plot1)
-#mark3<-line(left=50+c(1:90)*sin(6*pi*c(1:90)/100),bottom=50+c(1:90)*cos(6*pi*c(1:90)/100),stroke="red",width=3,xrange=range(df1[,1]),yrange=range(df1[,2]))
-#mark4<-hbar(bottom=50,left=c(-9,59),right=c(25,92),xrange=range(df1[,1]),yrange=range(df1[,2]))
-#mark5<-vbar(left=50,bottom=c(-33,83),top=c(0,115))
-#mark6<-text(top=mean(df1[,1]),left=mean(df1[,2]),text="test",xrange=range(df1[,1]),yrange=range(df1[,2]))
+#mark<- glyph(left=df1[,1]-min(df1[,1]),bottom=df1[,2]-min(df1[,2]),stroke=NA,fill='black',size=5,parent=plot1)
+#mark2<-rect(left=df1[,1]-(0.5*rectW)-min(df1[,1]),bottom=df1[,2]- (0.5*rectH)- min(df1[,2]),height=rectH, width=rectW,stroke=NA,fill=col2rgb(rgb(1,seq(0,1,length=nrow(df1)),0,0.5),T),parent=plot1)
+#mark3<-line(left=50+c(1:90)*sin(6*pi*c(1:90)/100)-min(df1[,1]),bottom=50+c(1:90)*cos(6*pi*c(1:90)/100)-min(df1[,2]),stroke="blue",width=3,parent=plot1)
+#mark4<-hbar(bottom=50-min(df1[,2]),left=c(-9,59)-min(df1[,1]),right=c(29,96)-min(df1[,2]),parent=plot1)
+#mark5<-vbar(left=50-min(df1[,1]),bottom=c(-33,83)-min(df1[,2]),top=c(0,115)-min(df1[,2]),parent=plot1, stroke="blue")
+#mark6<-text(bottom=50-min(df1[,2]),left=50-min(df1[,1]),text="test",parent=plot1)
 #
 #add_layer(parent=plot1,mark=mark)
 #add_layer(parent=plot1,mark=mark2)
