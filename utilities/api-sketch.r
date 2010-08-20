@@ -16,38 +16,66 @@ library(plumbr)
 # glyph(x = .(mpg), y = .(cyl), data = mtcars)
 
 glyph <- function(top = NULL, left = NULL, bottom = NULL, right = NULL, fill = "black", stroke = NULL, size= 5) {
-structure(list(top = top, left = left, right = right, bottom = bottom,
-fill = fill, stroke = stroke,size=size), 
-class = c("cranvas", "glyph"))
+  structure(
+    list(
+      top = top, left = left, right = right, bottom = bottom,
+      fill = fill, stroke = stroke,size=size
+    ), 
+    class = c("cranvas", "glyph")
+  )
 }
 
 rect <- function(top = NULL, left = NULL, bottom = NULL, right = NULL, fill = "black", stroke = NULL) {
-structure(list(
-top = top, left = left, right = right, bottom = bottom, fill = fill,
-stroke = stroke), class = c("cranvas", "rect"))
+  structure(
+    list(
+      top = top, left = left, right = right, bottom = bottom, 
+      fill = fill, stroke = stroke
+      ), 
+    class = c("cranvas", "rect")
+  )
 }
 
 hbar <- function(width = NULL, top = NULL, bottom = NULL, left = 0, fill = "black", stroke = NULL) {
-rect(top = top, right = width, bottom = bottom, left = left,
-fill = fill, stroke = stroke)
+  rect(
+    top = top, 
+    right = width, 
+    bottom = bottom, 
+    left = left,
+    fill = fill, 
+    stroke = stroke
+  )
 }
 
 vbar <- function(height = NULL, left = NULL, right = NULL, bottom = 0, fill = "black", stroke = NULL) {
-rect(top = height, bottom = bottom, left = left, right = right, 
-fill = fill, stroke = stroke)
+  rect(
+    top = height, 
+    bottom = bottom, 
+    left = left, 
+    right = right, 
+    fill = fill, 
+    stroke = stroke
+  )
 }
 
 
 line <- function(top = NULL, left = NULL, bottom = NULL, right = NULL, fill = "black", stroke = NULL, width=1) {
-structure(list(
-top = top, left = left, right = right, bottom = bottom, fill = fill,
-stroke = stroke, width=width), class = c("cranvas", "line"))
+  structure(
+    list(
+      top = top, left = left, right = right, bottom = bottom, fill = fill,
+      stroke = stroke, width=width
+    ), 
+    class = c("cranvas", "line")
+  )
 }
 
-text <- function(top = NULL, left = NULL, bottom = NULL, right = NULL, text = NULL, fill = "black", stroke = NULL ,valign="center",halign="center", rot=0){
-structure(list(
-text = text, left = left, bottom = bottom, fill = fill, stroke = stroke,
-halign = halign, valign = valign, rot = rot), class = c("cranvas", "text"))
+text <- function(top = NULL, left = NULL, bottom = NULL, right = NULL, text = NULL, fill = "black", stroke = NULL ,valign="center",halign="center", rot=0) {
+  structure(
+    list(
+      text = text, left = left, bottom = bottom, fill = fill, stroke = stroke,
+      halign = halign, valign = valign, rot = rot
+    ),
+    class = c("cranvas", "text")
+  )
 }
 
 # Thin wrappers around qtpaint drawing functions that basically translate
@@ -56,30 +84,30 @@ halign = halign, valign = valign, rot = rot), class = c("cranvas", "text"))
 draw <- function(mark, canvas) UseMethod("draw")
 
 draw.glyph <- function(mark, canvas) {
-#circle <- qpathCircle(0, 0, mark$size)
-circle <- qglyphCircle(r=mark$size)
-qdrawGlyph(canvas, circle, x=mark$left, y=mark$bottom,stroke = mark$stroke, fill = mark$fill)
+  #circle <- qpathCircle(0, 0, mark$size)
+  circle <- qglyphCircle(r=mark$size)
+  qdrawGlyph(canvas, circle, x=mark$left, y=mark$bottom,stroke = mark$stroke, fill = mark$fill)
 }
 
 draw.rect <- function(mark, canvas) {
-qdrawRect(canvas, mark$left, mark$bottom, mark$right, mark$top,
-stroke = mark$stroke, fill = mark$fill)
+  qdrawRect(canvas, mark$left, mark$bottom, mark$right, mark$top,
+  stroke = mark$stroke, fill = mark$fill)
 }
 
 draw.line <- function(mark, canvas) {
-qlineWidth(canvas) <- mark$width
-qdrawLine(canvas, mark$left, mark$bottom, stroke = mark$stroke)
+  qlineWidth(canvas) <- mark$width
+  qdrawLine(canvas, mark$left, mark$bottom, stroke = mark$stroke)
 }
 
 draw.text<-function(mark,canvas){
-qstrokeColor(canvas) <- mark$stroke
-qdrawText(canvas, text = mark$text, mark$left, mark$bottom,
-valign = mark$valign, halign = mark$halign, rot=mark$rot)
+  qstrokeColor(canvas) <- mark$stroke
+  qdrawText(canvas, text = mark$text, mark$left, mark$bottom,
+  valign = mark$valign, halign = mark$halign, rot=mark$rot)
 }
 
 update.cranvas <- function(object, ...) {
-new <- list(...)
-structure(defaults(new, object), class = class(object))
+  new <- list(...)
+  structure(defaults(new, object), class = class(object))
 }
 
 # Interaction
@@ -95,70 +123,72 @@ structure(defaults(new, object), class = class(object))
 # added mousepress place holder
 
 new_plot <- function(width, height, xrange = c(0, 1), yrange = c(0, 1)) {
-limits <- qrect(xrange, yrange)
-marks <- list()
-layers <- mutaframe()
-scene <- Qt$QGraphicsScene()
-root <- qlayer(scene)
-root$geometry<-qrect(0,0,width,height)
+  limits <- qrect(xrange, yrange)
+  marks <- list()
+  layers <- mutaframe()
+  scene <- Qt$QGraphicsScene()
+  root <- qlayer(scene)
+  root$geometry<-qrect(0,0,width,height)
 
-add_layer <- function(mark,keyPressFun = NULL, 
-keyReleaseFun = NULL, mouseDoubleClickFun = NULL, mouseMoveFun = NULL, 
-mousePressFun = NULL, mouseReleaseFun = NULL, wheelFun = NULL, 
-hoverMoveEvent = NULL, hoverEnterEvent = NULL, hoverLeaveEvent = NULL, 
-contextMenuEvent = NULL, dragEnterEvent = NULL, dragLeaveEvent = NULL, 
-dragMoveEvent = NULL, dropEvent = NULL, focusInEvent = NULL, 
-focusOutEvent = NULL, sizeHintFun = NULL,row=0L,col=0L, userlimits=NULL,geometry=qrect(0,0,600,400)) {
-i <- length(marks) + 1
-marks[[i]] <<- mark
+  add_layer <- function(mark,keyPressFun = NULL, 
+    keyReleaseFun = NULL, mouseDoubleClickFun = NULL, mouseMoveFun = NULL, 
+    mousePressFun = NULL, mouseReleaseFun = NULL, wheelFun = NULL, 
+    hoverMoveEvent = NULL, hoverEnterEvent = NULL, hoverLeaveEvent = NULL, 
+    contextMenuEvent = NULL, dragEnterEvent = NULL, dragLeaveEvent = NULL, 
+    dragMoveEvent = NULL, dropEvent = NULL, focusInEvent = NULL, 
+    focusOutEvent = NULL, sizeHintFun = NULL,row=0L,col=0L, userlimits=NULL,geometry=qrect(0,0,600,400)
+  ) {
+    i <- length(marks) + 1
+    marks[[i]] <<- mark
+    
+    if (class(mark)[1]=="function") {
+      paintFun<-marks[[1]]
+    } else {
+      paintFun<-function(item, painter, exposed) { draw(marks[[i]], painter)}
+    }
 
-if(class(mark)[1]=="function"){
-  paintFun<-marks[[1]]
- }else{
-  paintFun<-function(item, painter, exposed) { draw(marks[[i]], painter)}
-}
+    layer <- qlayer(parent=root, paintFun=paintFun,keyPressFun=keyPressFun,
+      keyReleaseFun=keyReleaseFun,mouseDoubleClickFun=mouseDoubleClickFun,
+      mouseMoveFun=mouseMoveFun,mousePressFun=mousePressFun,mouseReleaseFun=mouseReleaseFun,
+      wheelFun=wheelFun,hoverMoveEvent=hoverMoveEvent,hoverEnterEvent=hoverEnterEvent,
+      hoverLeaveEvent=hoverLeaveEvent,contextMenuEvent=contextMenuEvent,dragEnterEvent=dragEnterEvent,
+      dragLeaveEvent=dragLeaveEvent,dragMoveEvent=dragMoveEvent,dropEvent=dropEvent,focusInEvent=focusInEvent,
+      focusOutEvent=focusOutEvent,sizeHintFun=sizeHintFun,clip=F, row=row,col=col,geometry=geometry
+    )
 
+    #set layer limits by external argument
+    if (is.null(userlimits)) {
+    	layer$setLimits(limits)
+    } else {
+      layer$setLimits(userlimits)
+    }
 
+    layers[[i]] <<- layer   
+    invisible(self)
+  }
 
-layer <- qlayer(parent=root, paintFun=paintFun,keyPressFun=keyPressFun,
-  keyReleaseFun=keyReleaseFun,mouseDoubleClickFun=mouseDoubleClickFun,
-  mouseMoveFun=mouseMoveFun,mousePressFun=mousePressFun,mouseReleaseFun=mouseReleaseFun,
-  wheelFun=wheelFun,hoverMoveEvent=hoverMoveEvent,hoverEnterEvent=hoverEnterEvent,
-  hoverLeaveEvent=hoverLeaveEvent,contextMenuEvent=contextMenuEvent,dragEnterEvent=dragEnterEvent,
-  dragLeaveEvent=dragLeaveEvent,dragMoveEvent=dragMoveEvent,dropEvent=dropEvent,focusInEvent=focusInEvent,
-  focusOutEvent=focusOutEvent,sizeHintFun=sizeHintFun,clip=F, row=row,col=col,geometry=geometry)
+  modify_layer <- function(i,new_mark,new_limit,...) {
+    old <- marks[[i]]
+    marks[[i]] <<- new_mark
+    layers[[i]]$setLimits(new_limit)
+    qupdate(layers[[i]])
+    invisible(self)
+  }
 
-#set layer limits by external argument
-if(is.null(userlimits)){
-	layer$setLimits(limits)
-}else {
-layer$setLimits(userlimits)
-}
+  view <- qplotView(scene = scene)
 
-layers[[i]] <<- layer   
-invisible(self)
+  self <- structure(
+    list(
+      root=root,
+      layers=layers,
+      view = view,
+      add_layer = add_layer,
+      modify_layer = modify_layer
+    ), 
+    class = "cranvas-plot"
+  )
 
-}
-
-modify_layer <- function(i,new_mark,new_limit,...) {
-old <- marks[[i]]
-marks[[i]] <<- new_mark
-layers[[i]]$setLimits(new_limit)
-qupdate(layers[[i]])
-invisible(self)
-}
-
-view <- qplotView(scene = scene)
-
-
-self <- structure(list(
-root=root,
-layers=layers,
-view = view,
-add_layer = add_layer,
-modify_layer = modify_layer
-), class = "cranvas-plot")
-self
+  self
 }
 
 "print.cranvas-plot" <- function(x, ...) print(x$view)
