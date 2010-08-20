@@ -45,3 +45,28 @@ qtrect <- function(parent, x, y, color="black", width=5, height=5, alpha=1.0){
   modify_layer(layerID, parent, alpha)
 }
 
+#------------
+# draw a line connecting points (x1,y1), (x2,y2),...
+# uses data coordinates
+qtline <- function( parent, x, y, color = "black", width = 1, alpha = 1.0) {
+  mark <- line(left = x - parent$limits$left(), bottom = y - parent$limits$top(), stroke = color, width = width, parent = parent)
+  add_layer(parent, mark)
+  modify_layer(length(parent$root$childItems()), parent, alpha)
+}
+
+#----------
+# draw a horizontal line across entire canvas 
+qthline <- function( parent, position, color = "black", width = 1, alpha = 1.0) {
+  mark <- hbar(bottom = position - parent$limits$top(), left = parent$limits$left() - parent$limits$left(), right = parent$limits$right() - parent$limits$left(), stroke = color, width = width, parent = parent)
+  add_layer(parent,mark)
+  modify_layer(length(parent$root$childItems()), parent, alpha)
+}
+
+#---------
+# draw a vertical line across entire canvas
+qtvline <- function (parent, position, color = "black", width = 1, alpha = 1.0) {
+  mark <- vbar(left = position - parent$limits$left(), bottom = parent$limits$top() - parent$limits$top(), top = parent$limits$bottom() - parent$limits$top(), stroke = color, width = width, parent = parent)
+  add_layer(parent, mark)
+  modify_layer(length(parent$root$childItems()), parent, alpha)
+}
+
