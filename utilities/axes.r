@@ -1,5 +1,10 @@
+if_bprint <- function(...) {
+  FALSE
+}
+
+
 bprint <- function(...) {
-  ignore <- ...
+  invisible(...)
 }
 # source("../Barret/bprint.r")
 
