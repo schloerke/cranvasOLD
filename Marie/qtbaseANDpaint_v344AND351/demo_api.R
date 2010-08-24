@@ -1,6 +1,6 @@
 
 library(qtpaint)
-source("/home/marie/Documents/cranvas/utilities/api-sketch.r")
+#source("/home/marie/Documents/cranvas/utilities/api-sketch.r")
 
 n<-1000000
 x<-rnorm(n,50,25)
