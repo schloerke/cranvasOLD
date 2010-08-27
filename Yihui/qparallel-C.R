@@ -1,4 +1,13 @@
 library(qtpaint)
+test_so = function(basename) {
+    so_name = paste(basename, .Platform$dynlib.ext, sep = "")
+    if (!file.exists(so_name)) {
+        system(sprintf("R CMD SHLIB %s.c", basename))
+    }
+    dyn.load(so_name)
+    
+}
+test_so("pcp_find_y")
 
 qparallel = function(data, vars = names(data), scale = "range", 
     col = "black", horizontal = TRUE, boxplot = FALSE, boxwex, 
@@ -80,20 +89,6 @@ qparallel = function(data, vars = names(data), scale = "range",
 #     nn=length(tmpx)
 #     tmpcol = rep(col, each = p, length.out = nn-1)
 #     tmpcol[p*(1:(n-1))]=NA
-
-    # given x, calculate y
-    f = function(x0, y) {
-        if (x0 <= 1) 
-            return(y[1])
-        else {
-            if (x0 >= p) 
-                return(y[p])
-            else {
-                i = max(which(1:p <= x0))
-                return((y[i + 1] - y[i]) * (x0 - i) + y[i])
-            }
-        }
-    }
     
     pcp_Segment = function(item, painter, exposed) {
         qdrawRect(painter, min(x), min(y), max(x), max(y), stroke = .bgcolor, 
@@ -163,11 +158,10 @@ qparallel = function(data, vars = names(data), scale = "range",
             xi = which(abs(x[1, ] - pos[1]) <= abs(.brange[1]))
             # x on the boundary of the brush
             xb = pos[1] + c(-1, 1) * abs(.brange[1])
-            tmp0 = matrix(nrow = n, ncol = 2)
-            for (i in 1:n) {
-                tmp0[i, ] = c(f(xb[1], y[i, ]), f(xb[2], y[i, 
-                  ]))
-            }
+            tmp0 = matrix(.C("pcp_find_y", n = as.integer(n), 
+                p = as.integer(p), xb = as.double(xb), y = as.double(t(y)), 
+                tmp0 = as.double(rep(0, n * 2)))$tmp0, nrow = n, 
+                ncol = 2)
             if (length(xi)) 
                 tmp0 = cbind(tmp0, y[, xi, drop = FALSE])
             .brushed <<- apply(tmp0, 1, function(xx) (min(xx) < 
@@ -178,11 +172,10 @@ qparallel = function(data, vars = names(data), scale = "range",
             yi = which(abs(y[1, ] - pos[2]) <= abs(.brange[2]))
             # x on the boundary of the brush
             yb = pos[2] + c(-1, 1) * abs(.brange[2])
-            tmp0 = matrix(nrow = n, ncol = 2)
-            for (i in 1:n) {
-                tmp0[i, ] = c(f(yb[1], x[i, ]), f(yb[2], x[i, 
-                  ]))
-            }
+            tmp0 = matrix(.C("pcp_find_y", n = as.integer(n), 
+                p = as.integer(p), xb = as.double(yb), y = as.double(t(x)), 
+                tmp0 = as.double(rep(0, n * 2)))$tmp0, nrow = n, 
+                ncol = 2)
             if (length(yi)) 
                 tmp0 = cbind(tmp0, x[, yi, drop = FALSE])
             .brushed <<- apply(tmp0, 1, function(xx) (min(xx) < 

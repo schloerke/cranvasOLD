@@ -1,0 +1,3 @@
+qparallel.R	the latest version of par-coords
+qparallel-R.R	a first version written completely in R
+qparallel-C.R	a version that uses C code to speed up brushing

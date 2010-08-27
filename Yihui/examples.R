@@ -1,9 +1,13 @@
 ## examples of qparallel()
 
-## color palette
-library(RColorBrewer)
+## hints for interaction: 
+## double click to switch between drawing the brush and moving the brush
+
 # options(verbose = TRUE)
 source("qparallel.R")
+
+## color palette
+library(RColorBrewer)
 
 ## old iris...
 qparallel(iris, col = brewer.pal(3, "Set1")[as.integer(iris$Species)])
@@ -63,8 +67,8 @@ qparallel(NewHavenResidential, col = brewer.pal(3, "Set1")[as.integer(NewHavenRe
 qparallel(NewHavenResidential, col = rgb(1, 0, 0, 0.1), horizontal = FALSE)
 
 # jitter is hopeless for huge data...
-qparallel(NewHavenResidential, col = rgb(1, 0, 0, 0.1), jitter = "zone", amount = 0.3)
-qparallel(NewHavenResidential, col = rgb(1, 0, 0, 0.1), jitter = "bedrms", 
+qparallel(NewHavenResidential, col = rgb(1, 0, 0, 0.01), jitter = "zone", amount = 0.3)
+qparallel(NewHavenResidential, col = rgb(1, 0, 0, 0.01), jitter = c("bedrms",'zone'), 
     amount = 0.2)
 
 if (FALSE) {
