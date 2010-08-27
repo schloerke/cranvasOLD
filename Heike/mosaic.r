@@ -1,6 +1,6 @@
-source("utilities/api-sketch.r")
-source("utilities/helper.r")
-source("utilities/axes.r")
+source("../utilities/api-sketch.r")
+source("../utilities/helper.r")
+source("../utilities/axes.r")
 require(stringr)
 require(productplots)
 
@@ -23,8 +23,8 @@ find_y_label <- function(df) {
 
 qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = TRUE, na.rm = FALSE, subset=NULL, colour="grey30", main=NULL, ...) {
   odata <- data
+  odata$hilite <- FALSE
   data <- productplots:::prodcalc(odata, formula, divider, cascade, scale_max, na.rm = na.rm)
-  if (is.null(data$hilite)) data$hilite <- FALSE
 
 
 #browser()
@@ -93,7 +93,39 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 	  draw_y_axes_with_labels_fun(painter, dataRanges, axisLabel=rep("",length(sy$breaks)), labelVertPos=sy$breaks, name=ylab)
 	}
 	
-	if (!is.null(main)) add_title_fun(painter, dataRanges, main)
+  }
+
+  extract.formula <- function(formula) {
+	form <- parse_product_formula(formula)
+
+	ncond <- length(form$cond)
+	nmarg <- length(form$marg)
+	
+	if (ncond <= .level) { 
+		fcond <- form$cond
+		.level <- .level - ncond
+	} else {
+		fcond <- form$cond[(ncond-.level+1):ncond]
+		.level <- 0
+	}
+
+	if (.level == 0) fmarg <- ""
+	else {
+	  if (nmarg <= .level) { 
+		fmarg <- form$marg
+	  } else {
+		fmarg <- form$marg[(nmarg-.level+1):nmarg]
+	  }
+	}
+# piece everything together
+	formstring <- paste(form$wt,"~ ")
+
+	if (length(fmarg) > 0) formstring <- paste(formstring, paste(fmarg, collapse= "+"))
+	else formstring <- paste(formstring,"1")
+		
+	if (length(fcond) > 0) formstring <- paste(formstring, "|", paste(fcond, collapse= "+"))
+	
+	return(formstring)
   }
 
   mosaic.all <- function(item, painter, exposed) {
@@ -110,6 +142,8 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
       right,
       top, 
       fill=colour)
+
+	if (.df.title) add_title_fun(painter, dataRanges, title=extract.formula(formula))
   }
 
   drawInfoString <- function(item, painter, exposed, ...) {
@@ -323,7 +357,8 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 	}
 
 	if (formulachanged) {
-		formstring <- paste(form$wt,"~")
+		formstring <- paste(form$wt,"~ ")
+
 		if (length(form$marg) > 0) formstring <- paste(formstring, paste(form$marg, collapse= "+"))
 		else formstring <- paste(formstring,"1")
 		
@@ -331,7 +366,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 		
 		formula <<- as.formula(formstring)
 		bprint(formula)
-
+#browser()
 		datachanged <- TRUE
 	}
 	
@@ -340,6 +375,8 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
       if (is.null(data$hilite)) data$hilite <<- FALSE	
 	}
 
+print("level:")
+print(.level)
 	# should be updating the data set, then start all fresh ...
 	# need to figure out how to properly deal with hiliting of parts of the boxes
 
@@ -366,6 +403,11 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 }
 
 plot1 <- qmosaic(happy, ~ health+sex+happy, c("vspine","hspine","hspine"))  
-print(plot1)
+#print(plot1)
 
-plot1 <- qmosaic(happy, ~ health+sex+happy, c("fluct","hspine"))  
+#plot1 <- qmosaic(happy, ~ health+sex+happy, c("fluct","hspine"))  
+print(plot1)
+#happym <- mutaframe(happy)
+#qmosaic(happym, ~ health+sex+happy, c("vspine","hspine","hspine"))  
+
+#qmosaic(mutaframe(happy), ~ health+sex+happy, c("vspine","hspine","hspine"))  

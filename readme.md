@@ -1,3 +1,6 @@
+## Demos
+
+Assume that all demos are executed with the working directory in the same folder.
 
 ## Layers Order
 

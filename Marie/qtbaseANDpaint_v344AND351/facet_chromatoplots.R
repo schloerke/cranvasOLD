@@ -15,6 +15,9 @@ source("/home/marie/Documents/cranvas/utilities/axes.r")
 # @param wd root directory of experimental design
 expStruc.display<-function(wd=NULL,...){
 
+zoom_start<<-NULL
+zoom_end<<-NULL
+
 ###PART 1
 #format data into a data.frame object
 
@@ -82,6 +85,7 @@ expStruc.display<-function(wd=NULL,...){
  			setwd(temp)
 		}
 	}
+#  return(plot1)
 }
 
 #the axes layer
@@ -107,6 +111,7 @@ axes<-function(item,painter){
     axesOverlay<-qlayer(overlay,axes,limits=qrect(c(0,1),c(0,1)))
     print(plot1)
     plot1$root$geometry<-qrect(15,26,822,525)
+    plot1$root$setLimits(qrect(-22,643,1080,-33))
     return(plot1)
 }
 
@@ -209,6 +214,8 @@ drawZoomed<-function(data,...){
 				windowranges[2],
 				windowranges[3]-100,
 				windowranges[4]))
+	plot2$root$setLimits(qrect(0,525,879,0))
+
 	draw_grid_with_positions(	plot2,
 					dataRanges=c(windowranges[1],
 					windowranges[2]-(.02*xspan),
@@ -217,6 +224,7 @@ drawZoomed<-function(data,...){
 					horiPos=c(0,1000,2000,3000,4000),
 					vertPos=c(0,200,400,600,800),
 					row=0L, col=0L)
+#TODO: fold these into data overlayer
 	draw_x_axes_with_labels(plot2,dataRanges=c(	windowranges[1],
 						     	windowranges[2]-(.02*xspan),
 						     	windowranges[3],
@@ -224,6 +232,7 @@ drawZoomed<-function(data,...){
 				axisLabels=c(0,1000,2000,3000),
 				labelHoriPos=c(0,1000,2000,3000),
 				name=NULL,row=0L,col=0L)
+#TODO: fold these into data overlayer
 	draw_y_axes_with_labels(plot2,dataRanges=c(	windowranges[1],
 						     	windowranges[2]-(.02*xspan),
 						     	windowranges[3],
@@ -245,22 +254,91 @@ drawZoomed<-function(data,...){
                                 	T),
                       		size=1),
                   		row=0L,col=0L,
-				mousePressFun=function(event,...){	
-					print(ls(event))
-					#plot2$root$geometry<-qrect(85,53,770,480)
-					plot2$root$geometry<-qrect(	(plot2$root$geometry$left()-0.1*plot2$root$geometry$width()),
+				mouseDoubleClickFun=function(action,event,...){	
+   					plot2$root$geometry<-qrect(	(plot2$root$geometry$left()-0.1*plot2$root$geometry$width()),
 									(plot2$root$geometry$top()-0.1*plot2$root$geometry$height()),
 									(plot2$root$geometry$right()+0.1*plot2$root$geometry$width()),
 									(plot2$root$geometry$bottom()+0.1*plot2$root$geometry$height()))
+				},
+				mousePressFun=function(action,event,...){
+#					print(ls(event))
+#					print(ls(event$pos))
+					print("event$pos")
+					print(c(event$pos()$left(),event$pos()$right(),event$pos()$top(),event$pos()$bottom()))
+					print("event$screenPos")
+					print(c(event$screenPos()$left(),event$screenPos()$right(),event$screenPos()$top(),event$screenPos()$bottom()))
+					zoom_start<<-c(event$screenPos()$x(),event$screenPos()$y())
+					zoom_start2<<-c(event$pos()$x(),event$pos()$y())
+					print("event$screenPos()$x()")
+					print(zoom_start2)
+				},
+				mouseReleaseFun=function(action,event,...){
+					if(is.null(zoom_start)){
+						print("need start point!")
+  					} else {
+						zoom_end<<-c(event$screenPos()$x(),event$screenPos()$y())
+						zoom_end2<<-c(event$pos()$x(),event$pos()$y())
+					#	right<-plot2$root$geometry$right() + max(zoom_start[1],zoom_end[1])-plot2$root$geometry$right()
+					#	bottom<-plot2$root$geometry$bottom() + max(zoom_start[2],zoom_end[2])
+						print("zoom_start")
+						print(zoom_start)
+						print("zoom_end")
+						print(zoom_end)
+						print("zoom_start2")
+						print(zoom_start2)
+						print("zoom_end2")
+						print(zoom_end2)
+						print("curr - zoom")
+						print(plot2$root$limits()$left()-zoom_start[1])
+#						plot2$root$setLimits(qrect(200,325,395,0))
+						print(plot2$root$limits()$left())
+						
+						plot2$root$setLimits(qrect(zoom_start[1],525,879,0))
+					
+					}
+					zoom_start<<-NULL
+					zoom_end<<-NULL
+					
 				})     
-	axes<-function(item,painter){
+	axesLabel<-function(item,painter){
 		qstrokeColor(painter)<-"black"
 		qfillColor(painter)<-"black"
 		qdrawText(painter,text="time",x=.5, y=.025,halign="center",valign="center")
 		qdrawText(painter,text= "m/z",x=.01,y=.5,halign="center",valign="center",rot=90)
 	}
+
+	axes<-function(item,painter){
+		qstrokeColor(painter)<-"grey30"
+		qfillColor(painter)<-"black"
+		axesRanges<-c(	windowranges[1],
+				windowranges[2]-(.02*xspan),
+				windowranges[3],
+				windowranges[4]-(0.02*yspan))
+		y_left <- axesRanges[1] - 0.03 * diff(axesRanges[1:2])
+	  	y_bottom <- axesRanges[3:4]
+		y_labelpos <- axesRanges[1] - 0.04 * diff(axesRanges[1:2])
+
+		
+		qdrawLine(	painter, 
+				x=rep(	c(	axesRanges[1] - 0.02 * diff(axesRanges[1:2]), 
+							axesRanges[1],
+							NA), 
+						length(labelVertPos=c(0,200,400,600,800))),
+			  	y=rep(c(0,200,400,600,800),each=3),
+  				stroke="grey30")
+		qdrawText(	painter,
+				text=c(0,200,400,600,800),
+				x=y_labelpos,
+				y=c(0,200,400,600,800),
+				halign="right")
+  
+	}
+
 	overlay<-plot2$view$overlay()
-    	axesOverlay<-qlayer(overlay,axes,limits=qrect(c(0,1),c(0,1)))
+	overlay.frame<-mutaframe()
+    	overlay.frame[[1]]<-qlayer(overlay,axesLabel,limits=qrect(c(0,1),c(0,1)))
+#	overlay.frame[[2]]<-qlayer(overlay,axes,limits=qrect(c(0,1),c(0,1)))
+#	print(length(overlay.frame))
 	print(plot2)
 }
 	

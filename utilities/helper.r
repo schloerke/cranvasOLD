@@ -1,32 +1,3 @@
-#' Global Printing Check
-#' checks to see if the print statements should be executed
-#'
-#' @author Barret Schloerke \email{bigbear@@iastate.edu}
-#' @keywords hplot
-#' @examples
-#'  if(if_bprint()) cat("Hello World")
-if_bprint <- function()
-{
-  return(TRUE)
-}
-
-#' Print Item Information
-#' prints the item name and structure information below it
-#'
-#' @param ... item to be quoted and then printed
-#' @author Barret Schloerke \email{bigbear@@iastate.edu}
-#' @keywords hplot
-#' @examples
-#'  dataRanges <- c(0,1,2,3)
-#'  bprint(dataRanges)
-bprint <- function(...) {
-  if(if_bprint()) {
-    cat(substitute(...),":\n")
-    str(...)
-  }
-}
-
-
 #' makes the data ranges
 #' makes the data ranges with a small buffer
 #'
@@ -35,14 +6,13 @@ bprint <- function(...) {
 #' @keywords hplot
 #' @examples
 #'  make_data_ranges(mtcars$disp)
-make_data_ranges<-function(dataColumn){
-# add a five percent space around all points
-#	return(c(min(dataColumn)-0.01, max(dataColumn)+0.01))
+make_data_ranges <- function(dataColumn) {
 	maxdata <- max(dataColumn, na.rm=T)
 	mindata <- min(dataColumn, na.rm=T)
 	range <- maxdata - mindata
 	
-	return(c(mindata-0.05*range, maxdata+0.05*range))
+  # add a five percent space around all points
+	c(mindata-0.05*range, maxdata+0.05*range)
 }
 
 
@@ -72,48 +42,51 @@ make_new_plot <- function(windowRanges,width=600,height=600){
 #' @keywords hplot
 #' @examples
 #'  make_window_ranges(c(0,1,2,3))
-make_window_ranges <- function(dataRanges, xlab=NULL, ylab=NULL, xtickmarks=NULL, ytickmarks=NULL, main=NULL)
-{
-	if(!is.null(ylab))
-    	xmin = dataRanges[1] - 0.1*diff(dataRanges[1:2])
-	else
-    	xmin = dataRanges[1] - 0.065*diff(dataRanges[1:2])
-	
+make_window_ranges <- function(dataRanges, xlab=NULL, ylab=NULL, xtickmarks=NULL, ytickmarks=NULL, main=NULL) {
+
+  if (!is.null(ylab)) {
+    # add more space for the label 
+    xmin = dataRanges[1] - 0.1*diff(dataRanges[1:2])
+	} else {
+    xmin = dataRanges[1] - 0.065*diff(dataRanges[1:2])
+	}	
 	xmax = dataRanges[2]+0.05*diff(dataRanges[1:2])
 	
 	
-	if(!is.null(xlab))
-    	ymin = dataRanges[3]-0.1*diff(dataRanges[3:4])
-	else
-    	ymin = dataRanges[3]-0.065*diff(dataRanges[3:4])
-    
+	if (!is.null(xlab)) {
+    # add more space for the label 
+    ymin = dataRanges[3]-0.1*diff(dataRanges[3:4])
+	} else {
+    ymin = dataRanges[3]-0.065*diff(dataRanges[3:4])
+	}
 	ymax = dataRanges[4]+0.05*diff(dataRanges[3:4])
 
-# little extra space necessary for xtickmarks	
-	if(!is.null(xtickmarks))
-    	ymin = dataRanges[3]-0.05*diff(dataRanges[3:4])
+  # little extra space necessary for xtickmarks	
+  if (!is.null(xtickmarks)) {
+    ### Should this be "ymin = ymin - 0.05*diff(dataRanges[3:4])" ?
+    ymin = dataRanges[3]-0.05*diff(dataRanges[3:4])
+  }
 
-# based on length of y tickmarks extra space
-	if(!is.null(ytickmarks)) {
-		xwidth = max(str_length(as.character(ytickmarks)))
-		# each character gives 0.75% extra space
-    	xmin = dataRanges[1] - 0.0075*xwidth*diff(dataRanges[1:2])		
-    }
+  # based on length of y tickmarks extra space
+	if (!is.null(ytickmarks)) {
+    xwidth = max(str_length(as.character(ytickmarks)))
+    # each character gives 0.75% extra space
+    ### Should this be "xmin = xmin - 0.0075*xwidth*diff(dataRanges[1:2])" ?
+    xmin = dataRanges[1] - 0.0075*xwidth*diff(dataRanges[1:2])		
+  }
 
-# extra space for window title
-    if (!is.null(main)) {
-    	if (length(main)>0)
-    	   ymax = ymax+0.05*diff(dataRanges[3:4])
-    }
+  # extra space for window title
+  if (!is.null(main)) {
+  	if (length(main)>0)
+  	   ymax = ymax+0.05*diff(dataRanges[3:4])
+  }
 
-	
 	windowRanges <- c(
-					  xmin,
-					  xmax,
-					  ymin,
-					  ymax
-					  )
-	
+    xmin,
+    xmax,
+    ymin,
+    ymax
+  )
 	
 	if(if_bprint())
     cat("Window Range: x=c(", windowRanges[1],", ",windowRanges[2],")  y=(",windowRanges[3],", ",windowRanges[4],")\n")
@@ -121,21 +94,24 @@ make_window_ranges <- function(dataRanges, xlab=NULL, ylab=NULL, xtickmarks=NULL
 	windowRanges  
 }
 
-add_title_fun <- function(plotObj, dataRanges, title)
-{
+#' add a title using qt
+#'
+add_title_fun <- function(plotObj, dataRanges, title) {
   if (!is.null(title)) {
-	qstrokeColor(plotObj) <- "black"
-    qdrawText(plotObj,
-        text = title,
-        x = dataRanges[1] + 0.5*diff(dataRanges[1:2]),
-        y = dataRanges[4] + 0.05*diff(dataRanges[3:4]),
-        valign = "top"
-      )
-    }    
+    qstrokeColor(plotObj) <- "black"
+    qdrawText(
+      plotObj,
+      text = title,
+      x = dataRanges[1] + 0.5*diff(dataRanges[1:2]),
+      y = dataRanges[4] + 0.05*diff(dataRanges[3:4]),
+      valign = "top"
+    )
+  }    
 }
 
-add_title <- function(plotObj, dataRanges, title)
-{
+#' add a title using layers
+#'
+add_title <- function(plotObj, dataRanges, title) {
   plotObj$add_layer(
     text(
       text=title,
@@ -145,6 +121,4 @@ add_title <- function(plotObj, dataRanges, title)
       valign="top"
     )
   )
-
-  
 }
