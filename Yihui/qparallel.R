@@ -1,4 +1,19 @@
-library(qtpaint)
+# data: a data frame or matrix
+# vars: variables to show in par-coords - can be a character vector (names), or a formula like '~ x1 + x2'
+# scale: standardizing method - 'range' --> [0, 1]
+# 			      'I' --> do nothing
+# 			      'var' --> mean 0 var 1
+# 			      'custom_function_name' --> use your own function (see examples.R)
+# col: colour vector (will be cycled to the same length as nrow(data))
+# horizontal: logical - arrange variables in horizontal or vertical direction
+# boxplot: overlay boxplots on top of par-coords
+# boxwex: width of boxplots
+# jitter: NULL (no jittering) or a character vector to jitter variables (usually those categorical vars)
+# amount: jitter amount
+# mar: margin (in proportion to the whole canvas)
+# verbose: print some extra information (mainly the time consumed in each step)
+# 
+# some brushing parameters are not put in the function arguments yet
 
 qparallel = function(data, vars = names(data), scale = "range", 
     col = "black", horizontal = TRUE, boxplot = FALSE, boxwex, 

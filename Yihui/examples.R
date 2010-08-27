@@ -3,6 +3,8 @@
 ## hints for interaction: 
 ## double click to switch between drawing the brush and moving the brush
 
+library(qtpaint)
+
 # options(verbose = TRUE)
 source("qparallel.R")
 
