@@ -1,38 +1,32 @@
 #include <math.h>
 
+double find_yi(double x0, double yi[], int *p) {
+	int i;
+  if (x0 <= 1.0) {
+    return yi[0];
+  } else {
+    if (x0 >= *p) {
+  		return yi[*p - 1];
+    } else {
+  		i = floor(x0);
+	    return (yi[i] - yi[i-1]) * (x0 - i) + yi[i-1];
+    }
+  }
+}
+
+
 void pcp_find_y(int *n, int *p, double *xb, double *y, double *tmp0)
 {
-    int i, j;
-    double yi[*p];
-    double find_yi(double x0, double yi[])
-    {
-	int i;
-	if (x0 <= 1.0)
-	{
-	    return yi[0];
-	}
-	else
-	{
-	    if (x0 >= *p) 
-	    {
-		return yi[*p - 1];
-	    }
-	    else
-	    {
-		i = floor(x0);
-		return (yi[i] - yi[i-1]) * (x0 - i) + yi[i-1];
-	    }
-	}
-    }
-    for (i = 0; i <= *n-1; i++)
-    {
-	for (j = 0; j <= *p-1; j++)
-	{
+  int i, j;
+  double yi[*p];
+  
+  for (i = 0; i <= *n-1; i++) {
+  	for (j = 0; j <= *p-1; j++) {
 	    yi[j] = y[i * *p + j];
-	}
-	tmp0[i] = find_yi(xb[0], yi);
-	tmp0[i + *n] = find_yi(xb[1], yi);
-    }
+  	}
+    tmp0[i] = find_yi(xb[0], yi, p);
+    tmp0[i + *n] = find_yi(xb[1], yi, p);
+  }
 }
 
 /*
