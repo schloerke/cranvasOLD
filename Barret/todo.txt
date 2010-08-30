@@ -8,5 +8,15 @@
 #Spin-o-gram
 #  hist plot with width as count
 
+No more bar chart
+
+Fix histogram
+
+1-d - continous
+  dot plot 
+  density plot
+  ?(ash)
+  
+
 
 

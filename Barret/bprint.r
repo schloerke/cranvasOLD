@@ -21,7 +21,7 @@ if_bprint <- function() {
 #'  bprint(dataRanges)
 bprint <- function(...) {
   if(if_bprint()) {
-    cat(substitute(...),":\n")
+    cat("\n",substitute(...),":\n")
     str(...)
   }
 }

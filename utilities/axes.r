@@ -267,6 +267,7 @@ draw_x_axes_with_labels <- function(plotObj, dataRanges, axisLabels, labelHoriPo
     ),row=row,col=col
   )
   
+  # draw X label
   if (!is.null(name)) {
     plotObj$add_layer(
       text(

@@ -1,36 +1,8 @@
 source("../utilities/api-sketch.r")
 source("../utilities/axes.r")
 source("../utilities/helper.r")
+source("bprint.r")
 
-qtscat <- function(x, y, ...,title=NULL, xlab = NULL, ylab = NULL, color=NULL, fill = NULL, stroke = NULL) {
-  ranges <- c(make_data_ranges(x), make_data_ranges(y))
-  bprint(ranges)
-  #create the plot
-  #window size 600 x 600; xrange and yrange from above
-  windowRanges <- make_window_ranges(ranges, xlab, ylab)
-  plot1<-make_new_plot(windowRanges)
-
-  #draw grid
-  draw_grid(plot1, ranges)
-  
-  #for different representations of the data (shape, color, etc) pass vecor arguments for shape, color, x, y
-  if(is.null(color))
-    color = "black"
-  if(is.null(stroke))
-    stroke = color
-  if(is.null(fill))
-    fill = color
-    
-  plot1$add_layer(glyph(left = x, bottom = y, fill=fill, stroke=stroke))
-
-  draw_x_axes(plot1, ranges, xlab)
-  draw_y_axes(plot1, ranges, ylab) 
-  
-  if(!is.null(title))
-    add_title(plot1, ranges, title)
-
-  plot1  
-}
 
 #' Create a histogram
 #' Create a histogram from numeric data
@@ -41,99 +13,119 @@ qtscat <- function(x, y, ...,title=NULL, xlab = NULL, ylab = NULL, color=NULL, f
 #' @author Barret Schloerke \email{bigbear@@iastate.edu}
 #' @keywords hplot
 #' @examples
-#'  qthist(rnorm(100000))
-#'  qthist(mtcars$disp, TRUE, fill = "gold", stroke = "red4")
-qthist <- function(data, splitBy = rep(1,length(data)), horizontal = FALSE, position = "none", color = rainbow(length(unique(splitBy))), title=NULL, name = names(data), ...)
-{
+#'  qthist(rnorm(100000), floor(rnorm(100000)*3))
+#'  qthist(mtcars$disp, horizontal = TRUE, fill = "gold", stroke = "red4")
+#'  qthist(mtcars$disp, mtcars$cyl, position = "dodge", fill = "gold", stroke = "red4")
+qthist <- function(
+  data, 
+  splitBy = rep(1, length(data)), 
+  horizontal = FALSE, 
+  position = "none", 
+  color = NULL, 
+  fill = NULL,
+  stroke = NULL,
+  title = NULL, 
+  name = names(data), 
+  ...
+) {
 
 #  aesStuff <- aes(...)
 #  bprint(aesStuff)
   
   d <- suppressWarnings(hist(data,plot=FALSE,...))
-#  d <- hist(data,plot=FALSE,...)
-  bLength <- length(d$breaks)
-  counts <- table(cut(data, breaks = d$breaks), splitBy)
+  breaks <- d$breaks
+  bprint(breaks)
+  break_len <- length(breaks)
+  bar_top <- table(cut(data, breaks = breaks), splitBy)  
+  bprint(bar_top)
   
-#  counts <- table(d$counts, splitBy)
-  bprint(counts)
-  print(counts)
-  bottoms <- array(0, dim(counts))
-  labelNames <- dimnames(counts)[[1]]
-  colorNames <- dimnames(counts)[[2]]
+  bar_bottom <- array(0, dim(bar_top))
+  label_names <- dimnames(bar_top)[[1]]
+  split_names <- dimnames(bar_top)[[2]]
+  bprint(bar_bottom)
+  print(bar_bottom)
+  bprint(label_names)
+  bprint(split_names)
 
-  if (position == "dodge")
-  {
-    start <- make_dodge_start( d$breaks, length(colorNames) )
-    end <-   make_dodge_end( d$breaks, length(colorNames) )
-    counts <- apply(counts, 1, rbind)
-#    labelNames <- rep(labelNames, length(colorNames))
-   #counts <- counts
-    #color <- color
+  if (position == "dodge") {
+    pos <- make_dodge_pos( breaks, length(split_names))
+    bar_left  <- pos$start
+    bar_right <- pos$end
+    bar_top <- apply(bar_top, 1, rbind)
   }
 #  else if(position == "stack" || position == "relative")
-  else
-  {
+  else  {
     #(position = "stack")
     
-    start <- d$breaks[1:(bLength-1)]
-    end <- d$breaks[2:bLength] 
+    bar_left <- breaks[1:(break_len-1)]
+    bar_right <- breaks[2:break_len] 
     
-    # make the counts be stacked (cumulative)
-    for(i in 1:nrow(counts))
-      counts[i,] <- cumsum(counts[i,])
-    
-    #make the bottoms "stack"
-    if(ncol(bottoms) > 1)
-      bottoms[,2:ncol(bottoms)] <- counts[,1:(ncol(counts) - 1)]
-      
-    bottoms[,1] <- 0
-    color <- rep(color, each = length(labelNames))
-    
-    if(position == "relative")
-    {
-      #spine-o-gram
-      
-      for(i in 1:nrow(bottoms))
-        bottoms[i,] <- bottoms[i,] / max(counts[i,])
-
-      for(i in 1:nrow(counts))
-        counts[i,] <- counts[i,] / max(counts[i,])
-
-        
-      print(counts)
-      print(bottoms)
+    # make the bar_top be stacked (cumulative)
+    for (i in 1:nrow(bar_top)) {
+      bar_top[i,] <- cumsum(bar_top[i,])
     }
     
+    #make the bar_bottom "stack"
+    if (ncol(bar_bottom) > 1) {
+      bar_bottom[,2:ncol(bar_bottom)] <- bar_top[,1:(ncol(bar_top) - 1)]
+    }
+      
+    bar_bottom[,1] <- 0
+    color <- rep(color, each = length(label_names))
+    
+    if (position == "relative") {
+      #spine-o-gram      
 
+      for (i in 1:nrow(bar_bottom)) {
+        bar_bottom[i,] <- bar_bottom[i,] / max(bar_top[i,])
+      }
+
+      for (i in 1:nrow(bar_top)) {
+        bar_top[i,] <- bar_top[i,] / max(bar_top[i,])
+      }
+    }
   }
   
     
-  bprint(start)
-  bprint(end)
-  bprint(counts)
+  bprint(bar_left)
+  bprint(bar_right)
+  bprint(bar_top)
+  bprint(bar_bottom)
 
-  if(length(colorNames) == 1)
-    color <- "grey20"
-
+  if (is.null(color)) {
+    if (length(split_names) == 1) {
+      color <- "grey20"
+    } else {
+      color <- rainbow(length(unique(splitBy)))
+    }
+  }
   
+  if (is.null(stroke)) {
+    stroke = color
+  }
+  if (is.null(fill)) {
+    fill = color
+  }
+    
   # contains c(x_min, x_max, y_min, y_max)
-  if(horizontal)
-    ranges <- c(make_data_ranges(c(0,counts*1.1)), make_data_ranges(d$breaks))
-  else
-    ranges <- c(make_data_ranges(d$breaks), make_data_ranges( c(0,counts*1.1)))
+  if (horizontal) {
+    ranges <- c(make_data_ranges(c(0,bar_top*1.1)), make_data_ranges(breaks))
+  } else {
+    ranges <- c(make_data_ranges(breaks), make_data_ranges( c(0,bar_top*1.1)))
+  }
   bprint(ranges)
 
-  if(horizontal)
-  {
+  if (horizontal) {
     ylab = name
     xlab = "count"
-  }
-  else
-  {
+  } else {
     ylab = "count"
     xlab = name
   }
+  bprint(xlab)
+  bprint(ylab)
 
+#return(1)
   #create the plot
   #window size 600 x 600; xrange and yrange from above
   windowRanges <- make_window_ranges(ranges, xlab, ylab)
@@ -148,13 +140,16 @@ qthist <- function(data, splitBy = rep(1,length(data)), horizontal = FALSE, posi
   
   #for different representations of the data (shape, color, etc) pass vecor arguments for shape, color, x, y
 #  if(horizontal)
-#    plot1$add_layer(hbar(bottom = start, top = end, width = counts, ...))
+#    plot1$add_layer(hbar(bottom = bar_left, top = bar_right, width = bar_top, ...))
 #  else
-#    plot1$add_layer(vbar(left = start, right = end, height = counts, ...))
+#    plot1$add_layer(vbar(left = bar_left, right = bar_right, height = bar_top, ...))
+
+  # c(obj) makes a matrix into a vector
+
   if(horizontal)
-    plot1$add_layer(hbar(bottom = start, top = end, width = counts,left = bottoms, fill=color))
+    plot1$add_layer(hbar(bottom = bar_left, top = bar_right, width = bar_top, left = c(bar_bottom), fill=fill, stroke = stroke))
   else
-    plot1$add_layer(vbar(left = start, right = end, height = counts, bottom = bottoms, fill=color))
+    plot1$add_layer(vbar(left = bar_left, right = bar_right, height = bar_top, bottom = c(bar_bottom), fill=fill, stroke = stroke))
 
   draw_x_axes(plot1, ranges, xlab)
   draw_y_axes(plot1, ranges, ylab) 
@@ -165,41 +160,32 @@ qthist <- function(data, splitBy = rep(1,length(data)), horizontal = FALSE, posi
   plot1
 }
 
-make_dodge_start <- function(startVect, n)
-{
-  gap <- diff(startVect[1:2])
-  relPos <- seq(from = gap*.1, to = gap*.9, length.out = n+1)[1:n]
-  
-  finalVect <- rep(0, length(relPos) * n)
-  
-  pos <- 1
-  for(i in startVect)
-    for(j in relPos)
-    {
-      finalVect[pos] <- i + j
-      pos <- pos + 1
-    }
 
-  finalVect
+#' Make dodge positions
+#'
+#' @param breaks break positions
+#' @param n number of items per break
+#' @keywords internal
+#' @author Barret Schloerke
+#' @examples
+#'  make_dodge_pos(c(1:5), 3)
+make_dodge_pos <- function(breaks, n) {
+  gap <- diff(breaks[1:2])
+  breaks <- breaks[-length(breaks)]
+  relPos <- seq(from = gap*.1, to = gap * .9, length.out = n+1)
+  startRel <- relPos[-(n+1)]
+  endRel <- relPos[-1]
+
+  starts <- c(sapply(breaks, function(x) { 
+    x + startRel
+  }))
+  ends <- c(sapply(breaks, function(x) { 
+    x + endRel
+  }))
+
+  data.frame(start = starts, end = ends)  
 }
 
-make_dodge_end <- function(endVect, n)
-{
-  gap <- diff(endVect[1:2])
-  relPos <- seq(from = gap*.9, to = gap*.1, length.out = n+1)[n:1]
-  
-  finalVect <- rep(0, length(relPos) * n)
-  
-  pos <- 1
-  for(i in endVect)
-    for(j in relPos)
-    {
-      finalVect[pos] <- i + j
-      pos <- pos + 1
-    }
-
-  finalVect
-}
 
 #' Create a histogram
 #' Create a histogram from numeric data
@@ -218,129 +204,129 @@ make_dodge_end <- function(endVect, n)
 #'  qtbar(diamonds$color, fill="red4", stroke="gold",horizontal=TRUE,name="Color", title = "diamonds$color")
 #'  qtbar(diamonds$color, title="Diamonds",splitBy=diamonds$cut)
 #'  qtbar(diamonds$color, title="Diamonds",name = "color", splitBy=diamonds$cut,position="dodge")
-
-qtbar <- function(data, splitBy = rep(1,length(data)), horizontal = FALSE, position = "none", color = rainbow(length(unique(splitBy))), title=NULL, name = names(data))
-{
-  
-  counts <- table(data,splitBy)
-  bprint(counts)
-  bottoms <- array(0, dim(counts))
-  labelNames <- dimnames(counts)[[1]]
-  colorNames <- dimnames(counts)[[2]]
- 
-  bLength <- nrow(counts)
-  labelPos <- 1:bLength - 0.5
- 
- 
-  if (position == "dodge")
-  {
-    start <- make_dodge_start( 0:(bLength-1), length(colorNames) )
-    end <-   make_dodge_end( 0:(bLength-1), length(colorNames) )
-    counts <- apply(counts, 1, rbind)
+#
+#qtbar <- function(data, splitBy = rep(1,length(data)), horizontal = FALSE, position = "none", color = rainbow(length(unique(splitBy))), title=NULL, name = names(data))
+#{
+#  
+#  counts <- table(data,splitBy)
+#  bprint(counts)
+#  bottoms <- array(0, dim(counts))
+#  labelNames <- dimnames(counts)[[1]]
+#  colorNames <- dimnames(counts)[[2]]
+# 
+#  bLength <- nrow(counts)
+#  labelPos <- 1:bLength - 0.5
+# 
+# 
+#  if (position == "dodge")
+#  {
+#    start <- make_dodge_start( 0:(bLength-1), length(colorNames) )
+#    end <-   make_dodge_end( 0:(bLength-1), length(colorNames) )
+#    counts <- apply(counts, 1, rbind)
 #    labelNames <- rep(labelNames, length(colorNames))
-   #counts <- counts
-    #color <- color
-  }
+#   counts <- counts
+#    color <- color
+#  }
 #  else if(position == "stack" || position == "relative")
-  else
-  {
-    #(position = "stack")
-    
-    start <- 0:(bLength-1)+.1
-    end <- 1:bLength-.1
-    
-    # make the counts be stacked (cumulative)
-    for(i in 1:nrow(counts))
-      counts[i,] <- cumsum(counts[i,])
-    
-    #make the bottoms "stack"
-    if(ncol(bottoms) > 1)
-      bottoms[,2:ncol(bottoms)] <- counts[,1:(ncol(counts) - 1)]
-      
-    bottoms[,1] <- 0
-    color <- rep(color, each = length(labelNames))
-    
-    if(position == "relative")
-    {
-      #spine-o-gram
-      
-      for(i in 1:nrow(bottoms))
-        bottoms[i,] <- bottoms[i,] / max(counts[i,])
-
-      for(i in 1:nrow(counts))
-        counts[i,] <- counts[i,] / max(counts[i,])
-
-        
-      print(counts)
-      print(bottoms)
-    }
-    
-
-  }
-  
-  #make counts a vector
-  counts <- c(counts, NULL)
-  
-  bprint(start)
-  bprint(end)
-  bprint(counts)
-
-  # contains c(x_min, x_max, y_min, y_max)
-  if(horizontal)
-    ranges <- c( make_data_ranges(c(0,counts * 1.1)), make_data_ranges(0:bLength))
-  else
-    ranges <- c( make_data_ranges(0:bLength), make_data_ranges(c(0,counts * 1.1)))
-
-  bprint(ranges)
-  
-  if(horizontal)
-  {
-    ylab = name
-    xlab = "count"
-  }
-  else
-  {
-    ylab = "count"
-    xlab = name
-  }
-
-  #create the plot
-  #window size 600 x 600; xrange and yrange from above
-  windowRanges <- make_window_ranges(ranges, xlab, ylab)
-  plot1<-make_new_plot(windowRanges)
-  
-  #draw grid
-  if(horizontal)
-    draw_grid_with_positions(plot1, ranges, make_pretty_axes(ranges[1:2], ranges[1], ranges[2]), NULL)
-  else
-    draw_grid_with_positions(plot1, ranges, NULL, make_pretty_axes(ranges[3:4], ranges[3], ranges[4]))
-
-  #for different representations of the data (shape, color, etc) pass vecor arguments for shape, color, x, y
-  if(length(colorNames) == 1)
-    color <- "grey20"
-    
-  if(horizontal)
-    plot1$add_layer(hbar(bottom = start, top = end, width = counts,left = bottoms, fill=color))
-  else
-    plot1$add_layer(vbar(left = start, right = end, height = counts, bottom = bottoms, fill=color))
-
-  ## add axes
-  if(horizontal)
-  {
-    draw_x_axes(plot1, ranges, xlab)
-    draw_y_axes_with_labels(plot1, ranges, labelNames, labelPos, ylab)
-  }
-  else
-  {
-    draw_x_axes_with_labels(plot1, ranges, labelNames, labelPos, xlab)
-    draw_y_axes(plot1, ranges, ylab)    
-  }
-  
-  if(!is.null(title))
-    add_title(plot1, ranges, title)
-
-  plot1
-}
+#  else
+#  {
+#    (position = "stack")
+#    
+#    start <- 0:(bLength-1)+.1
+#    end <- 1:bLength-.1
+#    
+#     make the counts be stacked (cumulative)
+#    for(i in 1:nrow(counts))
+#      counts[i,] <- cumsum(counts[i,])
+#    
+#    make the bottoms "stack"
+#    if(ncol(bottoms) > 1)
+#      bottoms[,2:ncol(bottoms)] <- counts[,1:(ncol(counts) - 1)]
+#      
+#    bottoms[,1] <- 0
+#    color <- rep(color, each = length(labelNames))
+#    
+#    if(position == "relative")
+#    {
+#      spine-o-gram
+#      
+#      for(i in 1:nrow(bottoms))
+#        bottoms[i,] <- bottoms[i,] / max(counts[i,])
+#
+#      for(i in 1:nrow(counts))
+#        counts[i,] <- counts[i,] / max(counts[i,])
+#
+#        
+#      print(counts)
+#      print(bottoms)
+#    }
+#    
+#
+#  }
+#  
+#  make counts a vector
+#  counts <- c(counts, NULL)
+#  
+#  bprint(start)
+#  bprint(end)
+#  bprint(counts)
+#
+#   contains c(x_min, x_max, y_min, y_max)
+#  if(horizontal)
+#    ranges <- c( make_data_ranges(c(0,counts * 1.1)), make_data_ranges(0:bLength))
+#  else
+#    ranges <- c( make_data_ranges(0:bLength), make_data_ranges(c(0,counts * 1.1)))
+#
+#  bprint(ranges)
+#  
+#  if(horizontal)
+#  {
+#    ylab = name
+#    xlab = "count"
+#  }
+#  else
+#  {
+#    ylab = "count"
+#    xlab = name
+#  }
+#
+#  create the plot
+#  window size 600 x 600; xrange and yrange from above
+#  windowRanges <- make_window_ranges(ranges, xlab, ylab)
+#  plot1<-make_new_plot(windowRanges)
+#  
+#  draw grid
+#  if(horizontal)
+#    draw_grid_with_positions(plot1, ranges, make_pretty_axes(ranges[1:2], ranges[1], ranges[2]), NULL)
+#  else
+#    draw_grid_with_positions(plot1, ranges, NULL, make_pretty_axes(ranges[3:4], ranges[3], ranges[4]))
+#
+#  for different representations of the data (shape, color, etc) pass vecor arguments for shape, color, x, y
+#  if(length(colorNames) == 1)
+#    color <- "grey20"
+#    
+#  if(horizontal)
+#    plot1$add_layer(hbar(bottom = start, top = end, width = counts,left = bottoms, fill=color))
+#  else
+#    plot1$add_layer(vbar(left = start, right = end, height = counts, bottom = bottoms, fill=color))
+#
+#  # add axes
+#  if(horizontal)
+#  {
+#    draw_x_axes(plot1, ranges, xlab)
+#    draw_y_axes_with_labels(plot1, ranges, labelNames, labelPos, ylab)
+#  }
+#  else
+#  {
+#    draw_x_axes_with_labels(plot1, ranges, labelNames, labelPos, xlab)
+#    draw_y_axes(plot1, ranges, ylab)    
+#  }
+#  
+#  if(!is.null(title))
+#    add_title(plot1, ranges, title)
+#
+#  plot1
+#}
 
 
 #qt_barhist <- function(
