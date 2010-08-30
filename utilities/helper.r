@@ -88,8 +88,8 @@ make_window_ranges <- function(dataRanges, xlab=NULL, ylab=NULL, xtickmarks=NULL
     ymax
   )
 	
-	if(if_bprint())
-    cat("Window Range: x=c(", windowRanges[1],", ",windowRanges[2],")  y=(",windowRanges[3],", ",windowRanges[4],")\n")
+#	if(if_bprint())
+#    cat("Window Range: x=c(", windowRanges[1],", ",windowRanges[2],")  y=(",windowRanges[3],", ",windowRanges[4],")\n")
 	
 	windowRanges  
 }

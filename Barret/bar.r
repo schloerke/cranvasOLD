@@ -15,10 +15,9 @@ source("bprint.r")
 #' @examples
 #'  # toture
 #'    qthist(rnorm(1000000), floor(rnorm(1000000)*3))
-#'    qthist(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - stack")
-#'    qthist(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - dodge", position = "dodge")
-#'    qthist(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - relative", position = "relative")
-
+#'    qthist(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - stack") # each column is split evenly
+#'    qthist(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - dodge", position = "dodge") # each column has similar height colors
+#'    qthist(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - relative", position = "relative") # range from 0 to 1
 #'  # color tests
 #'    qthist(mtcars$disp, horizontal = TRUE, fill = "gold", stroke = "red4")
 #'    qthist(mtcars$disp, mtcars$cyl, stroke = "black")
@@ -32,25 +31,22 @@ qthist <- function(
   fill = NULL,
   stroke = NULL,
   title = NULL, 
-  name = names(data), 
+  name = names(data),
   ...
 ) {
-
-#  aesStuff <- aes(...)
-#  bprint(aesStuff)
   
   d <- suppressWarnings(hist(data,plot=FALSE,...))
   breaks <- d$breaks
-  bprint(breaks)
+#  bprint(breaks)
   break_len <- length(breaks)
   bar_top <- table(cut(data, breaks = breaks), splitBy)  
-  bprint(bar_top)
+#  bprint(bar_top)
   
   bar_bottom <- array(0, dim(bar_top))
   label_names <- dimnames(bar_top)[[1]]
   split_names <- dimnames(bar_top)[[2]]
-  bprint(label_names)
-  bprint(split_names)
+#  bprint(label_names)
+#  bprint(split_names)
     
   if (position == "dodge") {
     pos <- make_dodge_pos( breaks, length(split_names))
@@ -60,8 +56,9 @@ qthist <- function(
         
     color <- rep(color, length(label_names))
   }
-#  else if(position == "stack" || position == "relative")
   else  {
+    # (position == "stack" || position == "relative")
+    
     color <- rep(color, each = length(split_names))
 
     #(position = "stack")
@@ -124,7 +121,7 @@ qthist <- function(
   } else {
     ranges <- c(make_data_ranges(breaks), make_data_ranges( c(0, bar_top)))
   }
-  bprint(ranges)
+#  bprint(ranges)
 
   if (horizontal) {
     ylab = name
@@ -133,10 +130,9 @@ qthist <- function(
     ylab = "count"
     xlab = name
   }
-  bprint(xlab)
-  bprint(ylab)
+#  bprint(xlab)
+#  bprint(ylab)
 
-#return(1)
   #create the plot
   #window size 600 x 600; xrange and yrange from above
   windowRanges <- make_window_ranges(ranges, xlab, ylab)
@@ -156,11 +152,10 @@ qthist <- function(
 #    plot1$add_layer(vbar(left = bar_left, right = bar_right, height = bar_top, ...))
 
   # c(obj) makes a matrix into a vector
-
   if(horizontal)
-    plot1$add_layer(hbar(bottom = bar_left, top = bar_right, width = bar_top, left = c(bar_bottom), fill=fill, stroke = stroke))
+    plot1$add_layer(hbar(bottom = c(bar_left), top = c(bar_right), width = c(bar_top), left = c(bar_bottom), fill=fill, stroke = stroke))
   else
-    plot1$add_layer(vbar(left = bar_left, right = bar_right, height = bar_top, bottom = c(bar_bottom), fill=fill, stroke = stroke))
+    plot1$add_layer(vbar(left = c(bar_left), right = c(bar_right), height = c(bar_top), bottom = c(bar_bottom), fill=fill, stroke = stroke))
 
   draw_x_axes(plot1, ranges, xlab)
   draw_y_axes(plot1, ranges, ylab) 

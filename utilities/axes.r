@@ -20,7 +20,7 @@ make_pretty_axes <- function(dataRange, minimum, maximum) {
   prettyness <- prettyness[prettyness >= minimum]
   prettyness <- prettyness[prettyness <= maximum]
   
-  bprint(prettyness)
+#  bprint(prettyness)
   prettyness
 }
 
@@ -40,8 +40,8 @@ draw_grid <- function(plotObj, dataRanges, row = 0L,col = 0L) {
   
   yGridLines <- make_pretty_axes(dataRanges[3:4], dataRanges[3], dataRanges[4])
   
-  bprint(xGridLines)
-  bprint(yGridLines)
+#  bprint(xGridLines)
+#  bprint(yGridLines)
   draw_grid_with_positions(plotObj, dataRanges, xGridLines, yGridLines, row=row, col=col)
 
 }
@@ -281,14 +281,12 @@ draw_x_axes_with_labels <- function(plotObj, dataRanges, axisLabels, labelHoriPo
     )  
   }
 
-  x_axisLabels <- axisLabels
-  
-  
-  bprint(x_left)
-  bprint(x_bottom)
-  bprint(x_labelpos)
-  bprint(x_axisLabels)
-  bprint(labelHoriPos)
+#  x_axisLabels <- axisLabels
+#  bprint(x_left)
+#  bprint(x_bottom)
+#  bprint(x_labelpos)
+#  bprint(x_axisLabels)
+#  bprint(labelHoriPos)
 
 }
 
@@ -338,12 +336,12 @@ draw_x_axes_with_labels_fun <- function(plotObj, dataRanges, axisLabels, labelHo
   }  
 
   
-  x_axisLabels <- axisLabels
-  bprint(x_left)
-  bprint(x_bottom)
-  bprint(x_labelpos)
-  bprint(x_axisLabels)
-  bprint(labelHoriPos)
+#  x_axisLabels <- axisLabels
+#  bprint(x_left)
+#  bprint(x_bottom)
+#  bprint(x_labelpos)
+#  bprint(x_axisLabels)
+#  bprint(labelHoriPos)
 
 }
 
@@ -425,13 +423,12 @@ draw_y_axes_with_labels <- function(plotObj, dataRanges, axisLabels, labelVertPo
     )  
   }
 
-  y_axisLabels <- axisLabels
-
-  bprint(y_left)
-  bprint(y_bottom)
-  bprint(y_labelpos)
-  bprint(y_axisLabels)
-  bprint(labelVertPos)
+#  y_axisLabels <- axisLabels
+#  bprint(y_left)
+#  bprint(y_bottom)
+#  bprint(y_labelpos)
+#  bprint(y_axisLabels)
+#  bprint(labelVertPos)
 
 }
 
@@ -483,13 +480,12 @@ draw_y_axes_with_labels_fun <- function(plotObj, dataRanges, axisLabels, labelVe
     )
   }  
 
-  y_axisLabels <- axisLabels
-
-  bprint(y_left)
-  bprint(y_bottom)
-  bprint(y_labelpos)
-  bprint(y_axisLabels)
-  bprint(labelVertPos)
+#  y_axisLabels <- axisLabels
+#  bprint(y_left)
+#  bprint(y_bottom)
+#  bprint(y_labelpos)
+#  bprint(y_axisLabels)
+#  bprint(labelVertPos)
 
 }
 
