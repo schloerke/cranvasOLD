@@ -13,9 +13,16 @@ source("bprint.r")
 #' @author Barret Schloerke \email{bigbear@@iastate.edu}
 #' @keywords hplot
 #' @examples
-#'  qthist(rnorm(100000), floor(rnorm(100000)*3))
-#'  qthist(mtcars$disp, horizontal = TRUE, fill = "gold", stroke = "red4")
-#'  qthist(mtcars$disp, mtcars$cyl, position = "dodge", fill = "gold", stroke = "red4")
+#'  # toture
+#'    qthist(rnorm(1000000), floor(rnorm(1000000)*3))
+#'    qthist(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - stack")
+#'    qthist(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - dodge", position = "dodge")
+#'    qthist(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - relative", position = "relative")
+
+#'  # color tests
+#'    qthist(mtcars$disp, horizontal = TRUE, fill = "gold", stroke = "red4")
+#'    qthist(mtcars$disp, mtcars$cyl, stroke = "black")
+#'    qthist(mtcars$disp, mtcars$cyl, position = "dodge", stroke = "black")
 qthist <- function(
   data, 
   splitBy = rep(1, length(data)), 
@@ -42,28 +49,30 @@ qthist <- function(
   bar_bottom <- array(0, dim(bar_top))
   label_names <- dimnames(bar_top)[[1]]
   split_names <- dimnames(bar_top)[[2]]
-  bprint(bar_bottom)
-  print(bar_bottom)
   bprint(label_names)
   bprint(split_names)
-
+    
   if (position == "dodge") {
     pos <- make_dodge_pos( breaks, length(split_names))
     bar_left  <- pos$start
     bar_right <- pos$end
     bar_top <- apply(bar_top, 1, rbind)
+        
+    color <- rep(color, length(label_names))
   }
 #  else if(position == "stack" || position == "relative")
   else  {
+    color <- rep(color, each = length(split_names))
+
     #(position = "stack")
-    
-    bar_left <- breaks[1:(break_len-1)]
-    bar_right <- breaks[2:break_len] 
+    bar_left <- rep(breaks[1:(break_len-1)], length(split_names))
+    bar_right <- rep(breaks[2:break_len] , length(split_names))
     
     # make the bar_top be stacked (cumulative)
     for (i in 1:nrow(bar_top)) {
       bar_top[i,] <- cumsum(bar_top[i,])
     }
+    
     
     #make the bar_bottom "stack"
     if (ncol(bar_bottom) > 1) {
@@ -71,11 +80,9 @@ qthist <- function(
     }
       
     bar_bottom[,1] <- 0
-    color <- rep(color, each = length(label_names))
     
+    # spine-o-gram      
     if (position == "relative") {
-      #spine-o-gram      
-
       for (i in 1:nrow(bar_bottom)) {
         bar_bottom[i,] <- bar_bottom[i,] / max(bar_top[i,])
       }
@@ -87,16 +94,20 @@ qthist <- function(
   }
   
     
-  bprint(bar_left)
-  bprint(bar_right)
-  bprint(bar_top)
-  bprint(bar_bottom)
+#  bprint(bar_left)
+#  bprint(bar_right)
+#  bprint(bar_top)
+#  bprint(bar_bottom)
 
   if (is.null(color)) {
     if (length(split_names) == 1) {
       color <- "grey20"
     } else {
-      color <- rainbow(length(unique(splitBy)))
+      if(position == "dodge") {
+        color <- rep(rainbow(length(unique(splitBy))), length(label_names))        
+      } else {
+        color <- rep(rainbow(length(unique(splitBy))), each = length(label_names))
+      }
     }
   }
   
@@ -109,9 +120,9 @@ qthist <- function(
     
   # contains c(x_min, x_max, y_min, y_max)
   if (horizontal) {
-    ranges <- c(make_data_ranges(c(0,bar_top*1.1)), make_data_ranges(breaks))
+    ranges <- c(make_data_ranges(c(0, bar_top)), make_data_ranges(breaks))
   } else {
-    ranges <- c(make_data_ranges(breaks), make_data_ranges( c(0,bar_top*1.1)))
+    ranges <- c(make_data_ranges(breaks), make_data_ranges( c(0, bar_top)))
   }
   bprint(ranges)
 
