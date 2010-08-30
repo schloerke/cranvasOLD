@@ -1,4 +1,4 @@
-source("Heike/mosaic.r")
+source("mosaic.r")
 
 # Some Examples  
 qtmosaic(happy, ~ health+sex+happy, c("vspine","hspine","hspine"), subset=level==3)  
