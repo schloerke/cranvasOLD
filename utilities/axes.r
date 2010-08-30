@@ -136,7 +136,9 @@ draw_grid_with_positions <- function(
   horiPos = NULL, 
   vertPos = NULL, 
   minor.horiPos = NULL, 
-  minor.vertPos = NULL
+  minor.vertPos = NULL,
+  row = 0L,
+  col = 0L
 ) {
 
   #background  
@@ -244,12 +246,17 @@ draw_x_axes_with_labels <- function(plotObj, dataRanges, axisLabels, labelHoriPo
   x_labelpos <- dataRanges[3] - 0.03 * diff(dataRanges[3:4])
 
 #  plotObj$add_layer(line(left=x_left,bottom=x_bottom,stroke="grey"))
-# draw tick marks
-  plotObj$add_layer(line(
-  	left=rep(labelHoriPos,each=3),
-  	bottom=rep(c(dataRanges[3],dataRanges[3] - 0.02 * diff(dataRanges[3:4]),NA), length(labelHoriPos)),
-  	stroke="grey30"),row=row,col=col)
   
+  # draw tick marks
+  plotObj$add_layer(
+    line(
+    	left = rep(labelHoriPos, each = 3),
+    	bottom = rep(c(dataRanges[3], dataRanges[3] - 0.02 * diff(dataRanges[3:4]),NA), length(labelHoriPos)),
+    	stroke = "grey30")
+  	, row = row, col = col
+   )
+  
+  # draw labels
   plotObj$add_layer(
     text(
       text=axisLabels,
@@ -265,7 +272,7 @@ draw_x_axes_with_labels <- function(plotObj, dataRanges, axisLabels, labelHoriPo
       text(
         text = name,
         left = x_left[1] + 0.5 * diff(x_left),
-        bottom = dataRanges[3] - 0.13 * diff(dataRanges[3:4]),
+        bottom = dataRanges[3] - 0.07 * diff(dataRanges[3:4]),
         stroke = "black",
         valign = "center"
         
@@ -407,10 +414,10 @@ draw_y_axes_with_labels <- function(plotObj, dataRanges, axisLabels, labelVertPo
     plotObj$add_layer(
       text(
         text = name,
-        left = dataRanges[1] - 0.18 * diff(dataRanges[1:2]),
+        left = dataRanges[1] - 0.1 * diff(dataRanges[1:2]),
         bottom = y_bottom[1] + 0.5 * diff(y_bottom),
         stroke = "black",
-        valign = "center",
+        halign = "center",
         rot=90
       ),
       row=row,col=col
@@ -484,3 +491,34 @@ draw_y_axes_with_labels_fun <- function(plotObj, dataRanges, axisLabels, labelVe
   bprint(labelVertPos)
 
 }
+
+
+#' add a title using qt
+#'
+add_title_fun <- function(plotObj, dataRanges, title) {
+  if (!is.null(title)) {
+    qstrokeColor(plotObj) <- "black"
+    qdrawText(
+      plotObj,
+      text = title,
+      x = dataRanges[1] + 0.5*diff(dataRanges[1:2]),
+      y = dataRanges[4] + 0.05*diff(dataRanges[3:4]),
+      valign = "top"
+    )
+  }    
+}
+
+#' add a title using layers
+#'
+add_title <- function(plotObj, dataRanges, title) {
+  plotObj$add_layer(
+    text(
+      text=title,
+      left=dataRanges[1]+ 0.5*diff(dataRanges[1:2]),
+      bottom=dataRanges[4] + 0.05*diff(dataRanges[3:4]), 
+      stroke="black",
+      valign="top"
+    )
+  )
+}
+

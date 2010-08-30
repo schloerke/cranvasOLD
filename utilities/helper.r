@@ -44,8 +44,8 @@ make_new_plot <- function(windowRanges,width=600,height=600){
 #'  make_window_ranges(c(0,1,2,3))
 make_window_ranges <- function(dataRanges, xlab=NULL, ylab=NULL, xtickmarks=NULL, ytickmarks=NULL, main=NULL) {
 
+  # add more space for the Y label 
   if (!is.null(ylab)) {
-    # add more space for the label 
     xmin = dataRanges[1] - 0.1*diff(dataRanges[1:2])
 	} else {
     xmin = dataRanges[1] - 0.065*diff(dataRanges[1:2])
@@ -53,8 +53,8 @@ make_window_ranges <- function(dataRanges, xlab=NULL, ylab=NULL, xtickmarks=NULL
 	xmax = dataRanges[2]+0.05*diff(dataRanges[1:2])
 	
 	
+  # add more space for the X label 
 	if (!is.null(xlab)) {
-    # add more space for the label 
     ymin = dataRanges[3]-0.1*diff(dataRanges[3:4])
 	} else {
     ymin = dataRanges[3]-0.065*diff(dataRanges[3:4])
@@ -63,16 +63,16 @@ make_window_ranges <- function(dataRanges, xlab=NULL, ylab=NULL, xtickmarks=NULL
 
   # little extra space necessary for xtickmarks	
   if (!is.null(xtickmarks)) {
-    ### Should this be "ymin = ymin - 0.05*diff(dataRanges[3:4])" ?
-    ymin = dataRanges[3]-0.05*diff(dataRanges[3:4])
+#    ymin = dataRanges[3]-0.05*diff(dataRanges[3:4])
+    ymin = ymin - 0.05*diff(dataRanges[3:4])
   }
 
   # based on length of y tickmarks extra space
 	if (!is.null(ytickmarks)) {
     xwidth = max(str_length(as.character(ytickmarks)))
     # each character gives 0.75% extra space
-    ### Should this be "xmin = xmin - 0.0075*xwidth*diff(dataRanges[1:2])" ?
-    xmin = dataRanges[1] - 0.0075*xwidth*diff(dataRanges[1:2])		
+#    xmin = dataRanges[1] - 0.0075*xwidth*diff(dataRanges[1:2])		
+    xmin = xmin - 0.0075*xwidth*diff(dataRanges[1:2])
   }
 
   # extra space for window title
@@ -94,31 +94,3 @@ make_window_ranges <- function(dataRanges, xlab=NULL, ylab=NULL, xtickmarks=NULL
 	windowRanges  
 }
 
-#' add a title using qt
-#'
-add_title_fun <- function(plotObj, dataRanges, title) {
-  if (!is.null(title)) {
-    qstrokeColor(plotObj) <- "black"
-    qdrawText(
-      plotObj,
-      text = title,
-      x = dataRanges[1] + 0.5*diff(dataRanges[1:2]),
-      y = dataRanges[4] + 0.05*diff(dataRanges[3:4]),
-      valign = "top"
-    )
-  }    
-}
-
-#' add a title using layers
-#'
-add_title <- function(plotObj, dataRanges, title) {
-  plotObj$add_layer(
-    text(
-      text=title,
-      left=dataRanges[1]+ 0.5*diff(dataRanges[1:2]),
-      bottom=dataRanges[4] + 0.05*diff(dataRanges[3:4]), 
-      stroke="black",
-      valign="top"
-    )
-  )
-}
