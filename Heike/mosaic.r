@@ -23,7 +23,13 @@ find_y_label <- function(df) {
 
 qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = TRUE, na.rm = FALSE, subset=NULL, colour="grey30", main=NULL, ...) {
   odata <- data
-  odata$hilite <- FALSE
+  if (is.null(odata$hilite)) odata$hilite <- FALSE
+  
+#  if (sum(odata$hilite) > 0) {
+#	formula <- paste("hilite + ", formula, sep="")
+#	divider <- c("hspine",divider)
+#  }
+  
   data <- productplots:::prodcalc(odata, formula, divider, cascade, scale_max, na.rm = na.rm)
 
 
@@ -41,6 +47,8 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
   .level <- max(data$level)
   .df.title <- FALSE
   .clevel <- 0
+  form <- parse_product_formula(formula)
+  .activevars <- c(form$marg, form$cond)
 
   top <- data$t
   bottom <- data$b
@@ -52,7 +60,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
   ylab <- find_y_label(data)
 
   dataRanges <- c(make_data_ranges(c(min(left), max(right))),make_data_ranges(c(min(bottom),max(top))))
-  bprint(dataRanges)
+#  bprint(dataRanges)
 
 # space in window around plot (margins in base R)  
 # this space depends on the labels needed on the left
@@ -124,6 +132,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 	else formstring <- paste(formstring,"1")
 		
 	if (length(fcond) > 0) formstring <- paste(formstring, "|", paste(fcond, collapse= "+"))
+	.activevars <<- c(fmarg, fcond)
 	
 	return(formstring)
   }
@@ -153,7 +162,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 	  info <- subset(data, (y <= t) & (y >= b) & (x <= r) & (x >=l) & (level == .level))
 #	  print(str(info))
 	  if (nrow(info)>0) {
-	    idx <- setdiff(names(data),c("l","t","r","b", ".wt","level", "hilite"))[1:.level]
+	    idx <- setdiff(names(data),c("l","t","r","b", ".wt","level"))[1:.level]
 	    
 	    infostring <- character()
 	    infodata <- as.character(unlist(info[1,idx]))
@@ -242,8 +251,41 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 	bottom = min(.startBrush[2], .endBrush[2])
 
 	data$hilite <<- (data$level == .level) & (data$l <= right) & (data$r >= left) & (data$b <= top) & (data$t >= bottom)  
+
   }
 
+  getSelected <- function() {
+	hdata <- subset(data, (hilite==TRUE) & (level == .level))[,.activevars]
+
+
+	if (length(.activevars) >=2) {
+#	browser()
+	  conds <- adply(hdata, 1, function (x) {
+	  	cond <- adply(cbind(names(x),as.character(unlist(x))), 1, function(y) {
+			cstr <- ""
+	  		if (is.na(y[2])) cstr <- paste("is.na(",y[1],")", sep="")
+	  		else cstr <- paste("(",y[1],"=='",y[2],"')",sep="")
+	  		return(cstr)
+	  	}) 
+		return(paste(cond$V1, collapse=" & "))
+	  })
+	} else {
+	  conds <- ldply(hdata, function (x) {
+	    cond <- paste(.activevars ,paste("'",as.character(unlist(x)),"'",sep=""), sep="==")
+	    cond[which(is.na(x))] <- paste("is.na(",.activevars[1],")", sep="")
+	    return(paste(cond, collapse=" & "))
+	  })
+	} 
+	cond1 <- paste("(",conds[,ncol(conds)],")", sep="", collapse=" | ")
+
+	idx <- with(odata, which(eval(parse(text=cond1))))
+
+	print(cond1)
+	print("hilited")
+	print(length(idx))
+	return(idx)
+  }
+  
   drag <- function(item, event, ...) {  
 	#browser()
 #	print("dragging")
@@ -257,6 +299,9 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
   mouseReleaseFun <- function(item, event, ...) {	
 	.endBrush <<- as.numeric(event$pos())
 	setHiliting()	
+
+	odata$hilite <<- FALSE
+	odata$hilite[getSelected()] <<- TRUE
 	
 	qupdate(hilitelayer)
 	
@@ -266,7 +311,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 
   
   keyPressFun <- function(item, event, ...) {
-	print(event$key())
+#	print(event$key())
 	key <- event$key()
 
 	datachanged <- FALSE
@@ -365,18 +410,21 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 		if (length(form$cond) > 0) formstring <- paste(formstring, "|", paste(form$cond, collapse= "+"))
 		
 		formula <<- as.formula(formstring)
-		bprint(formula)
+#		bprint(formula)
 #browser()
 		datachanged <- TRUE
 	}
 	
 	if (datachanged) {
+
+#	  if (sum(odata$hilite) > 0) {
+#	    formula <- paste("hilite + ", formula, sep="")
+#	    divider <- c("hspine",divider)
+#      }
 	  data <<- productplots:::prodcalc(odata, formula, divider, cascade, scale_max, na.rm = na.rm)
       if (is.null(data$hilite)) data$hilite <<- FALSE	
 	}
 
-print("level:")
-print(.level)
 	# should be updating the data set, then start all fresh ...
 	# need to figure out how to properly deal with hiliting of parts of the boxes
 
@@ -389,8 +437,8 @@ print(.level)
   
   bglayer = qlayer(scene, coords, cache = TRUE, limits = lims, clip=FALSE)
   datalayer = qlayer(scene, mosaic.all,  cache = TRUE, limits = lims, clip=FALSE)
-  hilitelayer = qlayer(scene, hilite, hoverMoveEvent=hover, 
-  									  hoverLeaveEvent = hover.leave, 
+  hilitelayer = qlayer(scene, hilite, hoverMoveFun=hover, 
+  									  hoverLeaveFun = hover.leave, 
   									  mousePressFun=mousePressFun,
   									  keyPressFun=keyPressFun,
   									  mouseMoveFun=drag, 
@@ -402,7 +450,7 @@ print(.level)
   view
 }
 
-plot1 <- qmosaic(happy, ~ health+sex+happy, c("vspine","hspine","hspine"))  
+plot1 <- qmosaic(happy, ~ hilite+health+sex+happy, c("vspine","hspine","hspine","hspine"))  
 #print(plot1)
 
 #plot1 <- qmosaic(happy, ~ health+sex+happy, c("fluct","hspine"))  
@@ -411,3 +459,7 @@ print(plot1)
 #qmosaic(happym, ~ health+sex+happy, c("vspine","hspine","hspine"))  
 
 #qmosaic(mutaframe(happy), ~ health+sex+happy, c("vspine","hspine","hspine"))  
+
+#tc <- as.data.frame(Titanic)
+#plot1 <- qmosaic(tc, Freq~Survived+Sex+Class+Age, c("vspine","hspine","hspine","hspine"))
+#print(plot1)
