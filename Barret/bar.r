@@ -15,7 +15,17 @@ zero_then_top_by_order <- function(top, top_order) {
   c(0, top[top_order[-length(top_order)]])
 }
 
-continuous_to_bars <- function(data, splitBy, position, color, fill, stroke, ...) {
+continuous_to_bars <- function(data = NULL, splitBy = NULL, position = "none", color = NULL, fill = NULL, stroke = NULL, ...) {
+  
+  original = list(
+      data = data, 
+      splitBy = splitBy,
+      color = color,
+      stroke = stroke,
+      fill = fill,
+      position = position
+    ) 
+  
   d <- suppressWarnings(hist(data,plot=FALSE,...))
   breaks <- d$breaks
 #  bprint(breaks)
@@ -25,12 +35,21 @@ continuous_to_bars <- function(data, splitBy, position, color, fill, stroke, ...
   
   data_pos <- melt(bar_top)
   names(data_pos) <- c("label", "group", "top")
-  print(data_pos)
+#  print(data_pos)
   data_pos$bottom <- rep(0, nrow(data_pos))
   
   bar_bottom <- array(0, dim(bar_top))
   label_names <- dimnames(bar_top)[[1]]
   split_names <- dimnames(bar_top)[[2]]
+
+  if(is.null(color)) {
+    if(length(split_names) == 1) {
+      data_pos$color <- rep("grey20", nrow(data_pos))      
+    } else {    
+      data_pos$color <- rep(rainbow(length(split_names)), each = length(label_names))
+    }
+  }
+
 #  bprint(label_names)
 #  bprint(split_names)
     
@@ -42,14 +61,14 @@ continuous_to_bars <- function(data, splitBy, position, color, fill, stroke, ...
     data_pos$right <- pos$start
     bar_top <- apply(bar_top, 1, rbind)
         
-    color <- rep(color, length(label_names))
-    data_pos$color <- rep(color, length(label_names))
+#    color <- rep(color, length(label_names))
+#    data_pos$color <- rep(color, length(label_names))
   } else  {
     # (position == "stack" || position == "relative")
     
     
-    color <- rep(color, each <- length(label_names))
-    data_pos$color <- rep(color, each = length(split_names))
+#    color <- rep(color, each <- length(label_names))
+#    data_pos$color <- rep(color, each = length(split_names))
 
     #(position = "stack")
     bar_left <- rep(breaks[1:(break_len-1)], length(split_names))
@@ -93,40 +112,41 @@ continuous_to_bars <- function(data, splitBy, position, color, fill, stroke, ...
   bar_top <- c(bar_top)
   bar_bottom <- c(bar_bottom)
   
-  if (is.null(color)) {
-    if (length(unique(data_pos$group)) == 1) {
-      data_pos$color <- rep("grey20", nrow(data_pos))
-    } else {
-      if(position == "dodge") {
-        color <- rep(rainbow(length(split_names)), length(label_names))        
-      } else {
-        color <- rep(rainbow(length(split_names)), each = length(label_names))
-      }
-    }
-  }
   
   if (is.null(stroke)) {
-    stroke = color
+    stroke = data_pos$color
   }
+  data_pos$stroke = stroke
+  
   if (is.null(fill)) {
-    fill = color
+   fill = data_pos$color
   }
+  data_pos$fill = fill
+  
+  data_pos$color = NULL
 
   
-  print(data_pos)
+#  print(data_pos)
 
   list(
     data_pos = data_pos,
-    top    = bar_top, 
-    bottom = bar_bottom, 
-    left   = bar_left, 
-    right  = bar_right, 
+#    top    = bar_top, 
+#    bottom = bar_bottom, 
+#    left   = bar_left, 
+#    right  = bar_right, 
     label_names = label_names, 
     group_names = split_names,
-    color = color, 
-    breaks = breaks
+#    color = color, 
+    breaks = breaks,
+    original = original
   )
   
+  attributes(data_pos)$original <- original
+  attributes(data_pos)$breaks <- breaks
+  attributes(data_pos)$label_names <- label_names
+  attributes(data_pos)$group_names <- split_names
+
+  data_pos  
 }
 
 #' Create a dot plot
@@ -148,6 +168,7 @@ continuous_to_bars <- function(data, splitBy, position, color, fill, stroke, ...
 #'  # color tests
 #'    qthist(mtcars$disp, horizontal = TRUE, fill = "gold", stroke = "red4")
 #'    qthist(mtcars$disp, mtcars$cyl, stroke = "black")
+#'    qthist(mtcars$disp, mtcars$cyl, stroke = "black", position = "identity")
 #'    qthist(mtcars$disp, mtcars$cyl, position = "dodge", stroke = "black")
 qtdot <- function(
   data, 
@@ -260,38 +281,21 @@ qthist <- function(
 ) {
   
   bars <- continuous_to_bars(data, splitBy, position, color, fill, stroke, ...)
-  color <- bars$color  
+  color <- bars$color 
+  bprint(bars)
+   
 
 #  bprint(bars$left)
 #  bprint(bars$right)
 #  bprint(bars$top)
 #  bprint(bars$bottom)
 #  bprint(bars$color)
-
-  if (is.null(color)) {
-    if (length(bars$group_names) == 1) {
-      color <- "grey20"
-    } else {
-      if(position == "dodge") {
-        color <- rep(rainbow(length(unique(splitBy))), length(bars$label_names))        
-      } else {
-        color <- rep(rainbow(length(unique(splitBy))), each = length(bars$label_names))
-      }
-    }
-  }
   
-  if (is.null(stroke)) {
-    stroke = color
-  }
-  if (is.null(fill)) {
-    fill = color
-  }
-    
   # contains c(x_min, x_max, y_min, y_max)
   if (horizontal) {
-    ranges <- c(make_data_ranges(c(0, bars$top)), make_data_ranges(bars$breaks))
+    ranges <- c(make_data_ranges(c(0, bars$top)), make_data_ranges(attr(bars, "breaks")))
   } else {
-    ranges <- c(make_data_ranges(bars$breaks), make_data_ranges( c(0, bars$top)))
+    ranges <- c(make_data_ranges(attr(bars, "breaks")), make_data_ranges( c(0, bars$top)))
   }
 #  bprint(ranges)
 
@@ -325,9 +329,9 @@ qthist <- function(
 
   # c(obj) makes a matrix into a vector
   if(horizontal)
-    plot1$add_layer(hbar(bottom = c(bars$left), top = c(bars$right), width = c(bars$top), left = c(bars$bottom), fill=fill, stroke = stroke))
+    plot1$add_layer(hbar(bottom = c(bars$left), top = c(bars$right), width = c(bars$top), left = c(bars$bottom), fill=bars$fill, stroke = bars$stroke))
   else
-    plot1$add_layer(vbar(left = c(bars$left), right = c(bars$right), height = c(bars$top), bottom = c(bars$bottom), fill=fill, stroke = stroke))
+    plot1$add_layer(vbar(left = c(bars$left), right = c(bars$right), height = c(bars$top), bottom = c(bars$bottom), fill=bars$fill, stroke = bars$stroke))
 
   draw_x_axes(plot1, ranges, xlab)
   draw_y_axes(plot1, ranges, ylab) 
