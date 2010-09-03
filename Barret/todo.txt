@@ -10,10 +10,11 @@
 
 No more bar chart
 
-Fix histogram
+√ Fix histogram
 
 1-d - continous
-  dot plot 
+  √ histogram
+  √ dot plot 
   density plot
   ?(ash)
   
