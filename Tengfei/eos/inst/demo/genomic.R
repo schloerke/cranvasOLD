@@ -11,8 +11,8 @@ sourceDir <- function(path, trace = TRUE, ...) {
          }
       }
 
-sourceDir('~/Prolang/svn/repos/trunk/eos/pkg/eos/R')
-load('~/Prolang/svn/repos/trunk/eos/pkg/eos/data/cytobands.rda')
+sourceDir('~/Prolang/git/cranvas/Tengfei/eos/R')
+load('~/Prolang/git/cranvas/Tengfei/eos/data/cytobands.rda')
 obj <- cytobands[[1]]
 lst <- by(obj,obj$chr,function(x) data.frame(chr=unique(x$chr),start=min(x$start),end=max(x$end)))
 

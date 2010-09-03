@@ -122,21 +122,20 @@ setMethod('plot','EOSView',function(x,...){
     l <- x@pars$length
     w <- x@pars$width
     if(tp=='sector'){
-    ## rd$width <- width(rd)/sum(as.numeric(width(rd)))*(360-sp*length(rd))
-    ## rd$start <- c(0,cumsum(rd$width)[-(length(rd))])+(1:length(rd)-1)*sp
-    mw <- width(rd)/sum(as.numeric(width(rd)))*(360-sp*length(rd))
-    ms <- c(0,cumsum(mw)[-(length(rd))])+(1:length(rd)-1)*sp
-    paths <- lapply(1:length(rd),function(i){
-      sa <- ms[i]
-      sl <- mw[i]
-      paths <- qglyphSector(0,0,length=l+w*(n-1)+skip*(n-1),width=w,
-                            startAngle=sa,sweepLength=sl)
-    })
+      ## rd$width <- width(rd)/sum(as.numeric(width(rd)))*(360-sp*length(rd))
+      ## rd$start <- c(0,cumsum(rd$width)[-(length(rd))])+(1:length(rd)-1)*sp
+      mw <- width(rd)/sum(as.numeric(width(rd)))*(360-sp*length(rd))
+      ms <- c(0,cumsum(mw)[-(length(rd))])+(1:length(rd)-1)*sp
+      paths <- lapply(1:length(rd),function(i){
+        sa <- ms[i]
+        sl <- mw[i]
+        paths <- qglyphSector(0,0,length=l+w*(n-1)+skip*(n-1),width=w,
+                              startAngle=sa,sweepLength=sl)
+      })
       paintFun <- function(layer,painter){
-      qdrawPath(painter,paths,fill=rainbow(length(paths)),stroke=NA)
+        qdrawPath(painter,paths,fill=rainbow(length(paths)),stroke=NA)
+      }
     }
-  }
-    
     if(tp=='segment'){
       mw <- width(rd)/sum(as.numeric(width(rd)))*(360-sp*length(rd))
       ms <- c(0,cumsum(mw)[-(length(rd))])+(1:length(rd)-1)*sp
@@ -155,17 +154,14 @@ setMethod('plot','EOSView',function(x,...){
       ## compute the position
       mp <- ms+mw/2
       xy1 <- polar2xy(radius=l+w*(n-1)+skip*(n-1),mp)
-##      xy2 <- polar2xy(radius=l+w*(n-1)+skip*(n-1)+w,mp)
+      ##      xy2 <- polar2xy(radius=l+w*(n-1)+skip*(n-1)+w,mp)
       paintFun <- function(layer,painter){
-##        qdrawCircle(painter,xy1$x,xy1$y,r=2,fill='red')
         idx <- !(mp>90 & mp<270)
-        qdrawText(painter,space(ird)[idx],xy1$x[idx],xy1$y[idx],halign='left',valign='bottom',rot=mp[idx],color=rainbow(length(mp))[idx])
-        qdrawText(painter,space(ird)[!idx],xy1$x[!idx],xy1$y[!idx],halign='right',valign='bottom',rot=mp[!idx],color=rainbow(length(mp))[!idx])
-
+        qdrawText(painter,space(ird)[idx],xy1$x[idx],xy1$y[idx],halign='left',valign='center',rot=mp[idx],color=rainbow(length(mp))[idx])
+        qdrawText(painter,space(ird)[!idx],xy1$x[!idx],xy1$y[!idx],halign='right',valign='center',rot=mp[!idx]-180,color=rainbow(length(mp))[!idx])
       }
     }
-      qlayer(scene,paintFun=paintFun,limits=qrect(c(-len,len),c(-len,len)),geometry=qrect(0,0,400,400))
-
+    qlayer(scene,paintFun=paintFun,limits=qrect(c(-len,len),c(-len,len)),geometry=qrect(0,0,400,400))
   })
   ## layer <- qlayer(scene,paintFun=paintFun,limits=qrect(c(-len,len),c(-len,len)),geometry=qrect(0,0,400,400))
   view <- qplotView(scene)
