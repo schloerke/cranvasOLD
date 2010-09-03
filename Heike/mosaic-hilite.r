@@ -21,17 +21,83 @@ find_y_label <- function(df) {
 }
 
 
+
 qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = TRUE, na.rm = FALSE, subset=NULL, colour="grey30", main=NULL, ...) {
   odata <- data
-  if (is.null(odata$hilite)) odata$hilite <- FALSE
-  
-#  if (sum(odata$hilite) > 0) {
-#	formula <- paste("hilite + ", formula, sep="")
-#	divider <- c("hspine",divider)
-#  }
+
+
   
   data <- productplots:::prodcalc(odata, formula, divider, cascade, scale_max, na.rm = na.rm)
+  .level <- max(data$level)-1
 
+  extract.formula <- function(formula) {
+	form <- parse_product_formula(formula)
+
+	ncond <- length(form$cond)
+	nmarg <- length(form$marg)
+	
+	if (ncond <= .level) { 
+		fcond <- form$cond
+		.level <- .level - ncond
+	} else {
+		fcond <- form$cond[(ncond-.level+1):ncond]
+		.level <- 0
+	}
+
+	if (.level == 0) fmarg <- ""
+	else {
+	  if (nmarg <= .level) { 
+		fmarg <- form$marg
+	  } else {
+		fmarg <- form$marg[(nmarg-.level+1):nmarg]
+	  }
+	}
+# piece everything together
+	formstring <- paste(form$wt,"~ ")
+
+	if (length(fmarg) > 0) formstring <- paste(formstring, paste(fmarg, collapse= "+"))
+	else formstring <- paste(formstring,"1")
+		
+	if (length(fcond) > 0) formstring <- paste(formstring, "|", paste(fcond, collapse= "+"))
+	.activevars <<- c(fmarg, fcond)
+	
+	return(formstring)
+  }
+
+
+  setuphilite <- function(formula) {
+	if (is.null(odata$hilite)) odata$hilite <- FALSE
+	
+	formulahil <- NULL
+	dividerhil <- NULL
+		
+	if (sum(odata$hilite, na.rm=T) > 0) {
+  #  browser()
+	  form <- parse_product_formula(formula)
+	  fmarg <- c("hilite", form$marg)
+	  fcond <- form$cond
+	  
+	  formstring <- paste(form$wt,"~ ")
+  
+	  if (length(fmarg) > 0) formstring <- paste(formstring, paste(fmarg, collapse= "+"))
+	  else formstring <- paste(formstring,"1")
+		  
+	  if (length(fcond) > 0) formstring <- paste(formstring, "|", paste(fcond, collapse= "+"))
+  
+	  formulahil <- as.formula(formstring)
+
+	  dvd <- rev(rev(divider)[1:.level])
+	  if (dvd[1] %in% c("hspine", "hbar")) dividerhil <- c("vspine",dvd)
+	  else if (dvd[1] %in% c("vspine", "vbar")) dividerhil <- c("hspine",dvd)
+	}	
+	return(list(formulahil, dividerhil))
+  }
+
+#  hils <- setuphilite(formula=as.formula(extract.formula(formula)))  
+#  formulahil <<- hils[[1]]
+#  dividerhil <<- hils[[2]]
+  
+#  datahil <- productplots:::prodcalc(odata, formulahil, dividerhil, cascade, scale_max, na.rm = na.rm)
 
 #browser()
 
@@ -45,11 +111,14 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
   .startBrush <- NULL
   .endBrush <- NULL
   .level <- max(data$level)
+  
   .df.title <- FALSE
   .clevel <- 0
   form <- parse_product_formula(formula)
   .activevars <- c(form$marg, form$cond)
-
+  .hilitingchanged <- TRUE
+  .brush <- FALSE
+  
   top <- data$t
   bottom <- data$b
   left <- data$l
@@ -103,39 +172,6 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 	
   }
 
-  extract.formula <- function(formula) {
-	form <- parse_product_formula(formula)
-
-	ncond <- length(form$cond)
-	nmarg <- length(form$marg)
-	
-	if (ncond <= .level) { 
-		fcond <- form$cond
-		.level <- .level - ncond
-	} else {
-		fcond <- form$cond[(ncond-.level+1):ncond]
-		.level <- 0
-	}
-
-	if (.level == 0) fmarg <- ""
-	else {
-	  if (nmarg <= .level) { 
-		fmarg <- form$marg
-	  } else {
-		fmarg <- form$marg[(nmarg-.level+1):nmarg]
-	  }
-	}
-# piece everything together
-	formstring <- paste(form$wt,"~ ")
-
-	if (length(fmarg) > 0) formstring <- paste(formstring, paste(fmarg, collapse= "+"))
-	else formstring <- paste(formstring,"1")
-		
-	if (length(fcond) > 0) formstring <- paste(formstring, "|", paste(fcond, collapse= "+"))
-	.activevars <<- c(fmarg, fcond)
-	
-	return(formstring)
-  }
 
   mosaic.all <- function(item, painter, exposed) {
     all.data <- subset(data, level==.level)
@@ -162,7 +198,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 	  info <- subset(data, (y <= t) & (y >= b) & (x <= r) & (x >=l) & (level == .level))
 #	  print(str(info))
 	  if (nrow(info)>0) {
-	    idx <- setdiff(names(data),c("l","t","r","b", ".wt","level"))[1:.level]
+	    idx <- setdiff(names(data),c("l","t","r","b", ".wt","level", "hilite"))[1:.level]
 	    
 	    infostring <- character()
 	    infodata <- as.character(unlist(info[1,idx]))
@@ -193,25 +229,40 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 	    stroke="black")  
   }
   
-  hilite <- function(item, painter, exposed, ...) {
-	if (!is.null(data$hilite)) {
+  recalchiliting <- function() {
+	hils <- setuphilite(formula=as.formula(extract.formula(formula)))  
 
-	hdata <- subset(data, (hilite==TRUE) & (level == .level))
-	if (nrow(hdata)>0) {
+	formulahil <<- hils[[1]]
+	dividerhil <<- hils[[2]]
+	datahil <<- productplots:::prodcalc(odata, formulahil, dividerhil, cascade, scale_max, na.rm = na.rm)
+  }
+
+  hilite <- function(item, painter, exposed, ...) {
+    if (TRUE) {
+      if (.hilitingchanged) {
+	  	recalchiliting()
+	  	.hilitingchanged <<- FALSE
+      }
+
+	  if (.brush) hdata <- subset(data, (hilite==TRUE) & (level == (.level)))
+	  else hdata <- subset(datahil, (hilite==TRUE) & (level == (.level+1)))
+	  
+	  if (nrow(hdata)>0) {
+	  
+		top <- hdata$t
+		bottom <- hdata$b
+		left <- hdata$l
+		right <- hdata$r
 	
-	  top <- hdata$t
-	  bottom <- hdata$b
-	  left <- hdata$l
-	  right <- hdata$r
-  
-	  qdrawRect(painter,
-		left, 
-		bottom, 
-		right,
-		top, 
-		fill="darkred")
+		qdrawRect(painter,
+		  left, 
+		  bottom, 
+		  right,
+		  top, 
+		  fill="darkred")
+	  }
     }
-    }   
+
 	if (!is.null(.queryPos)) {
 		drawInfoString(item, painter, exposed)
 	}
@@ -236,6 +287,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
   mousePressFun <- function(item, event, ...) {  
 	#browser()
 #	print("mousedown")
+    .brush <<- TRUE
 	if (is.null(.startBrush)) 
 		.startBrush <<- as.numeric(event$pos())
 	.queryPos <<- NULL
@@ -251,6 +303,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 	bottom = min(.startBrush[2], .endBrush[2])
 
 	data$hilite <<- (data$level == .level) & (data$l <= right) & (data$r >= left) & (data$b <= top) & (data$t >= bottom)  
+	
 
   }
 
@@ -280,9 +333,9 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 
 	idx <- with(odata, which(eval(parse(text=cond1))))
 
-	print(cond1)
-	print("hilited")
-	print(length(idx))
+#	print(cond1)
+#	print("hilited")
+#	print(length(idx))
 	return(idx)
   }
   
@@ -302,6 +355,8 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 
 	odata$hilite <<- FALSE
 	odata$hilite[getSelected()] <<- TRUE
+    .brush <<- FALSE
+    .hilitingchanged <<- TRUE
 	
 	qupdate(hilitelayer)
 	
@@ -319,10 +374,16 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 	form <- parse_product_formula(formula)
 	
 	if (key == Qt$Qt$Key_Up) {		# arrow up
-	  if (.level > 1) .level <<- .level - 1
+	  if (.level > 1) {
+	    .level <<- .level - 1
+	    .hilitingchanged <<- TRUE
+	  }
 	}
 	if (key == Qt$Qt$Key_Down) {		# arrow down
-	  if (.level < max(data$level)) .level <<- .level + 1
+	  if (.level < max(data$level)) {
+	    .level <<- .level + 1
+	    .hilitingchanged <<- TRUE
+	  }
 	}
 	if (key == Qt$Qt$Key_Left) {		# arrow left
 	# move variable into mosaic plot from left
@@ -410,19 +471,15 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 		if (length(form$cond) > 0) formstring <- paste(formstring, "|", paste(form$cond, collapse= "+"))
 		
 		formula <<- as.formula(formstring)
-#		bprint(formula)
-#browser()
 		datachanged <- TRUE
 	}
 	
 	if (datachanged) {
+	  .hilitingchanged <<- TRUE
 
-#	  if (sum(odata$hilite) > 0) {
-#	    formula <- paste("hilite + ", formula, sep="")
-#	    divider <- c("hspine",divider)
-#      }
 	  data <<- productplots:::prodcalc(odata, formula, divider, cascade, scale_max, na.rm = na.rm)
-      if (is.null(data$hilite)) data$hilite <<- FALSE	
+
+
 	}
 
 	# should be updating the data set, then start all fresh ...
@@ -450,7 +507,8 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
   view
 }
 
-plot1 <- qmosaic(happy, ~ hilite+health+sex+happy, c("vspine","hspine","hspine","hspine"))  
+happy$hilite <- happy$marital =="married"
+plot1 <- qmosaic(happy, ~ health+sex+happy, c("vspine","hspine","hspine"))  
 #print(plot1)
 
 #plot1 <- qmosaic(happy, ~ health+sex+happy, c("fluct","hspine"))  
