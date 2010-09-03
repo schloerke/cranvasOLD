@@ -16,7 +16,7 @@ p2 <- function(layer,painter){
 s1 <- qscene()
 s2 <- qscene()
 l1 <- qlayer(s1,p1,limits=qrect(0,0,100,100))
-l2 <- qlayer(s2,p2,limits=qrect(0,0,100,100),col=2)
+l2 <- qlayer(s2,p2,limits=qrect(0,0,100,100))
 v1 <- qplotView(s1)
 v1$show()
 v2 <- qplotView(s2)
@@ -31,7 +31,7 @@ add_listener(mydf,function(i,j){
 
 
 ## Then when you change the color slots
-mydf$color[50] <- I('black')
+mydf$color[70] <- I('black')
 mydf$color[60] <- I('blue')
 ## change back
 mydf$color <- I('red')
