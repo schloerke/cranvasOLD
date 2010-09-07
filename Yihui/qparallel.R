@@ -20,7 +20,8 @@
 qparallel = function(data, vars = names(data), scale = "range", 
     col = "black", horizontal = TRUE, boxplot = FALSE, boxwex, 
     jitter = NULL, amount = NULL, mar = c(0.04, 0.04, 0.04, 0.04), 
-    main = "The Useless Title", verbose = getOption("verbose")) {
+    main = paste("Parallel Coordinates Plot of", deparse(substitute(data))), 
+    verbose = getOption("verbose")) {
     ## parameters for the brush
     # brush status
     .brushed = FALSE
@@ -273,14 +274,17 @@ qparallel = function(data, vars = names(data), scale = "range",
     pcp.yaxis = qlayer(root, function(item, painter) {
         qdrawText(painter, yticklab, 0.9, ytickloc, "right", 
             "center")
-        # \tqdrawSegment(painter, .92, ytickloc, 1, ytickloc, stroke='black')
+        # qdrawSegment(painter, .92, ytickloc, 1, ytickloc, stroke='black')
     }, limits = qrect(c(0, 1), c(lims[3], lims[4])), clip = FALSE, 
         row = 1, col = 0)
     # x-axis
     pcp.xaxis = qlayer(root, function(item, painter) {
         qdrawText(painter, xticklab, xtickloc, 0.9, "center", 
             "top")
-        # \tqdrawSegment(painter,xtickloc,.92,xtickloc,1,stroke='black')
+        xlabWidth = max(xr * mar[c(2, 4)], max(qstrWidth(painter, 
+            xticklab[c(1, length(xticklab))]))/2)
+        lims[, 1] <<- xspan + c(-1, 1) * xlabWidth
+        # qdrawSegment(painter,xtickloc,.92,xtickloc,1,stroke='black')
     }, limits = qrect(c(lims[1], lims[2]), c(0, 1)), clip = FALSE, 
         row = 2, col = 1)
     
@@ -298,10 +302,10 @@ qparallel = function(data, vars = names(data), scale = "range",
     
     layout = root$gridLayout()
     layout$setRowStretchFactor(0, 1)
-    layout$setRowStretchFactor(1, 5)
+    layout$setRowStretchFactor(1, 6)
     layout$setRowStretchFactor(2, 1)
     layout$setColumnStretchFactor(0, 1)
-    layout$setColumnStretchFactor(1, 5)
+    layout$setColumnStretchFactor(1, 6)
     
     view = qplotView(scene = scene)
     view
