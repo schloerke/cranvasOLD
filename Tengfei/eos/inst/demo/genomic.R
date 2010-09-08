@@ -56,6 +56,7 @@ targetTrack <- GenomicData(targetRanges, targets[, c("strand",
 "name", "target")], value=c(5,6),chrom = paste("chr", targets$chrom,
 sep = ""), genome = "hg19")
 
+targetTrack
 
 
 ir <- IRanges(start=mydf$start,end=mydf$end)
@@ -79,6 +80,12 @@ e6 <- EOSTrack(ird3,type='line')
 eosview <- EOSView(list(e4,e1,e5,e6,e3),scale=max(end(ird)),globalmap=ird)
 
 eosplot(eosview)
-space(e1@data)
-unique(space(e6@data))
 
+library(IRanges)
+ranges <- IRanges(c(1,2,3),c(4,5,6))
+filter <- c(1L,0L,1L)
+score <- c(10L,2L,NA)
+rd <- RangedData()
+rd <- RangedData(ranges)
+rd <- RangedData(ranges,score)
+rd
