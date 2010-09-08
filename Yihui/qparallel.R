@@ -17,10 +17,9 @@
 
 # some brushing parameters are not put in the function arguments yet
 
-qparallel = function(data, vars = names(data), scale = "range", 
-    col = "black", horizontal = TRUE, boxplot = FALSE, boxwex, 
-    jitter = NULL, amount = NULL, mar = c(0.04, 0.04, 0.04, 0.04), 
-    main = paste("Parallel Coordinates Plot of", deparse(substitute(data))), 
+qparallel = function(data, vars = names(data), scale = "range", col = "black",
+    horizontal = TRUE, boxplot = FALSE, boxwex, jitter = NULL, amount = NULL, mar = c(0.04,
+        0.04, 0.04, 0.04), main = paste("Parallel Coordinates Plot of", deparse(substitute(data))),
     verbose = getOption("verbose")) {
     ## parameters for the brush
     # brush status
@@ -36,6 +35,9 @@ qparallel = function(data, vars = names(data), scale = "range",
     .bstart = c(NA, NA)
     # move brush?
     .bmove = FALSE
+    # evaluate the title string right now!
+    main
+    # margins for the plot region
     mar = rep(mar, length.out = 4)
     scale = switch(scale, range = function(x) {
         xna = x[!is.na(x)]
@@ -43,7 +45,7 @@ qparallel = function(data, vars = names(data), scale = "range",
     }, var = base:::scale, I = function(x) x, get(scale))
     data = as.data.frame(data)
     if (!is.null(vars)) {
-        if (class(vars) == "formula") 
+        if (class(vars) == "formula")
             vars = attr(terms(vars, data = data), "term.labels")
         data = subset(data, select = vars)
     }
@@ -58,8 +60,7 @@ qparallel = function(data, vars = names(data), scale = "range",
     if (any(const.col)) {
         data = data[, !const.col]
         vars = vars[!const.col]
-        warning("removed constant column(s) ", paste(which(const.col), 
-            collapse = ","))
+        warning("removed constant column(s) ", paste(which(const.col), collapse = ","))
     }
     # back up original data
     # odata = data
@@ -70,13 +71,12 @@ qparallel = function(data, vars = names(data), scale = "range",
     n = nrow(data)
     col = rep(col, length.out = n)
     if (!is.null(jitter) && is.character(jitter)) {
-        data[, jitter] = apply(data[, jitter, drop = FALSE], 
-            2, base::jitter, amount = amount)
+        data[, jitter] = apply(data[, jitter, drop = FALSE], 2, base::jitter, amount = amount)
     }
     data = apply(data, 2, scale)
     # for boxplots
     bxpstats = apply(data, 2, function(x) boxplot.stats(x, do.conf = FALSE)$stats)
-    if (missing(boxwex)) 
+    if (missing(boxwex))
         boxwex = max(1/p, 0.2)
     # switch x and y according to the direction
     if (horizontal) {
@@ -99,27 +99,27 @@ qparallel = function(data, vars = names(data), scale = "range",
     yspan = range(y, na.rm = TRUE)
     xr = diff(xspan)
     yr = diff(yspan)
-    
+
     # brush range: horizontal and vertical
     .brange = c(xr, yr)/20
-    lims = matrix(c(xspan + c(-1, 1) * xr * mar[c(2, 4)], yspan + 
-        c(-1, 1) * yr * mar[c(1, 3)]), 2)
-    
-    ## for large data, store these large vectors beforehand or process them real-time?
+    lims = matrix(c(xspan + c(-1, 1) * xr * mar[c(2, 4)], yspan + c(-1, 1) * yr *
+        mar[c(1, 3)]), 2)
+
+    # creating starting and ending vectors, because indexing in real-time can be slow
     segx0 = as.vector(t.default(x[, 1:(p - 1)]))
     segx1 = as.vector(t.default(x[, 2:p]))
     segy0 = as.vector(t.default(y[, 1:(p - 1)]))
     segy1 = as.vector(t.default(y[, 2:p]))
     nn = n * (p - 1)
     segcol = rep(col, each = p - 1)
-    
+
     ## needs vectorization here!!
     # given x, calculate y
     f = function(x0, y) {
-        if (x0 <= 1) 
+        if (x0 <= 1)
             return(y[1])
         else {
-            if (x0 >= p) 
+            if (x0 >= p)
                 return(y[p])
             else {
                 i = floor(x0)
@@ -127,19 +127,17 @@ qparallel = function(data, vars = names(data), scale = "range",
             }
         }
     }
-    
+
     pcp_Segment = function(item, painter) {
-        qdrawRect(painter, lims[1, 1], lims[1, 2], lims[2, 1], 
-            lims[2, 2], stroke = .bgcolor, fill = .bgcolor)
-        qdrawSegment(painter, xtickloc, lims[1, 2], xtickloc, 
-            lims[2, 2], stroke = "white")
-        qdrawSegment(painter, lims[1, 1], ytickloc, lims[2, 1], 
-            ytickloc, stroke = "white")
+        qdrawRect(painter, lims[1, 1], lims[1, 2], lims[2, 1], lims[2, 2], stroke = .bgcolor,
+            fill = .bgcolor)
+        qdrawSegment(painter, xtickloc, lims[1, 2], xtickloc, lims[2, 2], stroke = "white")
+        qdrawSegment(painter, lims[1, 1], ytickloc, lims[2, 1], ytickloc, stroke = "white")
         ntime = Sys.time()
-        if (verbose) 
+        if (verbose)
             message("drawing pcp segments")
         qdrawSegment(painter, segx0, segy0, segx1, segy1, stroke = segcol)
-        if (verbose) 
+        if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
     pcp_Boxplot = function(item, painter) {
@@ -149,14 +147,10 @@ qparallel = function(data, vars = names(data), scale = "range",
         }
         qstrokeColor(painter) = "black"
         for (i in (1:p)[numcol]) {
-            x0 = c(rep(i - boxwex/2, 6), i + boxwex/2, rep(i, 
-                2))
-            y0 = c(bxpstats[, i], rep(bxpstats[2, i], 2), bxpstats[c(1, 
-                4), i])
-            x1 = c(rep(i + boxwex/2, 5), i - boxwex/2, i + boxwex/2, 
-                rep(i, 2))
-            y1 = c(bxpstats[, i], rep(bxpstats[4, i], 2), bxpstats[c(2, 
-                5), i])
+            x0 = c(rep(i - boxwex/2, 6), i + boxwex/2, rep(i, 2))
+            y0 = c(bxpstats[, i], rep(bxpstats[2, i], 2), bxpstats[c(1, 4), i])
+            x1 = c(rep(i + boxwex/2, 5), i - boxwex/2, i + boxwex/2, rep(i, 2))
+            y1 = c(bxpstats[, i], rep(bxpstats[4, i], 2), bxpstats[c(2, 5), i])
             if (horizontal) {
                 qdrawSegment(painter, x0, y0, x1, y1)
                 qlineWidth(painter) = 3
@@ -170,7 +164,7 @@ qparallel = function(data, vars = names(data), scale = "range",
                 qlineWidth(painter) = 1
             }
         }
-        if (verbose) 
+        if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
     pcpBrushStart = function(item, event) {
@@ -187,7 +181,7 @@ qparallel = function(data, vars = names(data), scale = "range",
         }
         pos = as.numeric(event$pos())
         # simple click: don't change .brange
-        if (!all(pos == .bstart) && !.bmove) 
+        if (!all(pos == .bstart) && !.bmove)
             .brange <<- pos - .bstart
         .brushed <<- rep(FALSE, n)
         if (horizontal) {
@@ -197,14 +191,12 @@ qparallel = function(data, vars = names(data), scale = "range",
             xb = pos[1] + c(-1, 1) * abs(.brange[1])
             tmp0 = matrix(nrow = n, ncol = 2)
             for (i in 1:n) {
-                tmp0[i, ] = c(f(xb[1], y[i, ]), f(xb[2], y[i, 
-                  ]))
+                tmp0[i, ] = c(f(xb[1], y[i, ]), f(xb[2], y[i, ]))
             }
-            if (length(xi)) 
+            if (length(xi))
                 tmp0 = cbind(tmp0, y[, xi, drop = FALSE])
-            .brushed = apply(tmp0, 1, function(xx) (min(xx) < 
-                pos[2] + abs(.brange[2])) & (max(xx) > pos[2] - 
-                abs(.brange[2])))
+            .brushed = apply(tmp0, 1, function(xx) (min(xx) < pos[2] + abs(.brange[2])) &
+                (max(xx) > pos[2] - abs(.brange[2])))
             .brushed[is.na(.brushed)] = FALSE
             .brushed <<- .brushed
             #                 print(.brushed)
@@ -215,18 +207,16 @@ qparallel = function(data, vars = names(data), scale = "range",
             yb = pos[2] + c(-1, 1) * abs(.brange[2])
             tmp0 = matrix(nrow = n, ncol = 2)
             for (i in 1:n) {
-                tmp0[i, ] = c(f(yb[1], x[i, ]), f(yb[2], x[i, 
-                  ]))
+                tmp0[i, ] = c(f(yb[1], x[i, ]), f(yb[2], x[i, ]))
             }
-            if (length(yi)) 
+            if (length(yi))
                 tmp0 = cbind(tmp0, x[, yi, drop = FALSE])
-            .brushed <<- apply(tmp0, 1, function(xx) (min(xx) < 
-                pos[1] + abs(.brange[1])) & (max(xx) > pos[1] - 
-                abs(.brange[1])))
+            .brushed <<- apply(tmp0, 1, function(xx) (min(xx) < pos[1] + abs(.brange[1])) &
+                (max(xx) > pos[1] - abs(.brange[1])))
         }
         .bpos <<- pos
         qupdate(pcp.brush)
-        if (verbose) 
+        if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
     pcpBrush = function(item, painter) {
@@ -234,13 +224,12 @@ qparallel = function(data, vars = names(data), scale = "range",
             message("drawing brushed segments")
             ntime = Sys.time()
         }
-        
+
         if (!any(is.na(.bpos))) {
             qlineWidth(painter) = 2
             #qdash(painter)=c(1,3,1,3)
-            qdrawRect(painter, .bpos[1] - .brange[1], .bpos[2] - 
-                .brange[2], .bpos[1] + .brange[1], .bpos[2] + 
-                .brange[2], stroke = .bcolor)
+            qdrawRect(painter, .bpos[1] - .brange[1], .bpos[2] - .brange[2], .bpos[1] +
+                .brange[1], .bpos[2] + .brange[2], stroke = .bcolor)
         }
         if (sum(.brushed, na.rm = TRUE) >= 1) {
             qlineWidth(painter) = 3
@@ -255,58 +244,48 @@ qparallel = function(data, vars = names(data), scale = "range",
             #             print(nn)
             #             print(str(tmpy))
             #             print(str(tmpx))
-            qdrawSegment(painter, tmpx[-nn], tmpy[-nn], tmpx[-1], 
-                tmpy[-1])
+            qdrawSegment(painter, tmpx[-nn], tmpy[-nn], tmpx[-1], tmpy[-1])
         }
-        if (verbose) 
+        if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
-    
+
     scene = qscene()
     root = qlayer(scene)
     # title
     pcp.title = qlayer(root, function(item, painter) {
-        qdrawText(painter, main, (lims[1] + lims[2])/2, 0, "center", 
-            "bottom")
-    }, limits = qrect(c(lims[1], lims[2]), c(0, 1)), clip = FALSE, 
-        row = 0, col = 1)
+        qdrawText(painter, main, (lims[1] + lims[2])/2, 0, "center", "bottom")
+    }, limits = qrect(c(lims[1], lims[2]), c(0, 1)), clip = FALSE, row = 0, col = 1)
     # y-axis
     pcp.yaxis = qlayer(root, function(item, painter) {
-        qdrawText(painter, yticklab, 0.9, ytickloc, "right", 
-            "center")
+        qdrawText(painter, yticklab, 0.9, ytickloc, "right", "center")
         # qdrawSegment(painter, .92, ytickloc, 1, ytickloc, stroke='black')
-    }, limits = qrect(c(0, 1), c(lims[3], lims[4])), clip = FALSE, 
-        row = 1, col = 0)
+    }, limits = qrect(c(0, 1), c(lims[3], lims[4])), clip = FALSE, row = 1, col = 0)
     # x-axis
     pcp.xaxis = qlayer(root, function(item, painter) {
-        qdrawText(painter, xticklab, xtickloc, 0.9, "center", 
-            "top")
-        xlabWidth = max(xr * mar[c(2, 4)], max(qstrWidth(painter, 
-            xticklab[c(1, length(xticklab))]))/2)
+        qdrawText(painter, xticklab, xtickloc, 0.9, "center", "top")
+        xlabWidth = max(xr * mar[c(2, 4)], max(qstrWidth(painter, xticklab[c(1, length(xticklab))]))/2)
         lims[, 1] <<- xspan + c(-1, 1) * xlabWidth
         # qdrawSegment(painter,xtickloc,.92,xtickloc,1,stroke='black')
-    }, limits = qrect(c(lims[1], lims[2]), c(0, 1)), clip = FALSE, 
-        row = 2, col = 1)
-    
-    pcp.main = qlayer(root, pcp_Segment, limits = qrect(lims), 
-        clip = FALSE, row = 1, col = 1)
-    if (boxplot) {
-        pcp.boxplot = qlayer(root, pcp_Boxplot, limits = qrect(lims), 
-            row = 1, col = 1)
-    }
-    pcp.brush = qlayer(root, pcpBrush, mousePressFun = pcpBrushStart, 
-        mouseReleaseFun = pcpIdentify, mouseDoubleClickFun = pcpMove, 
-        mouseMove = pcpIdentify, limits = qrect(lims), row = 1, 
+    }, limits = qrect(c(lims[1], lims[2]), c(0, 1)), clip = FALSE, row = 2, col = 1)
+
+    pcp.main = qlayer(root, pcp_Segment, limits = qrect(lims), clip = FALSE, row = 1,
         col = 1)
-    
-    
+    if (boxplot) {
+        pcp.boxplot = qlayer(root, pcp_Boxplot, limits = qrect(lims), row = 1, col = 1)
+    }
+    pcp.brush = qlayer(root, pcpBrush, mousePressFun = pcpBrushStart, mouseReleaseFun = pcpIdentify,
+        mouseDoubleClickFun = pcpMove, mouseMove = pcpIdentify, limits = qrect(lims),
+        row = 1, col = 1)
+
+
     layout = root$gridLayout()
     layout$setRowStretchFactor(0, 1)
     layout$setRowStretchFactor(1, 6)
     layout$setRowStretchFactor(2, 1)
     layout$setColumnStretchFactor(0, 1)
     layout$setColumnStretchFactor(1, 6)
-    
+
     view = qplotView(scene = scene)
     view
-} 
+}
