@@ -19,9 +19,21 @@ qglyphSector <- function(x,y,length,width,startAngle,sweepLength){
   glyph
 }
 
+qglyphArc <- function(x,y,r,startAngle,sweepLength){
+  x0 <- x-r
+  y0 <- y-r
+  len <- 2*r
+  glyph <- Qt$QPainterPath()
+  movex <- x+r*cos(startAngle/180*pi)
+  movey <- y+r*sin(startAngle/180*pi)
+  glyph$moveTo(movex,movey)
+  glyph$arcTo(x0,y0,len,len,-startAngle,-sweepLength)
+  glyph
+}
+
 
 ## s <- qscene()
-## paths <- qglyphSector(0,0,100,20,60,60)
+## paths <- qglyphArc(0,0,100,60,60)
 ## myfun <- function(layer,painter){
 ##    qdrawPath(painter,paths)  
 ## }
