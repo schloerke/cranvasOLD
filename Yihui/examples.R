@@ -37,8 +37,7 @@ qparallel(iris, jitter = "Species", amount = 0.3)
 ## with boxplots
 qparallel(iris, col = rgb(1, 0, 0, 0.5), boxplot = TRUE)
 qparallel(iris, scale = "I", col = rgb(1, 0, 0, 0.5), boxplot = TRUE)
-qparallel(iris, col = rgb(1, 0, 0, 0.5), boxplot = TRUE, horizontal = FALSE, 
-    verbose = TRUE)
+qparallel(iris, col = rgb(1, 0, 0, 0.5), boxplot = TRUE, horizontal = FALSE)
 
 ## what if there are missing values?
 xna = sapply(iris, function(x) {
@@ -50,13 +49,13 @@ qparallel(xna)
 qparallel(mtcars)
 
 ## test speed
-qparallel(matrix(rnorm(1000 * 10), ncol = 10), col = rgb(1, 0, 0, 0.2), 
+qparallel(matrix(rnorm(1000 * 10), ncol = 10), col = rgb(1, 0, 0, 0.2),
     mar = c(0.2, 0.1, 0.1, 0.1))
-qparallel(matrix(rnorm(1000 * 15), ncol = 15), col = rgb(1, 0, 0, 0.2), 
+qparallel(matrix(rnorm(1000 * 15), ncol = 15), col = rgb(1, 0, 0, 0.2),
     boxplot = TRUE)
-qparallel(matrix(rnorm(5000 * 10), ncol = 10), col = rgb(1, 0, 0, 0.2))
+qparallel(matrix(rnorm(10000 * 10), ncol = 10), col = rgb(1, 0, 0, 0.2), verbose = TRUE)
 # 1 million segments to torture Qt!!
-qparallel(matrix(rbeta(1e+05 * 11, 5, 30), ncol = 11), col = rgb(1, 0, 
+qparallel(matrix(rbeta(1e+05 * 11, 5, 30), ncol = 11), col = rgb(1, 0,
     0, 0.05), verbose = TRUE)
 
 
@@ -64,7 +63,7 @@ qparallel(matrix(rbeta(1e+05 * 11, 5, 30), ncol = 11), col = rgb(1, 0,
 if (!require("YaleToolkit")) install.packages("YaleToolkit")
 library(YaleToolkit)
 data(NewHavenResidential)
-qparallel(NewHavenResidential, col = rgb(1, 0, 0, 0.1))
+qparallel(NewHavenResidential, col = rgb(1, 0, 0, 0.1), verbose = TRUE)
 
 # ggplot2
 library(ggplot2)
@@ -79,9 +78,9 @@ qparallel(NewHavenResidential, col = brewer.pal(3, "Set1")[as.integer(NewHavenRe
 qparallel(NewHavenResidential, col = rgb(1, 0, 0, 0.1), horizontal = FALSE)
 
 # jitter is hopeless for huge data...
-qparallel(NewHavenResidential, col = rgb(1, 0, 0, 0.01), jitter = "zone", 
+qparallel(NewHavenResidential, col = rgb(1, 0, 0, 0.01), jitter = "zone",
     amount = 0.3)
-qparallel(NewHavenResidential, col = rgb(1, 0, 0, 0.01), jitter = c("bedrms", 
+qparallel(NewHavenResidential, col = rgb(1, 0, 0, 0.01), jitter = c("bedrms",
     "zone"), amount = 0.2)
 
 if (FALSE) {
@@ -90,7 +89,7 @@ if (FALSE) {
     qparallel(chrom2, mar = c(0.1, 0.1, 0.05, 0.1))
     qparallel(chrom2, col = rgb(1, 0, 0, 0.2), mar = c(0.1, 0.1, 0.05, 0.1))
     qparallel(chrom2, horizontal = FALSE, mar = c(0.1, 0.1, 0.05, 0.1))
-    
+
     ld = read.csv("~/Downloads/ld.csv")
     qparallel(ld, col = rgb(0, 1, 0, 0.2), mar = c(0.1, 0.1, 0.05, 0.1))
 }
@@ -106,7 +105,7 @@ if (FALSE) {
     n = 1e+06
     y = matrix(runif(n * p), ncol = p)
     x = col(y)
-    
+
     system.time({
         for (i in 1:10) {
             segx0 = c(t(x[, 1:(p - 1)]))
@@ -144,4 +143,4 @@ if (FALSE) {
     })
 }
 
-# git pull cranvas master 
+# git pull cranvas master
