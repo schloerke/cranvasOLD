@@ -20,10 +20,12 @@ setClass('EOSTrack',contains=c('GraphicPars'),
 
 setClass('EOSView',contains=c('EOS','GraphicPars'),
          representation(
-                     listData='list'
+                     listData='list',
+                   globalmap='RangedData'     
                      ),
          prototype(elementType='EOSTrack',
-                   pars=new.env()))
+                   pars=new.env()
+                   ))
 
 
      

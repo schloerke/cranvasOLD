@@ -3,6 +3,7 @@
 ##--------------------------------------------------------------##
 
 setGeneric('plot')
+setGeneric('eosplot',function(obj,...) standardGeneric('eosplot'))
 
 ##----------------------------------------------------------------##
 ##                Methods for GraphicsPars
@@ -45,9 +46,6 @@ pushCon <- function(gp1, gp2) {
 }
 
 
-
-
-
 ##----------------------------------------------------------------##
 ##                Constructor for GraphicsPars
 ##----------------------------------------------------------------##
@@ -88,7 +86,7 @@ EOSTrack <- function(obj,type,...){
 ##               Constructor for EOSView
 ##--------------------------------------------------------------##
 
-EOSView <- function(obj,...){
+EOSView <- function(obj,globalmap,...){
   ## obj should be a list of EOSTrack
   if(!all(lapply(obj,function(x){
     class(x)=='EOSTrack'
@@ -101,31 +99,32 @@ EOSView <- function(obj,...){
   gp2@pars$skip <- 10
   gp2@pars$theme <- 'default'
   gp2@pars$spaceRate <- 0.01
+  gp2@pars$unit <- (360-gp2@pars$spaceRate*360*length(globalmap))/sum(as.numeric(width(globalmap)))
+  mw <- globalmap$wipeLength <- width(globalmap)*gp2@pars$unit
+  globalmap$startAngle <- c(0,cumsum(mw)[-(length(globalmap))])+(1:length(globalmap)-1)*gp2@pars$spaceRate*360
   ##gp2@pars$scale <- 
   gp <- pushCon(gp1,gp2)
-  res <- new('EOSView',listData=obj,pars=gp@pars)
+  res <- new('EOSView',listData=obj,pars=gp@pars,globalmap=globalmap)
 }
 
 
-setMethod('plot','EOSView',function(x,...){
+setMethod('eosplot','EOSView',function(obj,...){
   ## if(is.null(myscale)) myscale <- max(end(x@data))
   ## myscale <- x@pars$scale
   scene <- qscene()
-  spaceRate <- x@pars$spaceRate
+  spaceRate <- obj@pars$spaceRate
   sp <- spaceRate*360
-  skip <- x@pars$skip
-  len <- x@pars$length+(x@pars$width+20)*length(x@listData)
-  ##for(n in 1:length(x@listData)){
-  lapply(1:length(x@listData),function(n){
-    rd <- x@listData[[n]]@data
-    tp <- x@listData[[n]]@type
-    l <- x@pars$length
-    w <- x@pars$width
+  skip <- obj@pars$skip
+  len <- obj@pars$length+(obj@pars$width+20)*length(obj@listData)
+  unit <- obj@pars$unit
+  lapply(1:length(obj@listData),function(n){
+    rd <- obj@listData[[n]]@data
+    tp <- obj@listData[[n]]@type
+    l <- obj@pars$length
+    w <- obj@pars$width
     if(tp=='sector'){
-      ## rd$width <- width(rd)/sum(as.numeric(width(rd)))*(360-sp*length(rd))
-      ## rd$start <- c(0,cumsum(rd$width)[-(length(rd))])+(1:length(rd)-1)*sp
-      mw <- width(rd)/sum(as.numeric(width(rd)))*(360-sp*length(rd))
-      ms <- c(0,cumsum(mw)[-(length(rd))])+(1:length(rd)-1)*sp
+      mw <- map2global(obj,rd)$width
+      ms <- map2global(obj,rd)$start
       paths <- lapply(1:length(rd),function(i){
         sa <- ms[i]
         sl <- mw[i]
@@ -137,20 +136,20 @@ setMethod('plot','EOSView',function(x,...){
       }
     }
     if(tp=='segment'){
-      mw <- width(rd)/sum(as.numeric(width(rd)))*(360-sp*length(rd))
-      ms <- c(0,cumsum(mw)[-(length(rd))])+(1:length(rd)-1)*sp
+      mw <- map2global(obj,rd)$width
+      ms <- map2global(obj,rd)$start
       ## compute the position
       mp <- ms+mw/2
       mp <- mp
       xy1 <- polar2xy(radius=l+w*(n-1)+skip*(n-1),mp)
       xy2 <- polar2xy(radius=l+w*(n-1)+skip*(n-1)+w,mp)
       paintFun <- function(layer,painter){
-        qdrawSegment(painter,xy1$x,xy1$y,xy2$x,xy2$y)
+        qdrawSegment(painter,xy1$x,xy1$y,xy2$x,xy2$y,stroke=rainbow(length(mp)))
       }
     }
     if(tp=='text'){
-      mw <- width(rd)/sum(as.numeric(width(rd)))*(360-sp*length(rd))
-      ms <- c(0,cumsum(mw)[-(length(rd))])+(1:length(rd)-1)*sp
+      mw <- map2global(obj,rd)$width
+      ms <- map2global(obj,rd)$start
       ## compute the position
       mp <- ms+mw/2
       xy1 <- polar2xy(radius=l+w*(n-1)+skip*(n-1),mp)
@@ -159,6 +158,63 @@ setMethod('plot','EOSView',function(x,...){
         idx <- !(mp>90 & mp<270)
         qdrawText(painter,space(ird)[idx],xy1$x[idx],xy1$y[idx],halign='left',valign='center',rot=mp[idx],color=rainbow(length(mp))[idx])
         qdrawText(painter,space(ird)[!idx],xy1$x[!idx],xy1$y[!idx],halign='right',valign='center',rot=mp[!idx]-180,color=rainbow(length(mp))[!idx])
+      }
+    }
+    if(tp=='point'){
+      x <- map2global(obj,rd)$start
+      y <- rd$value
+      y <- y/(max(y)-min(y))*(w*0.8)+w*0.1
+      xy <- polar2xy(l+w*(n-1)+skip*(n-1)+y,x)
+      ## need to rescale y
+      paintFun <- function(layer,painter){
+        ## drawbg(painter,obj,l+w*(n-1)+skip*(n-1)+y,w)
+        mw <- map2global(obj,obj@globalmap)$width
+        ms <- map2global(obj,obj@globalmap)$start
+        paths <- lapply(1:length(rd),function(i){
+          sa <- ms[i]
+          sl <- mw[i]
+          paths <- qglyphSector(0,0,length=l+w*(n-1)+skip*(n-1),width=w,
+                                startAngle=sa,sweepLength=sl)
+        })
+        qdrawPath(painter,paths,fill='gray80',stroke=NA)
+        seqlen <- pretty(c(l+w*(n-1)+skip*(n-1),
+                           l+w*(n-1)+skip*(n-1)+w))
+        paths <- lapply(seqlen,function(r){
+          qglyphArc(0,0,r=r,0,360)          
+        })
+        qdrawPath(painter,paths,fill=NA,stroke='white')
+        qdrawCircle(painter,xy$x,xy$y,r=1.5,fill='red',stroke=NA)
+      }
+    }
+    if(tp=='line'){
+      x <- map2global(obj,rd)$start
+      y <- rd$value
+      y <- y/(max(y)-min(y))*(w*0.8)+w*0.1
+      xy <- polar2xy(l+w*(n-1)+skip*(n-1)+y,x)
+      sp <- space(rd)
+      idx <- seq_len(length(sp))
+      ## need to rescale y
+      paintFun <- function(layer,painter){
+        mw <- map2global(obj,obj@globalmap)$width
+        ms <- map2global(obj,obj@globalmap)$start
+        paths <- lapply(1:length(rd),function(i){
+          sa <- ms[i]
+          sl <- mw[i]
+          paths <- qglyphSector(0,0,length=l+w*(n-1)+skip*(n-1),width=w,
+                                startAngle=sa,sweepLength=sl)
+        })
+        qdrawPath(painter,paths,fill='gray80',stroke=NA)
+        seqlen <- pretty(c(l+w*(n-1)+skip*(n-1),
+                           l+w*(n-1)+skip*(n-1)+w))
+        paths <- lapply(seqlen,function(r){
+          qglyphArc(0,0,r=r,0,360)          
+        })
+        qdrawPath(painter,paths,fill=NA,stroke='white')
+        by(idx,sp,function(idx){
+          st <- x[idx]
+          idx <- idx[order(st)]
+          qdrawLine(painter,xy$x[idx],xy$y[idx],stroke='black')
+        })
       }
     }
     qlayer(scene,paintFun=paintFun,limits=qrect(c(-len,len),c(-len,len)),geometry=qrect(0,0,400,400))
@@ -184,6 +240,15 @@ polar2xy <- function(radius,angle){
   data.frame(x=x,y=y)
 }
 
+## obj should be a global scale
+## need to return start angle and wipe length
+map2global <- function(obj,rd){
+  unit <- obj@pars$unit
+  idx <- match(space(rd),space(obj@globalmap))
+  st <- obj@globalmap[idx,]$startAngle+start(rd)*unit
+  wd <- (end(rd)-start(rd))*unit
+  return(data.frame(start=st,width=wd))
+}
 
 
 
