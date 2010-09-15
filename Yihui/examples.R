@@ -1,9 +1,10 @@
 ## examples of qparallel()
 
 ## hints for interaction:
-## double click to switch between drawing the brush and moving the brush
+## drag with the right button to resize the brush; left button to move the brush
 
 library(qtpaint)
+library(plumbr)
 
 # options(verbose = TRUE)
 source("qparallel.R")
@@ -53,10 +54,17 @@ qparallel(matrix(rnorm(1000 * 10), ncol = 10), col = rgb(1, 0, 0, 0.2),
     mar = c(0.2, 0.1, 0.1, 0.1))
 qparallel(matrix(rnorm(1000 * 15), ncol = 15), col = rgb(1, 0, 0, 0.2),
     boxplot = TRUE)
-qparallel(matrix(rnorm(10000 * 10), ncol = 10), col = rgb(1, 0, 0, 0.2), verbose = TRUE)
+# slow for brushing in my laptop
+qparallel(matrix(rnorm(6000 * 10), ncol = 10), col = rgb(1, 0, 0, 0.2),
+    verbose = TRUE)
 # 1 million segments to torture Qt!!
 qparallel(matrix(rbeta(1e+05 * 11, 5, 30), ncol = 11), col = rgb(1, 0,
     0, 0.05), verbose = TRUE)
+
+# linking two parcoords plots
+testdata = as.data.frame(matrix(rnorm(2000 * 10), ncol = 10))
+qparallel(testdata, sprintf("V%d", 1:5))
+qparallel(testdata, sprintf("V%d", 6:10))
 
 
 ## residential data: 18221x8

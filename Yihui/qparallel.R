@@ -19,11 +19,8 @@
 
 qparallel = function(data, vars = names(data), scale = "range", col = "black", 
     horizontal = TRUE, boxplot = FALSE, boxwex, jitter = NULL, amount = NULL, mar = c(0.04, 
-        0.04, 0.04, 0.04), main = paste("Parallel Coordinates Plot of", deparse(substitute(data))), 
-    verbose = getOption("verbose")) {
+        0.04, 0.04, 0.04), main, verbose = getOption("verbose")) {
     ## parameters for the brush
-    # brush status
-    .brushed = FALSE
     # brush color
     .bcolor = "yellow"
     # background color
@@ -34,15 +31,18 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
     # drag start
     .bstart = c(NA, NA)
     # move brush?
-    .bmove = FALSE
-    # evaluate the title string right now!
-    main
+    .bmove = TRUE
+    # the title string
+    dataname = deparse(substitute(data))
+    if (missing(main)) {
+        main = paste("Parallel Coordinates Plot of", dataname)
+    }
     # margins for the plot region
     mar = rep(mar, length.out = 4)
     scale = switch(scale, range = function(x) {
         xna = x[!is.na(x)]
         (x - min(xna))/(max(xna) - min(xna))
-    }, var = base:::scale, I = function(x) x, get(scale))
+    }, var = base:::scale, I = identity, get(scale))
     data = as.data.frame(data)
     if (!is.null(vars)) {
         if (class(vars) == "formula") 
@@ -68,6 +68,8 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
     numcol = sapply(data, class) == "numeric"
     data = sapply(data, as.numeric)
     p = ncol(data)
+    # we need >= 2 columns
+    stopifnot(p > 1)
     n = nrow(data)
     col = rep(col, length.out = n)
     if (!is.null(jitter) && is.character(jitter)) {
@@ -113,6 +115,21 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
     nn = n * (p - 1)
     segcol = rep(col, each = p - 1)
     
+    ## use a mutaframe to store the interaction parameters
+    # store the mutaframe in options() using the name plname -- any other more appropriate place??
+    # plname is like plumbr.dataname, stored in global options
+    plname = paste("plumbr.", dataname, sep = "")
+    if (is.null(getOption(plname))) {
+        mf = mutaframe(brushed = rep(FALSE, n))
+        attr(mf, "bcolor") = "yellow"
+        
+        # very nasty here... I hate eval()ing anything ! why does not R have a setOption() function beside getOption()?
+        eval(parse(text = paste("options(\"", plname, "\"= mf)", sep = "")))
+    }
+    else {
+        mf = getOption(plname)
+    }
+    
     pcp_Grid = function(item, painter) {
         qdrawRect(painter, lims[1, 1], lims[1, 2], lims[2, 1], lims[2, 2], stroke = .bgcolor, 
             fill = .bgcolor)
@@ -157,10 +174,13 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
     }
     pcpBrushStart = function(item, event) {
         .bstart <<- as.numeric(event$pos())
-    }
-    pcpMove = function(item, event) {
-        .bmove <<- !.bmove
-        message("Brush status: ", ifelse(.bmove, "MOVE", "DRAW"))
+        # on right click, we can resize the brush; left click: only move the brush
+        if (event$button() == Qt$Qt$RightButton) {
+            .bmove <<- FALSE
+        }
+        if (event$button() == Qt$Qt$LeftButton) {
+            .bmove <<- TRUE
+        }
     }
     pcpIdentify = function(layer, event) {
         if (verbose) {
@@ -170,17 +190,18 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
         pos = event$pos()
         .bpos <<- as.numeric(pos)
         # simple click: don't change .brange
-        if (!all(.bpos == .bstart) && !.bmove) 
+        if (!all(.bpos == .bstart) && (!.bmove)) {
             .brange <<- .bpos - .bstart
-        .brushed <<- rep(FALSE, n)
+        }
+        # use an extra variable here instead of manipulating mf$brushed, which will cause updating pcp.brush
+        .brushed = rep(FALSE, n)
         rect = qrect(matrix(c(.bpos - .brange, .bpos + .brange), 2, byrow = TRUE))
         hits = layer$locate(rect) + 1
         hits = ceiling(hits/(p - 1))
         .brushed[hits] = TRUE
-        .brushed <<- .brushed
+        mf$brushed = .brushed
         if (verbose) 
             message(format(difftime(Sys.time(), ntime)))
-        qupdate(pcp.brush)
     }
     pcpBrush = function(item, painter) {
         if (verbose) {
@@ -194,6 +215,7 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
             qdrawRect(painter, .bpos[1] - .brange[1], .bpos[2] - .brange[2], .bpos[1] + 
                 .brange[1], .bpos[2] + .brange[2], stroke = .bcolor)
         }
+        .brushed = mf$brushed
         if (sum(.brushed, na.rm = TRUE) >= 1) {
             qlineWidth(painter) = 3
             qstrokeColor(painter) = .bcolor
@@ -216,7 +238,7 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
     }, limits = qrect(c(lims[1], lims[2]), c(0, 1)), clip = FALSE, row = 0, col = 1)
     # y-axis
     pcp.yaxis = qlayer(root, function(item, painter) {
-        qdrawText(painter, yticklab, 0.9, ytickloc, "right", "center")
+        qdrawText(painter, yticklab, 0.7, ytickloc, "right", "center")
         # qdrawSegment(painter, .92, ytickloc, 1, ytickloc, stroke='black')
     }, limits = qrect(c(0, 1), c(lims[3], lims[4])), clip = FALSE, row = 1, col = 0)
     # x-axis
@@ -229,8 +251,7 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
     pcp.grid = qlayer(root, pcp_Grid, limits = qrect(lims), clip = FALSE, row = 1, 
         col = 1)
     pcp.main = qlayer(root, pcp_Segment, mousePressFun = pcpBrushStart, mouseReleaseFun = pcpIdentify, 
-        mouseDoubleClickFun = pcpMove, mouseMove = pcpIdentify, limits = qrect(lims), 
-        clip = FALSE, row = 1, col = 1)
+        mouseMove = pcpIdentify, limits = qrect(lims), clip = FALSE, row = 1, col = 1)
     if (boxplot) {
         pcp.boxplot = qlayer(root, pcp_Boxplot, limits = qrect(lims), clip = FALSE, 
             row = 1, col = 1)
@@ -238,13 +259,18 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
     pcp.brush = qlayer(root, pcpBrush, limits = qrect(lims), clip = FALSE, row = 1, 
         col = 1)
     
+    # update the brush layer in case of any modifications to the mutaframe
+    add_listener(mf, function(i, j) {
+        qupdate(pcp.brush)
+    })
+    
     
     layout = root$gridLayout()
     layout$setRowStretchFactor(0, 1)
-    layout$setRowStretchFactor(1, 6)
+    layout$setRowStretchFactor(1, 5)
     layout$setRowStretchFactor(2, 1)
     layout$setColumnStretchFactor(0, 1)
-    layout$setColumnStretchFactor(1, 6)
+    layout$setColumnStretchFactor(1, 5)
     
     view = qplotView(scene = scene)
     view
