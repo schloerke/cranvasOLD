@@ -17,8 +17,8 @@
 
 # some brushing parameters are not put in the function arguments yet
 
-qparallel = function(data, vars = names(data), scale = "range", col = "black", 
-    horizontal = TRUE, boxplot = FALSE, boxwex, jitter = NULL, amount = NULL, mar = c(0.04, 
+qparallel = function(data, vars = names(data), scale = "range", col = "black",
+    horizontal = TRUE, boxplot = FALSE, boxwex, jitter = NULL, amount = NULL, mar = c(0.04,
         0.04, 0.04, 0.04), main, verbose = getOption("verbose")) {
     ## parameters for the brush
     # brush color
@@ -45,25 +45,24 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
     }, var = base:::scale, I = identity, get(scale))
     data = as.data.frame(data)
     if (!is.null(vars)) {
-        if (class(vars) == "formula") 
+        if (class(vars) == "formula")
             vars = attr(terms(vars, data = data), "term.labels")
         data = subset(data, select = vars)
     }
     else vars = names(data)
-    # omit NA's
-    # in fact, don't have to omit NA's (NA's will produce disconnected segments)
-    # data = na.omit(data)
+    ## TODO: handle missing values
+
+    # constant columns (or nearly constants -- for safety with floating numbers)
     const.col = sapply(data, function(x) {
         x = na.omit(x)
-        length(x) && all(x == x[1])
+        x = as.numeric(x)
+        length(x) == 0 || all(abs(x - x[1]) < .Machine$double.eps ^ 0.5)
     })
     if (any(const.col)) {
         data = data[, !const.col]
         vars = vars[!const.col]
         warning("removed constant column(s) ", paste(which(const.col), collapse = ","))
     }
-    # back up original data
-    # odata = data
     # which columns are numeric? we don't want boxplots for non-numeric vars
     numcol = sapply(data, class) == "numeric"
     data = sapply(data, as.numeric)
@@ -78,7 +77,8 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
     data = apply(data, 2, scale)
     # for boxplots
     bxpstats = apply(data, 2, function(x) boxplot.stats(x, do.conf = FALSE)$stats)
-    if (missing(boxwex)) 
+    # automatic box width
+    if (missing(boxwex))
         boxwex = max(1/p, 0.2)
     # switch x and y according to the direction
     if (horizontal) {
@@ -101,12 +101,12 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
     yspan = range(y, na.rm = TRUE)
     xr = diff(xspan)
     yr = diff(yspan)
-    
+
     # brush range: horizontal and vertical
     .brange = c(xr, yr)/20
-    lims = matrix(c(xspan + c(-1, 1) * xr * mar[c(2, 4)], yspan + c(-1, 1) * yr * 
+    lims = matrix(c(xspan + c(-1, 1) * xr * mar[c(2, 4)], yspan + c(-1, 1) * yr *
         mar[c(1, 3)]), 2)
-    
+
     # creating starting and ending vectors, because indexing in real-time can be slow
     segx0 = as.vector(t.default(x[, 1:(p - 1)]))
     segx1 = as.vector(t.default(x[, 2:p]))
@@ -114,24 +114,26 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
     segy1 = as.vector(t.default(y[, 2:p]))
     nn = n * (p - 1)
     segcol = rep(col, each = p - 1)
-    
+
     ## use a mutaframe to store the interaction parameters
     # store the mutaframe in options() using the name plname -- any other more appropriate place??
-    # plname is like plumbr.dataname, stored in global options
+    # plname is a string like plumbr.dataname, stored in global options
+    # this 'option' will be created if it does not exist, otherwise just extract it from options() and use it later
     plname = paste("plumbr.", dataname, sep = "")
     if (is.null(getOption(plname))) {
         mf = mutaframe(brushed = rep(FALSE, n))
         attr(mf, "bcolor") = "yellow"
-        
+
         # very nasty here... I hate eval()ing anything ! why does not R have a setOption() function beside getOption()?
         eval(parse(text = paste("options(\"", plname, "\"= mf)", sep = "")))
     }
     else {
         mf = getOption(plname)
     }
-    
+    # convention of notation:
+    # pcp_Something means a drawing function for a layer; pcpSomething means an interaction; pcp.something is a layer object
     pcp_Grid = function(item, painter) {
-        qdrawRect(painter, lims[1, 1], lims[1, 2], lims[2, 1], lims[2, 2], stroke = .bgcolor, 
+        qdrawRect(painter, lims[1, 1], lims[1, 2], lims[2, 1], lims[2, 2], stroke = .bgcolor,
             fill = .bgcolor)
         qdrawSegment(painter, xtickloc, lims[1, 2], xtickloc, lims[2, 2], stroke = "white")
         qdrawSegment(painter, lims[1, 1], ytickloc, lims[2, 1], ytickloc, stroke = "white")
@@ -142,7 +144,7 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
             message("drawing pcp segments")
         }
         qdrawSegment(painter, segx0, segy0, segx1, segy1, stroke = segcol)
-        if (verbose) 
+        if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
     pcp_Boxplot = function(item, painter) {
@@ -169,7 +171,7 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
                 qlineWidth(painter) = 1
             }
         }
-        if (verbose) 
+        if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
     pcpBrushStart = function(item, event) {
@@ -200,7 +202,7 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
         hits = ceiling(hits/(p - 1))
         .brushed[hits] = TRUE
         mf$brushed = .brushed
-        if (verbose) 
+        if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
     pcpBrush = function(item, painter) {
@@ -208,11 +210,11 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
             message("drawing brushed segments")
             ntime = Sys.time()
         }
-        
+
         if (!any(is.na(.bpos))) {
             qlineWidth(painter) = 2
             #qdash(painter)=c(1,3,1,3)
-            qdrawRect(painter, .bpos[1] - .brange[1], .bpos[2] - .brange[2], .bpos[1] + 
+            qdrawRect(painter, .bpos[1] - .brange[1], .bpos[2] - .brange[2], .bpos[1] +
                 .brange[1], .bpos[2] + .brange[2], stroke = .bcolor)
         }
         .brushed = mf$brushed
@@ -226,10 +228,10 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
             nn = length(tmpx)
             qdrawSegment(painter, tmpx[-nn], tmpy[-nn], tmpx[-1], tmpy[-1])
         }
-        if (verbose) 
+        if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
-    
+
     scene = qscene()
     root = qlayer(scene)
     # title
@@ -248,30 +250,29 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
         lims[, 1] <<- xspan + c(-1, 1) * xlabWidth
         # qdrawSegment(painter,xtickloc,.92,xtickloc,1,stroke='black')
     }, limits = qrect(c(lims[1], lims[2]), c(0, 1)), clip = FALSE, row = 2, col = 1)
-    pcp.grid = qlayer(root, pcp_Grid, limits = qrect(lims), clip = FALSE, row = 1, 
+    pcp.grid = qlayer(root, pcp_Grid, limits = qrect(lims), clip = FALSE, row = 1,
         col = 1)
-    pcp.main = qlayer(root, pcp_Segment, mousePressFun = pcpBrushStart, mouseReleaseFun = pcpIdentify, 
+    pcp.main = qlayer(root, pcp_Segment, mousePressFun = pcpBrushStart, mouseReleaseFun = pcpIdentify,
         mouseMove = pcpIdentify, limits = qrect(lims), clip = FALSE, row = 1, col = 1)
     if (boxplot) {
-        pcp.boxplot = qlayer(root, pcp_Boxplot, limits = qrect(lims), clip = FALSE, 
+        pcp.boxplot = qlayer(root, pcp_Boxplot, limits = qrect(lims), clip = FALSE,
             row = 1, col = 1)
     }
-    pcp.brush = qlayer(root, pcpBrush, limits = qrect(lims), clip = FALSE, row = 1, 
+    pcp.brush = qlayer(root, pcpBrush, limits = qrect(lims), clip = FALSE, row = 1,
         col = 1)
-    
+
     # update the brush layer in case of any modifications to the mutaframe
     add_listener(mf, function(i, j) {
         qupdate(pcp.brush)
     })
-    
-    
+
     layout = root$gridLayout()
     layout$setRowStretchFactor(0, 1)
     layout$setRowStretchFactor(1, 5)
     layout$setRowStretchFactor(2, 1)
     layout$setColumnStretchFactor(0, 1)
     layout$setColumnStretchFactor(1, 5)
-    
+
     view = qplotView(scene = scene)
     view
-} 
+}
