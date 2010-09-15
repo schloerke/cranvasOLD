@@ -5,8 +5,30 @@ source("bprint.r")
 library(reshape)
 library(plyr)
 
-divide_by_maximum <- function(x) {
-  x / max(x)
+#' Fill and Stroke by Color
+#' Set the fill and stroke by the color if they are already not defined
+#'
+#' @param color color to be used for (possibly) both the fill and stroke
+#' @param fill fill to be used
+#' @param color stroke to be used
+#' @author Barret Schloerke \email{bigbear@@iastate.edu}
+#' @examples
+#'   fill_and_stroke(color = "red")
+#'   fill_and_stroke(fill = "red", stroke = "black")
+#'   fill_and_stroke(color = "red", stroke = "black")
+#'   fill_and_stroke(color = "red", fill = "black")
+fill_and_stroke <- function(color=NULL, fill=NULL, stroke=NULL) {  
+  if (is.null(stroke)) stroke = color  
+  if (is.null(fill)) fill = color
+  list(fill=fill, stroke = stroke)
+}
+
+divide_by_maximum <- function(val, maxVal= val) {
+  maxValue <- max(maxVal)
+  if(maxValue != 0)
+    val / maxValue
+  else 
+    val
 }
 
 zero_then_top_by_order <- function(top, top_order) {
@@ -15,6 +37,11 @@ zero_then_top_by_order <- function(top, top_order) {
   c(0, top[top_order[-length(top_order)]])
 }
 
+
+#' continuous_to_bars(mtcars$disp, mtcars$cyl, position = "dodge", stroke = "black")
+#' continuous_to_bars(mtcars$disp, mtcars$cyl, position = "identity", stroke = "black")
+#' continuous_to_bars(mtcars$disp, mtcars$cyl, position = "relative", stroke = "black")
+#' continuous_to_bars(mtcars$disp, mtcars$cyl, position = "stack", stroke = "black")
 continuous_to_bars <- function(data = NULL, splitBy = NULL, position = "none", color = NULL, fill = NULL, stroke = NULL, ...) {
   
   original = list(
@@ -26,27 +53,33 @@ continuous_to_bars <- function(data = NULL, splitBy = NULL, position = "none", c
       position = position
     ) 
   
-  d <- suppressWarnings(hist(data,plot=FALSE,...))
-  breaks <- d$breaks
-#  bprint(breaks)
+  breaks <- suppressWarnings(hist(data,plot=FALSE,...))$breaks
   break_len <- length(breaks)
+
   bar_top <- table(cut(data, breaks = breaks), splitBy)  
-#  bprint(bar_top)
   
   data_pos <- melt(bar_top)
   names(data_pos) <- c("label", "group", "top")
-#  print(data_pos)
+
+#  attributes(data_pos)$original <- original
+#  attributes(data_pos)$breaks <- breaks
+#  attributes(data_pos)$label_names <- unique(data_pos$label)
+#  attributes(data_pos)$group_names <- unique(data_pos$group)
+  label_names <- unique(data_pos$label)
+  group_names <- unique(data_pos$group)
+
+
   data_pos$bottom <- rep(0, nrow(data_pos))
   
-  bar_bottom <- array(0, dim(bar_top))
-  label_names <- dimnames(bar_top)[[1]]
-  split_names <- dimnames(bar_top)[[2]]
+#  bar_bottom <- array(0, dim(bar_top))
+#  label_names <- dimnames(bar_top)[[1]]
+#  split_names <- dimnames(bar_top)[[2]]
 
   if(is.null(color)) {
-    if(length(split_names) == 1) {
+    if(length(group_names) == 1) {
       data_pos$color <- rep("grey20", nrow(data_pos))      
     } else {    
-      data_pos$color <- rep(rainbow(length(split_names)), each = length(label_names))
+      data_pos$color <- rep(rainbow(length(group_names)), each = length(label_names))
     }
   }
 
@@ -54,15 +87,10 @@ continuous_to_bars <- function(data = NULL, splitBy = NULL, position = "none", c
 #  bprint(split_names)
     
   if (position == "dodge") {
-    pos <- make_dodge_pos( breaks, length(split_names))
-    bar_left  <- pos$start
+    
+    pos <- make_dodge_pos( breaks, length(group_names))
     data_pos$left <- pos$start
-    bar_right <- pos$end
-    data_pos$right <- pos$start
-    bar_top <- apply(bar_top, 1, rbind)
-        
-#    color <- rep(color, length(label_names))
-#    data_pos$color <- rep(color, length(label_names))
+    data_pos$right <- pos$end
   } else  {
     # (position == "stack" || position == "relative")
     
@@ -71,10 +99,10 @@ continuous_to_bars <- function(data = NULL, splitBy = NULL, position = "none", c
 #    data_pos$color <- rep(color, each = length(split_names))
 
     #(position = "stack")
-    bar_left <- rep(breaks[1:(break_len-1)], length(split_names))
-    bar_right <- rep(breaks[2:break_len] , length(split_names))
-    data_pos$left <- rep(breaks[1:(break_len-1)], length(split_names))
-    data_pos$right <- rep(breaks[2:break_len] , length(split_names))
+#    bar_left <- rep(breaks[1:(break_len-1)], length(split_names))
+#    bar_right <- rep(breaks[2:break_len] , length(split_names))
+    data_pos$left <- rep(breaks[1:(break_len-1)], length(group_names))
+    data_pos$right <- rep(breaks[2:break_len] , length(group_names))
     
     
     if(position != "identity") {
@@ -86,67 +114,49 @@ continuous_to_bars <- function(data = NULL, splitBy = NULL, position = "none", c
     }
     
     #make the bar_bottom "stack"
-    if (ncol(bar_bottom) > 1) {
-      bar_bottom[,2:ncol(bar_bottom)] <- bar_top[,1:(ncol(bar_top) - 1)]
-    }
+#    if (ncol(bar_bottom) > 1) {
+#      bar_bottom[,2:ncol(bar_bottom)] <- bar_top[,1:(ncol(bar_top) - 1)]
+#    }
 #    data_pos$bottom[-1] <- data_pos$top[-nrow(data_pos)]
     data_pos <- data_pos[order(data_pos$top),]
     data_pos <- ddply(data_pos, "label", transform, bottom = zero_then_top_by_order(top, order))
 
-    bar_bottom[,1] <- 0
+#    bar_bottom[,1] <- 0
     
     
     # spine-o-gram      
     if (position == "relative") {
-      for (i in 1:nrow(bar_bottom)) {
-        bar_bottom[i,] <- bar_bottom[i,] / max(bar_top[i,])
-      }
-      data_pos <- ddply(data_pos, c("label"), transform, bottom = divide_by_maximum(bottom))
+#      for (i in 1:nrow(bar_bottom)) {
+#        bar_bottom[i,] <- bar_bottom[i,] / max(bar_top[i,])
+#      }
+      print(data_pos)
 
-      for (i in 1:nrow(bar_top)) {
-        bar_top[i,] <- bar_top[i,] / max(bar_top[i,])
-      }
-      data_pos <- ddply(data_pos, c("label"), transform, top = divide_by_maximum(top))
+      data_pos <- ddply(data_pos, c("label"), transform, bottom = divide_by_maximum(bottom, top), .progress="text")
+
+#      for (i in 1:nrow(bar_top)) {
+#        bar_top[i,] <- bar_top[i,] / max(bar_top[i,])
+#      }
+      data_pos <- ddply(data_pos, c("label"), transform, top = divide_by_maximum(top), .progress="text")
+      print(data_pos)
     }
   }
-  bar_top <- c(bar_top)
-  bar_bottom <- c(bar_bottom)
+#  bar_top <- c(bar_top)
+#  bar_bottom <- c(bar_bottom)
   
-  
-  if (is.null(stroke)) {
-    stroke = data_pos$color
-  }
-  data_pos$stroke = stroke
-  
-  if (is.null(fill)) {
-   fill = data_pos$color
-  }
-  data_pos$fill = fill
-  
-  data_pos$color = NULL
-
-  
-#  print(data_pos)
+  # Color Management
+  f_and_s <- fill_and_stroke(data_pos$color, fill = fill, stroke = stroke)
+  data_pos$fill = f_and_s$fill
+  data_pos$stroke = f_and_s$stroke
+#  data_pos$color = NULL
 
   list(
-    data_pos = data_pos,
-#    top    = bar_top, 
-#    bottom = bar_bottom, 
-#    left   = bar_left, 
-#    right  = bar_right, 
-    label_names = label_names, 
-    group_names = split_names,
-#    color = color, 
+    data = data_pos,
     breaks = breaks,
+    label_names = label_names,
+    group_names = group_names,
     original = original
   )
-  
-  attributes(data_pos)$original <- original
-  attributes(data_pos)$breaks <- breaks
-  attributes(data_pos)$label_names <- label_names
-  attributes(data_pos)$group_names <- split_names
 
-  data_pos  
 }
 
 #' Create a dot plot
@@ -161,15 +171,16 @@ continuous_to_bars <- function(data = NULL, splitBy = NULL, position = "none", c
 #' @keywords hplot
 #' @examples
 #'  # toture
-#'    qthist(rnorm(1000000), floor(rnorm(1000000)*3))
-#'    qthist(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - stack") # each column is split evenly
-#'    qthist(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - dodge", position = "dodge") # each column has similar height colors
-#'    qthist(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - relative", position = "relative") # range from 0 to 1
+#'    qtdot(rnorm(1000000), floor(rnorm(1000000)*3))
+#'    qtdot(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - stack") # each column is split evenly
+#'    qtdot(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - dodge", position = "dodge") # each column has similar height colors
+#'    qtdot(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - relative", position = "relative") # range from 0 to 1
 #'  # color tests
-#'    qthist(mtcars$disp, horizontal = TRUE, fill = "gold", stroke = "red4")
-#'    qthist(mtcars$disp, mtcars$cyl, stroke = "black")
-#'    qthist(mtcars$disp, mtcars$cyl, stroke = "black", position = "identity")
-#'    qthist(mtcars$disp, mtcars$cyl, position = "dodge", stroke = "black")
+#'    qtdot(mtcars$disp, horizontal = TRUE, fill = "gold", stroke = "red4")
+#'    qtdot(mtcars$disp, mtcars$cyl, stroke = "black", position = "stack")
+#'    qtdot(mtcars$disp, mtcars$cyl, stroke = "black", position = "identity")
+#'    qtdot(mtcars$disp, mtcars$cyl, stroke = "black", position = "dodge")
+#'    qtdot(mtcars$disp, mtcars$cyl, stroke = "black", position = "relative")
 qtdot <- function(
   data, 
   splitBy = rep(1, length(data)), 
@@ -183,8 +194,10 @@ qtdot <- function(
   ...
 ) {
 
-  bars <- continuous_to_bars(data, splitBy, position, color, fill, stroke, ...)
-#  bprint(bars)
+  bars_info <- continuous_to_bars(data, splitBy, position, color, fill, stroke, ...)
+  bars <- bars_info$data
+  bprint(bars)
+  str(bars)
   color <- bars$color  
 
 #  bprint(bars$left)
@@ -196,11 +209,11 @@ qtdot <- function(
     
   # contains c(x_min, x_max, y_min, y_max)
   if (horizontal) {
-    ranges <- c(make_data_ranges(c(0, bars$top)), make_data_ranges(bars$breaks))
+    ranges <- c(make_data_ranges(c(0, bars$top)), make_data_ranges(bars_info$breaks))
   } else {
-    ranges <- c(make_data_ranges(bars$breaks), make_data_ranges( c(0, bars$top)))
+    ranges <- c(make_data_ranges(bars_info$breaks), make_data_ranges( c(0, bars$top)))
   }
-#  bprint(ranges)
+  bprint(ranges)
 
   if (horizontal) {
     ylab = name
@@ -232,9 +245,9 @@ qtdot <- function(
 
   # c(obj) makes a matrix into a vector
   if(horizontal)
-    plot1$add_layer(hbar(bottom = c(bars$left), top = c(bars$right), width = c(bars$top), left = c(bars$bottom), fill=fill, stroke = stroke))
+    plot1$add_layer(hbar(bottom = c(bars$left), top = c(bars$right), width = c(bars$top), left = c(bars$bottom), fill = c(bars$fill), stroke = c(bars$stroke)))
   else
-    plot1$add_layer(vbar(left = c(bars$left), right = c(bars$right), height = c(bars$top), bottom = c(bars$bottom), fill=fill, stroke = stroke))
+    plot1$add_layer(vbar(left = c(bars$left), right = c(bars$right), height = c(bars$top), bottom = c(bars$bottom), fill = c(bars$fill), stroke = c(bars$stroke)))
 
   draw_x_axes(plot1, ranges, xlab)
   draw_y_axes(plot1, ranges, ylab) 
@@ -348,21 +361,22 @@ qthist <- function(
 #' @param breaks break positions
 #' @param n number of items per break
 #' @keywords internal
-#' @author Barret Schloerke
+#' @author Barret Schloerke \email{bigbear@@iastate.edu}
 #' @examples
 #'  make_dodge_pos(c(1:5), 3)
 make_dodge_pos <- function(breaks, n) {
   gap <- diff(breaks[1:2])
   breaks <- breaks[-length(breaks)]
+  
   relPos <- seq(from = gap*.1, to = gap * .9, length.out = n+1)
   startRel <- relPos[-(n+1)]
   endRel <- relPos[-1]
-
-  starts <- c(sapply(breaks, function(x) { 
-    x + startRel
+  
+  starts <- c(sapply(startRel, function(x) { 
+    x + breaks
   }))
-  ends <- c(sapply(breaks, function(x) { 
-    x + endRel
+  ends <- c(sapply(endRel, function(x) { 
+    x + breaks
   }))
 
   data.frame(start = starts, end = ends)  
