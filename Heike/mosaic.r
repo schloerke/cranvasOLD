@@ -1,25 +1,9 @@
 source("../utilities/api-sketch.r")
 source("../utilities/helper.r")
 source("../utilities/axes.r")
+source("labels.r")
 require(stringr)
 require(productplots)
-
-find_x_label <- function(df) {
-  vars <- setdiff(names(df), c(".wt", "l", "r", "t", "b", "level"))
-
-  axis.set <- subset(df, (b==min(b)) &  (level==max(level)))
-  
-  paste(vars[sapply(vars, function(x) return(length(unique(axis.set[,x]))>1))],"")
-}
-
-find_y_label <- function(df) {
-  vars <- setdiff(names(df), c(".wt", "l", "r", "t", "b", "level"))
-
-  axis.set <- subset(df, (l==min(l)) & (level==max(level)))
-  
-  paste(vars[sapply(vars, function(x) return(length(unique(axis.set[,x]))>1))],"")
-}
-
 
 qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = TRUE, na.rm = FALSE, subset=NULL, colour="grey30", main=NULL, ...) {
   odata <- data
@@ -30,7 +14,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 #	divider <- c("hspine",divider)
 #  }
   
-  data <- productplots:::prodcalc(odata, formula, divider, cascade, scale_max, na.rm = na.rm)
+  data <- prodcalc(odata, formula, divider, cascade, scale_max, na.rm = na.rm)
 
 
 #browser()
@@ -66,10 +50,10 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 # this space depends on the labels needed on the left
 # find out about these first:
 
-  row <- productplots:::find_row_level(data)
+  row <- find_row_level(data)
   ylabels <- NULL
   if (!is.na(row))
-  	ylabels <- productplots:::row_labels(data[data$level == row, ])
+  	ylabels <- row_labels(data[data$level == row, ])
 
   if (.df.title) main <- as.character(formula)
   windowRanges <- make_window_ranges(dataRanges, xlab, ylab, ytickmarks=ylabels, main=main)
@@ -84,9 +68,9 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
     draw_grid_with_positions_fun(painter, dataRanges, sx$breaks, sy$breaks, sx$minor_breaks, sy$minor_breaks)
 	
 	# put labels, if appropriate
-	col <- productplots:::find_col_level(data)
+	col <- find_col_level(data)
 	if (!is.na(col)) {
-	  labels <- productplots:::col_labels(data[data$level == col, ])
+	  labels <- col_labels(data[data$level == col, ])
 	  
 	  draw_x_axes_with_labels_fun(painter, dataRanges, axisLabel=labels$label, labelHoriPos=labels$pos, name=xlab)
 	} else {
@@ -94,7 +78,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 	}
 
 	if (!is.na(row)) {
-	  labels <- productplots:::row_labels(data[data$level == row, ])
+	  labels <- row_labels(data[data$level == row, ])
 	  draw_y_axes_with_labels_fun(painter, dataRanges, axisLabel=labels$label, labelVertPos=labels$pos, name=ylab)
 	  
 	} else {
@@ -421,7 +405,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 #	    formula <- paste("hilite + ", formula, sep="")
 #	    divider <- c("hspine",divider)
 #      }
-	  data <<- productplots:::prodcalc(odata, formula, divider, cascade, scale_max, na.rm = na.rm)
+	  data <<- prodcalc(odata, formula, divider, cascade, scale_max, na.rm = na.rm)
       if (is.null(data$hilite)) data$hilite <<- FALSE	
 	}
 
