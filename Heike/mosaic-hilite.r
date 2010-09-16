@@ -481,9 +481,10 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 
   scene = qscene()
   
-  bglayer = qlayer(scene, coords, limits = lims, clip = FALSE)
+  bglayer = qlayer(scene, coords, limits = lims, clip = FALSE, 
+    keyPressFun=keyPressFun)
   datalayer = qlayer(scene, mosaic.all, limits = lims, clip = FALSE)
-  brushing_layer = qlayer(scene, brushing_draw, keyPressFun=keyPressFun, 
+  brushing_layer = qlayer(scene, brushing_draw, 
     mousePressFun = brushing_mouse_press, mouseMoveFun = brushing_mouse_move,  
     mouseReleaseFun = brushing_mouse_release, 
     limits = lims, clip = FALSE)
