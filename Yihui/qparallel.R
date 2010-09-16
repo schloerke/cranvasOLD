@@ -56,7 +56,7 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
     const.col = sapply(data, function(x) {
         x = na.omit(x)
         x = as.numeric(x)
-        length(x) == 0 || all(abs(x - x[1]) < .Machine$double.eps ^ 0.5)
+        length(x) == 0 || diff(range(x)) < 1e-6
     })
     if (any(const.col)) {
         data = data[, !const.col]
