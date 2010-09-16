@@ -34,6 +34,10 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
     .bstart = c(NA, NA)
     # move brush?
     .bmove = TRUE
+
+    # before we do anything, extract the mutaframes needed
+    row.attr = get_row_attr(data)
+
     # the title string
     dataname = deparse(substitute(data))
     if (missing(main)) {
@@ -117,21 +121,6 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
     nn = n * (p - 1)
     segcol = rep(col, each = p - 1)
 
-    ## use a mutaframe to store the interaction parameters
-    # store the mutaframe in options() using the name plname -- any other more appropriate place??
-    # plname is a string like plumbr.dataname, stored in global options
-    # this 'option' will be created if it does not exist, otherwise just extract it from options() and use it later
-    plname = paste("plumbr.", dataname, sep = "")
-    if (is.null(getOption(plname))) {
-        mf = mutaframe(brushed = rep(FALSE, n))
-        attr(mf, "bcolor") = "yellow"
-
-        # very nasty here... I hate eval()ing anything ! why does not R have a setOption() function beside getOption()?
-        eval(parse(text = paste("options(\"", plname, "\"= mf)", sep = "")))
-    }
-    else {
-        mf = getOption(plname)
-    }
     # convention of notation:
     # pcp_Something means a drawing function for a layer; pcpSomething means an interaction; pcp.something is a layer object
     pcp_Grid = function(item, painter) {
@@ -197,13 +186,13 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
         if (!all(.bpos == .bstart) && (!.bmove)) {
             .brange <<- .bpos - .bstart
         }
-        # use an extra variable here instead of manipulating mf$brushed, which will cause updating pcp.brush
+        # use an extra variable here instead of manipulating row.attr$brushed, which will cause updating pcp.brush
         .brushed = rep(FALSE, n)
         rect = qrect(matrix(c(.bpos - .brange, .bpos + .brange), 2, byrow = TRUE))
         hits = layer$locate(rect) + 1
         hits = ceiling(hits/(p - 1))
         .brushed[hits] = TRUE
-        mf$brushed = .brushed
+        row.attr$brushed = .brushed
         if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
@@ -219,7 +208,7 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
             qdrawRect(painter, .bpos[1] - .brange[1], .bpos[2] - .brange[2], .bpos[1] +
                 .brange[1], .bpos[2] + .brange[2], stroke = .bcolor)
         }
-        .brushed = mf$brushed
+        .brushed = row.attr$brushed
         if (sum(.brushed, na.rm = TRUE) >= 1) {
             qlineWidth(painter) = 3
             qstrokeColor(painter) = .bcolor
@@ -264,9 +253,11 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
         col = 1)
 
     # update the brush layer in case of any modifications to the mutaframe
-    add_listener(mf, function(i, j) {
-        qupdate(pcp.brush)
-    })
+    if (inherits(row.attr, "mutaframe")) {
+	add_listener(row.attr, function(i, j) {
+	    qupdate(pcp.brush)
+	})
+    }
 
     layout = root$gridLayout()
     layout$setRowStretchFactor(0, 1)

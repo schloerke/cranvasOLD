@@ -13,11 +13,15 @@ source("qparallel.R")
 library(RColorBrewer)
 
 ## old iris...
+#  create mutaframes inside the data first
+qiris = qmutaframe(iris)
+
 iris.col = brewer.pal(3, "Set1")[as.integer(iris$Species)]
 
-qparallel(iris, col = iris.col)
-qparallel(iris, scale = "I")
-qparallel(iris, scale = "var")
+qparallel(qiris, col = iris.col)
+qparallel(qiris, scale = "I")
+qparallel(qiris, scale = "var")
+
 # try other standardizing methods
 st2 = function(x) ((x - min(x))/(max(x) - min(x)))^2
 qparallel(iris, scale = "st2")
