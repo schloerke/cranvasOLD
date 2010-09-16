@@ -98,7 +98,6 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
   }
 
   .bgcolor<-"grey80"
-  .queryPos <- NULL
   .startBrush <- NULL
   .endBrush <- NULL
   .level <- max(data$level)
@@ -193,27 +192,6 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
     }
   }
 
-  drawInfoString <- function(item, painter, exposed, ...) {
-    x <- .queryPos[1]
-    y <- .queryPos[2]
-
-    info <- subset(data, (y <= t) & (y >= b) & (x <= r) & (x >=l) & 
-      (level == .level))
-    #  print(str(info))
-    if (nrow(info)>0) {
-      idx <- setdiff(names(data),c("l","t","r","b", ".wt","level",
-        "hilite"))[1:.level]
-      
-      infostring <- character()
-      infodata <- as.character(unlist(info[1,idx]))
-      infostring <- paste(idx, infodata,collapse="\n", sep=":")
-      # print(infodata)
-      
-      qstrokeColor(painter) <- "white"
-      qdrawText(painter, infostring, x, y, valign="top", halign="left")
-    }
-  }
-  
   drawBrush <- function(item, painter, exposed) {
     left = min(.startBrush[1], .endBrush[1])
     right = max(.startBrush[1], .endBrush[1])
@@ -254,25 +232,53 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
       }
     }
 
-    if (!is.null(.queryPos)) {
-      drawInfoString(item, painter, exposed)
-    }
-
     if (!is.null(.endBrush)) {
       drawBrush(item, painter, exposed)
     }
   }
     
+  # Display category information on hover (query) ----------------------------
+  .queryPos <- NULL
+  
+  draw_labels <- function(item, painter, exposed, ...) {
+    if (is.null(.queryPos)) return()
+    
+    x <- .queryPos[1]
+    y <- .queryPos[2]
+
+    info <- subset(data, (y <= t) & (y >= b) & (x <= r) & (x >=l) & 
+      (level == .level))
+      
+    # Nothing under mouse
+    if (nrow(info) == 0) return()
+
+    idx <- setdiff(names(data),c("l","t","r","b", ".wt","level",
+      "hilite"))[1:.level]
+    
+    infostring <- character()
+    infodata <- as.character(unlist(info[1,idx]))
+    infostring <- paste(idx, infodata,collapse="\n", sep=":")
+    # print(infodata)
+    
+    qstrokeColor(painter) <- "white"
+    qdrawText(painter, infostring, x, y, valign="top", halign="left")
+  }
+  
   hover <- function(item, event, ...) { 
     .queryPos <<- as.numeric(event$pos())
-#    bprint(.queryPos)
-    qupdate(hilitelayer)
+    qupdate(querylayer)
   }
 
   hover.leave <- function(item, event, ...) {
     .queryPos <<- NULL
-    qupdate(hilitelayer)
+    qupdate(querylayer)
   }
+  
+  if (!is.null(.queryPos)) {
+    drawInfoString(item, painter, exposed)
+  }
+
+  # Highlighting -------------------------------------------------------------
 
   mousePressFun <- function(item, event, ...) {  
     # browser()
@@ -483,10 +489,12 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
   
   bglayer = qlayer(scene, coords, limits = lims, clip = FALSE)
   datalayer = qlayer(scene, mosaic.all, limits = lims, clip = FALSE)
-  hilitelayer = qlayer(scene, hilite, hoverMoveFun=hover, 
-    hoverLeaveFun = hover.leave, mousePressFun=mousePressFun,
-    keyPressFun=keyPressFun, mouseMoveFun=drag, 
-    mouseReleaseFun=mouseReleaseFun, limits = lims, clip = FALSE)
+  hilitelayer = qlayer(scene, hilite, keyPressFun=keyPressFun, 
+    mousePressFun=mousePressFun, mouseMoveFun=drag,  
+    mouseReleaseFun=mouseReleaseFun, 
+    limits = lims, clip = FALSE)
+  querylayer = qlayer(scene, draw_labels, limits = lims, clip = FALSE,
+    hoverMoveFun = hover, hoverLeaveFun = hover.leave)
 
   qplotView(scene = scene)
 }
