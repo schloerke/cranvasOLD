@@ -1,6 +1,8 @@
 source("../utilities/api-sketch.r")
 source("../utilities/helper.r")
 source("../utilities/axes.r")
+rm(hbar)
+rm(vbar)
 source("labels.r")
 require(stringr)
 require(productplots)
