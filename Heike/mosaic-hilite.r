@@ -240,7 +240,9 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
   # Display category information on hover (query) ----------------------------
   .queryPos <- NULL
   
-  draw_labels <- function(item, painter, exposed, ...) {
+  query_draw <- function(item, painter, exposed, ...) {
+    # Don't draw when brushing
+    if (.brush) return()
     if (is.null(.queryPos)) return()
     
     x <- .queryPos[1]
@@ -252,30 +254,26 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
     # Nothing under mouse
     if (nrow(info) == 0) return()
 
+    # Work out label text
     idx <- setdiff(names(data),c("l","t","r","b", ".wt","level",
-      "hilite"))[1:.level]
-    
-    infostring <- character()
+      "hilite"))[1:.level]    
     infodata <- as.character(unlist(info[1,idx]))
     infostring <- paste(idx, infodata,collapse="\n", sep=":")
-    # print(infodata)
     
     qstrokeColor(painter) <- "white"
     qdrawText(painter, infostring, x, y, valign="top", halign="left")
   }
   
-  hover <- function(item, event, ...) { 
+  query_hover <- function(item, event, ...) {
+    if (.brush) return() 
+    
     .queryPos <<- as.numeric(event$pos())
     qupdate(querylayer)
   }
 
-  hover.leave <- function(item, event, ...) {
+  query_hover_leave <- function(item, event, ...) {
     .queryPos <<- NULL
     qupdate(querylayer)
-  }
-  
-  if (!is.null(.queryPos)) {
-    drawInfoString(item, painter, exposed)
   }
 
   # Highlighting -------------------------------------------------------------
@@ -287,7 +285,6 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
     if (is.null(.startBrush)) {
       .startBrush <<- as.numeric(event$pos())      
     }
-    .queryPos <<- NULL
     # bprint(.startBrush)
 
     qupdate(hilitelayer)
@@ -493,8 +490,8 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
     mousePressFun=mousePressFun, mouseMoveFun=drag,  
     mouseReleaseFun=mouseReleaseFun, 
     limits = lims, clip = FALSE)
-  querylayer = qlayer(scene, draw_labels, limits = lims, clip = FALSE,
-    hoverMoveFun = hover, hoverLeaveFun = hover.leave)
+  querylayer = qlayer(scene, query_draw, limits = lims, clip = FALSE,
+    hoverMoveFun = query_hover, hoverLeaveFun = query_hover_leave)
 
   qplotView(scene = scene)
 }
