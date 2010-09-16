@@ -27,7 +27,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 
 
   
-  data <- productplots:::prodcalc(odata, formula, divider, cascade, scale_max, na.rm = na.rm)
+  data <- prodcalc(odata, formula, divider, cascade, scale_max, na.rm = na.rm)
   .level <- max(data$level)-1
 
   extract.formula <- function(formula) {
@@ -97,7 +97,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 #  formulahil <<- hils[[1]]
 #  dividerhil <<- hils[[2]]
   
-#  datahil <- productplots:::prodcalc(odata, formulahil, dividerhil, cascade, scale_max, na.rm = na.rm)
+#  datahil <- prodcalc(odata, formulahil, dividerhil, cascade, scale_max, na.rm = na.rm)
 
 #browser()
 
@@ -135,10 +135,10 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 # this space depends on the labels needed on the left
 # find out about these first:
 
-  row <- productplots:::find_row_level(data)
+  row <- find_row_level(data)
   ylabels <- NULL
   if (!is.na(row))
-  	ylabels <- productplots:::row_labels(data[data$level == row, ])
+  	ylabels <- row_labels(data[data$level == row, ])
 
   if (.df.title) main <- as.character(formula)
   windowRanges <- make_window_ranges(dataRanges, xlab, ylab, ytickmarks=ylabels, main=main)
@@ -153,9 +153,9 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
     draw_grid_with_positions_fun(painter, dataRanges, sx$breaks, sy$breaks, sx$minor_breaks, sy$minor_breaks)
 	
 	# put labels, if appropriate
-	col <- productplots:::find_col_level(data)
+	col <- find_col_level(data)
 	if (!is.na(col)) {
-	  labels <- productplots:::col_labels(data[data$level == col, ])
+	  labels <- col_labels(data[data$level == col, ])
 	  
 	  draw_x_axes_with_labels_fun(painter, dataRanges, axisLabel=labels$label, labelHoriPos=labels$pos, name=xlab)
 	} else {
@@ -163,7 +163,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 	}
 
 	if (!is.na(row)) {
-	  labels <- productplots:::row_labels(data[data$level == row, ])
+	  labels <- row_labels(data[data$level == row, ])
 	  draw_y_axes_with_labels_fun(painter, dataRanges, axisLabel=labels$label, labelVertPos=labels$pos, name=ylab)
 	  
 	} else {
@@ -234,7 +234,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 
 	formulahil <<- hils[[1]]
 	dividerhil <<- hils[[2]]
-	datahil <<- productplots:::prodcalc(odata, formulahil, dividerhil, cascade, scale_max, na.rm = na.rm)
+	datahil <<- prodcalc(odata, formulahil, dividerhil, cascade, scale_max, na.rm = na.rm)
   }
 
   hilite <- function(item, painter, exposed, ...) {
@@ -329,8 +329,13 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 	    return(paste(cond, collapse=" & "))
 	  })
 	} 
-	cond1 <- paste("(",conds[,ncol(conds)],")", sep="", collapse=" | ")
 
+	if (ncol(conds) > 1) {
+  	cond1 <- paste("(",conds[,ncol(conds)],")", sep="", collapse=" | ")	  
+	} else {
+	  cond1 <- "TRUE"
+	}
+  
 	idx <- with(odata, which(eval(parse(text=cond1))))
 
 #	print(cond1)
@@ -477,7 +482,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 	if (datachanged) {
 	  .hilitingchanged <<- TRUE
 
-	  data <<- productplots:::prodcalc(odata, formula, divider, cascade, scale_max, na.rm = na.rm)
+	  data <<- prodcalc(odata, formula, divider, cascade, scale_max, na.rm = na.rm)
 
 
 	}
