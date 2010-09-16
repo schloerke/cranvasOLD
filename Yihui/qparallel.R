@@ -1,3 +1,5 @@
+source("../utilities/interaction.R")
+
 #' Create a parallel co-ordinates plot
 #' Create a parallel co-ordinates plot from a data frame or matrix, with each line representing a row
 #'
