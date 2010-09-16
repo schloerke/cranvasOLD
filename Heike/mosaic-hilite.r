@@ -100,16 +100,12 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
   }
 
   .bgcolor<-"grey80"
-  .startBrush <- NULL
-  .endBrush <- NULL
   .level <- max(data$level)
   
   .df.title <- FALSE
   .clevel <- 0
   form <- parse_product_formula(formula)
   .activevars <- c(form$marg, form$cond)
-  .hilitingchanged <- TRUE
-  .brush <- FALSE
   
   top <- data$t
   bottom <- data$b
@@ -194,6 +190,12 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
     }
   }
 
+  # Brushing -----------------------------------------------------------------
+  .startBrush <- NULL
+  .endBrush <- NULL
+  .hilitingchanged <- TRUE
+  .brush <- FALSE
+
   drawBrush <- function(item, painter, exposed) {
     left = min(.startBrush[1], .endBrush[1])
     right = max(.startBrush[1], .endBrush[1])
@@ -213,7 +215,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
       scale_max, na.rm = na.rm)
   }
 
-  hilite <- function(item, painter, exposed, ...) {
+  brushing_draw <- function(item, painter, exposed, ...) {
     if (TRUE) {
       if (.hilitingchanged) {
           recalchiliting()
@@ -238,58 +240,34 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
       drawBrush(item, painter, exposed)
     }
   }
-    
-  # Display category information on hover (query) ----------------------------
-  .queryPos <- NULL
-  
-  query_draw <- function(item, painter, exposed, ...) {
-    # Don't draw when brushing
-    if (.brush) return()
-    if (is.null(.queryPos)) return()
-    
-    x <- .queryPos[1]
-    y <- .queryPos[2]
-
-    info <- subset(data, (y <= t) & (y >= b) & (x <= r) & (x >=l) & 
-      (level == .level))
-      
-    # Nothing under mouse
-    if (nrow(info) == 0) return()
-
-    # Work out label text
-    idx <- setdiff(names(data),c("l","t","r","b", ".wt","level",
-      "hilite"))[1:.level]    
-    infodata <- as.character(unlist(info[1,idx]))
-    infostring <- paste(idx, infodata,collapse="\n", sep=":")
-    
-    qstrokeColor(painter) <- "white"
-    qdrawText(painter, infostring, x, y, valign="top", halign="left")
-  }
-  
-  query_hover <- function(item, event, ...) {
-    if (.brush) return() 
-    
-    .queryPos <<- as.numeric(event$pos())
-    qupdate(querylayer)
-  }
-
-  query_hover_leave <- function(item, event, ...) {
-    .queryPos <<- NULL
-    qupdate(querylayer)
-  }
-
-  # Highlighting -------------------------------------------------------------
-
-  mousePressFun <- function(item, event, ...) {  
-    # browser()
-    # print("mousedown")
+  brushing_mouse_press <- function(item, event, ...) {  
     .brush <<- TRUE
     if (is.null(.startBrush)) {
       .startBrush <<- as.numeric(event$pos())      
     }
-    # bprint(.startBrush)
+    qupdate(brushing_layer)
+  }
+  
+  brushing_mouse_move <- function(item, event, ...) {  
+    .endBrush <<- as.numeric(event$pos())
 
-    qupdate(hilitelayer)
+    setHiliting()
+    qupdate(brushing_layer)
+  }
+
+  brushing_mouse_release <- function(item, event, ...) {    
+    .endBrush <<- as.numeric(event$pos())
+    setHiliting()    
+
+    odata$hilite <<- FALSE
+    odata$hilite[getSelected()] <<- TRUE
+    .brush <<- FALSE
+    .hilitingchanged <<- TRUE
+    
+    qupdate(brushing_layer)
+    
+    .startBrush <<- NULL
+    .endBrush <<- NULL
   }
 
   setHiliting <- function() {
@@ -338,31 +316,48 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
     # print(length(idx))
     return(idx)
   }
+
+    
+  # Display category information on hover (query) ----------------------------
+  .queryPos <- NULL
   
-  drag <- function(item, event, ...) {  
-    # browser()
-    # print("dragging")
-    .endBrush <<- as.numeric(event$pos())
+  query_draw <- function(item, painter, exposed, ...) {
+    # Don't draw when brushing
+    if (.brush) return()
+    if (is.null(.queryPos)) return()
+    
+    x <- .queryPos[1]
+    y <- .queryPos[2]
 
-    setHiliting()
-    qupdate(hilitelayer)
+    info <- subset(data, (y <= t) & (y >= b) & (x <= r) & (x >=l) & 
+      (level == .level))
+      
+    # Nothing under mouse
+    if (nrow(info) == 0) return()
+
+    # Work out label text
+    idx <- setdiff(names(data),c("l","t","r","b", ".wt","level",
+      "hilite"))[1:.level]    
+    infodata <- as.character(unlist(info[1,idx]))
+    infostring <- paste(idx, infodata,collapse="\n", sep=":")
+    
+    qstrokeColor(painter) <- "white"
+    qdrawText(painter, infostring, x, y, valign="top", halign="left")
+  }
+  
+  query_hover <- function(item, event, ...) {
+    if (.brush) return() 
+    
+    .queryPos <<- as.numeric(event$pos())
+    qupdate(querylayer)
   }
 
-  mouseReleaseFun <- function(item, event, ...) {    
-    .endBrush <<- as.numeric(event$pos())
-    setHiliting()    
-
-    odata$hilite <<- FALSE
-    odata$hilite[getSelected()] <<- TRUE
-    .brush <<- FALSE
-    .hilitingchanged <<- TRUE
-    
-    qupdate(hilitelayer)
-    
-    .startBrush <<- NULL
-    .endBrush <<- NULL
+  query_hover_leave <- function(item, event, ...) {
+    .queryPos <<- NULL
+    qupdate(querylayer)
   }
 
+  # Key board events ---------------------------------------------------------
   
   keyPressFun <- function(item, event, ...) {
     # print(event$key())
@@ -481,16 +476,16 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 
     qupdate(bglayer)
     qupdate(datalayer)
-    qupdate(hilitelayer)
+    qupdate(brushing_layer)
   }
 
   scene = qscene()
   
   bglayer = qlayer(scene, coords, limits = lims, clip = FALSE)
   datalayer = qlayer(scene, mosaic.all, limits = lims, clip = FALSE)
-  hilitelayer = qlayer(scene, hilite, keyPressFun=keyPressFun, 
-    mousePressFun=mousePressFun, mouseMoveFun=drag,  
-    mouseReleaseFun=mouseReleaseFun, 
+  brushing_layer = qlayer(scene, brushing_draw, keyPressFun=keyPressFun, 
+    mousePressFun = brushing_mouse_press, mouseMoveFun = brushing_mouse_move,  
+    mouseReleaseFun = brushing_mouse_release, 
     limits = lims, clip = FALSE)
   querylayer = qlayer(scene, query_draw, limits = lims, clip = FALSE,
     hoverMoveFun = query_hover, hoverLeaveFun = query_hover_leave)
