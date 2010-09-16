@@ -481,14 +481,12 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 
   scene = qscene()
   
-  bglayer = qlayer(scene, coords, cache = TRUE, limits = lims, clip=FALSE)
-  datalayer = qlayer(scene, mosaic.all,  cache = TRUE, limits = lims,
-     clip=FALSE)
+  bglayer = qlayer(scene, coords, limits = lims, clip = FALSE)
+  datalayer = qlayer(scene, mosaic.all, limits = lims, clip = FALSE)
   hilitelayer = qlayer(scene, hilite, hoverMoveFun=hover, 
     hoverLeaveFun = hover.leave, mousePressFun=mousePressFun,
     keyPressFun=keyPressFun, mouseMoveFun=drag, 
-    mouseReleaseFun=mouseReleaseFun,
-    cache = TRUE, limits = lims, clip=FALSE)
+    mouseReleaseFun=mouseReleaseFun, limits = lims, clip = FALSE)
 
   qplotView(scene = scene)
 }
