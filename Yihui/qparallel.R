@@ -123,14 +123,14 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
     segcol = rep(col, each = p - 1)
 
     # convention of notation:
-    # pcp_Something means a drawing function for a layer; pcpSomething means an interaction; pcp.something is a layer object
-    pcp_Grid = function(item, painter) {
+    # *_draw means a drawing function for a layer; *_event is an even callback; *_layer is a layer object
+    grid_draw = function(item, painter) {
         qdrawRect(painter, lims[1, 1], lims[1, 2], lims[2, 1], lims[2, 2], stroke = .bgcolor,
             fill = .bgcolor)
         qdrawSegment(painter, xtickloc, lims[1, 2], xtickloc, lims[2, 2], stroke = "white")
         qdrawSegment(painter, lims[1, 1], ytickloc, lims[2, 1], ytickloc, stroke = "white")
     }
-    pcp_Segment = function(item, painter) {
+    main_draw = function(item, painter) {
         if (verbose) {
             ntime = Sys.time()
             message("drawing pcp segments")
@@ -139,7 +139,7 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
         if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
-    pcp_Boxplot = function(item, painter) {
+    boxplot_draw = function(item, painter) {
         if (verbose) {
             message("Drawing boxplots")
             ntime = Sys.time()
@@ -166,7 +166,7 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
         if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
-    pcpBrushStart = function(item, event) {
+    brush_mouse_press = function(item, event) {
         .bstart <<- as.numeric(event$pos())
         # on right click, we can resize the brush; left click: only move the brush
         if (event$button() == Qt$Qt$RightButton) {
@@ -176,7 +176,7 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
             .bmove <<- TRUE
         }
     }
-    pcpIdentify = function(layer, event) {
+    identify_mouse_move = function(layer, event) {
         if (verbose) {
             message("identifying mouse location and looking for segments within range")
             ntime = Sys.time()
@@ -187,7 +187,7 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
         if (!all(.bpos == .bstart) && (!.bmove)) {
             .brange <<- .bpos - .bstart
         }
-        # use an extra variable here instead of manipulating row.attr$.brushed, which will cause updating pcp.brush
+        # use an extra variable here instead of manipulating row.attr$.brushed, which will cause updating brush_layer
         .brushed = rep(FALSE, n)
         rect = qrect(matrix(c(.bpos - .brange, .bpos + .brange), 2, byrow = TRUE))
         hits = layer$locate(rect) + 1
@@ -197,7 +197,7 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
         if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
-    pcpBrush = function(item, painter) {
+    brush_draw = function(item, painter) {
         if (verbose) {
             message("drawing brushed segments")
             ntime = Sys.time()
@@ -225,42 +225,42 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
     }
 
     scene = qscene()
-    root = qlayer(scene)
+    root_layer = qlayer(scene)
     # title
-    pcp.title = qlayer(root, function(item, painter) {
+    title_layer = qlayer(root_layer, function(item, painter) {
         qdrawText(painter, main, (lims[1] + lims[2])/2, 0, "center", "bottom")
     }, limits = qrect(c(lims[1], lims[2]), c(0, 1)), clip = FALSE, row = 0, col = 1)
     # y-axis
-    pcp.yaxis = qlayer(root, function(item, painter) {
+    yaxis_layer = qlayer(root_layer, function(item, painter) {
         qdrawText(painter, yticklab, 0.7, ytickloc, "right", "center")
         # qdrawSegment(painter, .92, ytickloc, 1, ytickloc, stroke='black')
     }, limits = qrect(c(0, 1), c(lims[3], lims[4])), clip = FALSE, row = 1, col = 0)
     # x-axis
-    pcp.xaxis = qlayer(root, function(item, painter) {
+    xaxis_layer = qlayer(root_layer, function(item, painter) {
         qdrawText(painter, xticklab, xtickloc, 0.9, "center", "top")
         xlabWidth = max(xr * mar[c(2, 4)], max(qstrWidth(painter, xticklab[c(1, length(xticklab))]))/2)
         lims[, 1] <<- xspan + c(-1, 1) * xlabWidth
         # qdrawSegment(painter,xtickloc,.92,xtickloc,1,stroke='black')
     }, limits = qrect(c(lims[1], lims[2]), c(0, 1)), clip = FALSE, row = 2, col = 1)
-    pcp.grid = qlayer(root, pcp_Grid, limits = qrect(lims), clip = FALSE, row = 1,
+    grid_layer = qlayer(root_layer, grid_draw, limits = qrect(lims), clip = FALSE, row = 1,
         col = 1)
-    pcp.main = qlayer(root, pcp_Segment, mousePressFun = pcpBrushStart, mouseReleaseFun = pcpIdentify,
-        mouseMove = pcpIdentify, limits = qrect(lims), clip = FALSE, row = 1, col = 1)
+    main_layer = qlayer(root_layer, main_draw, mousePressFun = brush_mouse_press, mouseReleaseFun = identify_mouse_move,
+        mouseMove = identify_mouse_move, limits = qrect(lims), clip = FALSE, row = 1, col = 1)
     if (boxplot) {
-        pcp.boxplot = qlayer(root, pcp_Boxplot, limits = qrect(lims), clip = FALSE,
+        boxplot_layer = qlayer(root_layer, boxplot_draw, limits = qrect(lims), clip = FALSE,
             row = 1, col = 1)
     }
-    pcp.brush = qlayer(root, pcpBrush, limits = qrect(lims), clip = FALSE, row = 1,
+    brush_layer = qlayer(root_layer, brush_draw, limits = qrect(lims), clip = FALSE, row = 1,
         col = 1)
 
     # update the brush layer in case of any modifications to the mutaframe
     if (is.mutaframe(row.attr)) {
 	add_listener(row.attr, function(i, j) {
-	    qupdate(pcp.brush)
+	    qupdate(brush_layer)
 	})
     }
 
-    layout = root$gridLayout()
+    layout = root_layer$gridLayout()
     layout$setRowStretchFactor(0, 1)
     layout$setRowStretchFactor(1, 5)
     layout$setRowStretchFactor(2, 1)

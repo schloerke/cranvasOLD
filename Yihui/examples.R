@@ -44,6 +44,9 @@ qparallel(iris, col = rgb(1, 0, 0, 0.5), boxplot = TRUE)
 qparallel(iris, scale = "I", col = rgb(1, 0, 0, 0.5), boxplot = TRUE)
 qparallel(iris, col = rgb(1, 0, 0, 0.5), boxplot = TRUE, horizontal = FALSE)
 
+## verbose timing
+qparallel(iris, col = rgb(1, 0, 0, 0.5), verbose = TRUE)
+
 ## what if there are missing values?
 xna = sapply(iris, function(x) {
     x[sample(length(x), 50)] = NA
