@@ -187,13 +187,13 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
         if (!all(.bpos == .bstart) && (!.bmove)) {
             .brange <<- .bpos - .bstart
         }
-        # use an extra variable here instead of manipulating row.attr$brushed, which will cause updating pcp.brush
+        # use an extra variable here instead of manipulating row.attr$.brushed, which will cause updating pcp.brush
         .brushed = rep(FALSE, n)
         rect = qrect(matrix(c(.bpos - .brange, .bpos + .brange), 2, byrow = TRUE))
         hits = layer$locate(rect) + 1
         hits = ceiling(hits/(p - 1))
         .brushed[hits] = TRUE
-        row.attr$brushed = .brushed
+        row.attr$.brushed = .brushed
         if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
@@ -209,7 +209,7 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
             qdrawRect(painter, .bpos[1] - .brange[1], .bpos[2] - .brange[2], .bpos[1] +
                 .brange[1], .bpos[2] + .brange[2], stroke = .bcolor)
         }
-        .brushed = row.attr$brushed
+        .brushed = row.attr$.brushed
         if (sum(.brushed, na.rm = TRUE) >= 1) {
             qlineWidth(painter) = 3
             qstrokeColor(painter) = .bcolor
@@ -254,7 +254,7 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
         col = 1)
 
     # update the brush layer in case of any modifications to the mutaframe
-    if (inherits(row.attr, "mutaframe")) {
+    if (is.mutaframe(row.attr)) {
 	add_listener(row.attr, function(i, j) {
 	    qupdate(pcp.brush)
 	})

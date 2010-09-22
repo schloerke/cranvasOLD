@@ -6,11 +6,11 @@ qmutaframe = function(data) {
     }
 
     data = as.data.frame(data)
+    data = as.mutaframe(data)
     n = nrow(data)
 
     if (!has_attr("row.attr")) {
-	# a 'natural' data frame: we don't have to use names begin with a dot '.'
-	row.attr = mutaframe(color = rep("black", n), size = rep(1L, n), shape = rep(1L, n), brushed = logical(n))
+	row.attr = mutaframe(.color = rep("black", n), .size = rep(1L, n), .shape = rep(1L, n), .brushed = logical(n))
 	attr(data, "row.attr") = row.attr
     }
 
