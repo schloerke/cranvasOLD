@@ -24,7 +24,16 @@
 \graphics default
 \paperfontsize default
 \spacing single
-\use_hyperref false
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered true
+\pdf_bookmarksopen true
+\pdf_bookmarksopenlevel 2
+\pdf_breaklinks false
+\pdf_pdfborder false
+\pdf_colorlinks false
+\pdf_backref false
+\pdf_pdfusetitle true
 \papersize default
 \use_geometry true
 \use_amsmath 1
@@ -62,6 +71,10 @@ ISU Graphics Group
 
 \begin_layout Section
 Naming conventions
+\end_layout
+
+\begin_layout Subsection
+Naming functions and layers
 \end_layout
 
 \begin_layout Standard
@@ -124,6 +137,18 @@ e.g.
 \end_layout
 
 \begin_layout Scrap
+scene = qscene()
+\end_layout
+
+\begin_layout Scrap
+## the root layer
+\end_layout
+
+\begin_layout Scrap
+root_layer = qlayer(scene)
+\end_layout
+
+\begin_layout Scrap
 ## draw the brush and redraw the brushed elements
 \end_layout
 
@@ -169,6 +194,38 @@ idx=layer$locate(qrect(...))
 
 \begin_layout Scrap
 brush_layer=qlayer(root_layer, brush_draw, mouseMove=brush_mouse_move)
+\end_layout
+
+\begin_layout Scrap
+@
+\end_layout
+
+\begin_layout Subsection
+Naming mutaframes
+\end_layout
+
+\begin_layout Standard
+Create a mutaframe for dynamic graphics by 
+\emph on
+qmutaframe()
+\emph default
+:
+\end_layout
+
+\begin_layout Scrap
+<<qmutaframe, eval=FALSE>>=
+\end_layout
+
+\begin_layout Scrap
+## example
+\end_layout
+
+\begin_layout Scrap
+x=qmutaframe(iris, .color = 'black', .brushed = FALSE)
+\end_layout
+
+\begin_layout Scrap
+qparallel(x)
 \end_layout
 
 \begin_layout Scrap
