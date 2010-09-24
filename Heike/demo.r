@@ -1,5 +1,6 @@
 library(qtpaint)
 library(plumbr)
+library(productplots)
 
 # iris data: 
 # link parallel coordinate plot and barchart
