@@ -1,9 +1,10 @@
 ## examples of qparallel()
 
 ## hints for interaction:
-## double click to switch between drawing the brush and moving the brush
+## drag with the right button to resize the brush; left button to move the brush
 
 library(qtpaint)
+library(plumbr)
 
 # options(verbose = TRUE)
 source("qparallel.R")
@@ -12,11 +13,15 @@ source("qparallel.R")
 library(RColorBrewer)
 
 ## old iris...
+#  create mutaframes inside the data first
+qiris = qmutaframe(iris)
+
 iris.col = brewer.pal(3, "Set1")[as.integer(iris$Species)]
 
-qparallel(iris, col = iris.col)
-qparallel(iris, scale = "I")
-qparallel(iris, scale = "var")
+qparallel(qiris, col = iris.col)
+qparallel(qiris, scale = "I")
+qparallel(qiris, scale = "var")
+
 # try other standardizing methods
 st2 = function(x) ((x - min(x))/(max(x) - min(x)))^2
 qparallel(iris, scale = "st2")
@@ -39,6 +44,9 @@ qparallel(iris, col = rgb(1, 0, 0, 0.5), boxplot = TRUE)
 qparallel(iris, scale = "I", col = rgb(1, 0, 0, 0.5), boxplot = TRUE)
 qparallel(iris, col = rgb(1, 0, 0, 0.5), boxplot = TRUE, horizontal = FALSE)
 
+## verbose timing
+qparallel(iris, col = rgb(1, 0, 0, 0.5), verbose = TRUE)
+
 ## what if there are missing values?
 xna = sapply(iris, function(x) {
     x[sample(length(x), 50)] = NA
@@ -53,10 +61,17 @@ qparallel(matrix(rnorm(1000 * 10), ncol = 10), col = rgb(1, 0, 0, 0.2),
     mar = c(0.2, 0.1, 0.1, 0.1))
 qparallel(matrix(rnorm(1000 * 15), ncol = 15), col = rgb(1, 0, 0, 0.2),
     boxplot = TRUE)
-qparallel(matrix(rnorm(10000 * 10), ncol = 10), col = rgb(1, 0, 0, 0.2), verbose = TRUE)
+# slow for brushing in my laptop
+qparallel(matrix(rnorm(6000 * 10), ncol = 10), col = rgb(1, 0, 0, 0.2),
+    verbose = TRUE)
 # 1 million segments to torture Qt!!
 qparallel(matrix(rbeta(1e+05 * 11, 5, 30), ncol = 11), col = rgb(1, 0,
     0, 0.05), verbose = TRUE)
+
+# linking two parcoords plots: split the data into 2 parts
+testdata = as.data.frame(matrix(rnorm(2000 * 10), ncol = 10))
+qparallel(testdata, sprintf("V%d", 1:5))
+qparallel(testdata, sprintf("V%d", 6:10))
 
 
 ## residential data: 18221x8
@@ -64,6 +79,10 @@ if (!require("YaleToolkit")) install.packages("YaleToolkit")
 library(YaleToolkit)
 data(NewHavenResidential)
 qparallel(NewHavenResidential, col = rgb(1, 0, 0, 0.1), verbose = TRUE)
+
+qparallel(NewHavenResidential, vars = names(NewHavenResidential)[1:4], col = rgb(1, 0, 0, 0.1))
+qparallel(NewHavenResidential, vars = names(NewHavenResidential)[5:8], col = rgb(1, 0, 0, 0.1))
+
 
 # ggplot2
 library(ggplot2)

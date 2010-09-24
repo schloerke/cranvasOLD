@@ -1,3 +1,6 @@
+source("../utilities/interaction.R")
+source("../utilities/optimization.R")
+
 #' Create a parallel co-ordinates plot
 #' Create a parallel co-ordinates plot from a data frame or matrix, with each line representing a row
 #'
@@ -17,13 +20,10 @@
 
 # some brushing parameters are not put in the function arguments yet
 
-qparallel = function(data, vars = names(data), scale = "range", col = "black", 
-    horizontal = TRUE, boxplot = FALSE, boxwex, jitter = NULL, amount = NULL, mar = c(0.04, 
-        0.04, 0.04, 0.04), main = paste("Parallel Coordinates Plot of", deparse(substitute(data))), 
-    verbose = getOption("verbose")) {
+qparallel = function(data, vars = names(data), scale = "range", col = "black",
+    horizontal = TRUE, boxplot = FALSE, boxwex, jitter = NULL, amount = NULL, mar = c(0.04,
+        0.04, 0.04, 0.04), main, verbose = getOption("verbose")) {
     ## parameters for the brush
-    # brush status
-    .brushed = FALSE
     # brush color
     .bcolor = "yellow"
     # background color
@@ -34,40 +34,48 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
     # drag start
     .bstart = c(NA, NA)
     # move brush?
-    .bmove = FALSE
-    # evaluate the title string right now!
-    main
+    .bmove = TRUE
+
+    # before we do anything, extract the mutaframes needed
+    row.attr = get_row_attr(data)
+
+    # the title string
+    dataname = deparse(substitute(data))
+    if (missing(main)) {
+        main = paste("Parallel Coordinates Plot of", dataname)
+    }
     # margins for the plot region
     mar = rep(mar, length.out = 4)
     scale = switch(scale, range = function(x) {
         xna = x[!is.na(x)]
         (x - min(xna))/(max(xna) - min(xna))
-    }, var = base:::scale, I = function(x) x, get(scale))
+    }, var = base:::scale, I = identity, get(scale))
     data = as.data.frame(data)
     if (!is.null(vars)) {
-        if (class(vars) == "formula") 
+        if (class(vars) == "formula")
             vars = attr(terms(vars, data = data), "term.labels")
         data = subset(data, select = vars)
     }
     else vars = names(data)
-    # omit NA's
-    # in fact, don't have to omit NA's (NA's will produce disconnected segments)
-    # data = na.omit(data)
+    ## TODO: handle missing values
+
+    # constant columns (or nearly constants -- for safety with floating numbers)
     const.col = sapply(data, function(x) {
         x = na.omit(x)
-        length(x) && all(x == x[1])
+        x = as.numeric(x)
+        length(x) == 0 || diff(range(x)) < 1e-6
     })
     if (any(const.col)) {
         data = data[, !const.col]
         vars = vars[!const.col]
         warning("removed constant column(s) ", paste(which(const.col), collapse = ","))
     }
-    # back up original data
-    # odata = data
     # which columns are numeric? we don't want boxplots for non-numeric vars
     numcol = sapply(data, class) == "numeric"
     data = sapply(data, as.numeric)
     p = ncol(data)
+    # we need >= 2 columns
+    stopifnot(p > 1)
     n = nrow(data)
     col = rep(col, length.out = n)
     if (!is.null(jitter) && is.character(jitter)) {
@@ -76,7 +84,8 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
     data = apply(data, 2, scale)
     # for boxplots
     bxpstats = apply(data, 2, function(x) boxplot.stats(x, do.conf = FALSE)$stats)
-    if (missing(boxwex)) 
+    # automatic box width
+    if (missing(boxwex))
         boxwex = max(1/p, 0.2)
     # switch x and y according to the direction
     if (horizontal) {
@@ -99,12 +108,12 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
     yspan = range(y, na.rm = TRUE)
     xr = diff(xspan)
     yr = diff(yspan)
-    
+
     # brush range: horizontal and vertical
     .brange = c(xr, yr)/20
-    lims = matrix(c(xspan + c(-1, 1) * xr * mar[c(2, 4)], yspan + c(-1, 1) * yr * 
+    lims = matrix(c(xspan + c(-1, 1) * xr * mar[c(2, 4)], yspan + c(-1, 1) * yr *
         mar[c(1, 3)]), 2)
-    
+
     # creating starting and ending vectors, because indexing in real-time can be slow
     segx0 = as.vector(t.default(x[, 1:(p - 1)]))
     segx1 = as.vector(t.default(x[, 2:p]))
@@ -112,23 +121,25 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
     segy1 = as.vector(t.default(y[, 2:p]))
     nn = n * (p - 1)
     segcol = rep(col, each = p - 1)
-    
-    pcp_Grid = function(item, painter) {
-        qdrawRect(painter, lims[1, 1], lims[1, 2], lims[2, 1], lims[2, 2], stroke = .bgcolor, 
+
+    # convention of notation:
+    # *_draw means a drawing function for a layer; *_event is an even callback; *_layer is a layer object
+    grid_draw = function(item, painter) {
+        qdrawRect(painter, lims[1, 1], lims[1, 2], lims[2, 1], lims[2, 2], stroke = .bgcolor,
             fill = .bgcolor)
         qdrawSegment(painter, xtickloc, lims[1, 2], xtickloc, lims[2, 2], stroke = "white")
         qdrawSegment(painter, lims[1, 1], ytickloc, lims[2, 1], ytickloc, stroke = "white")
     }
-    pcp_Segment = function(item, painter) {
+    main_draw = function(item, painter) {
         if (verbose) {
             ntime = Sys.time()
             message("drawing pcp segments")
         }
         qdrawSegment(painter, segx0, segy0, segx1, segy1, stroke = segcol)
-        if (verbose) 
+        if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
-    pcp_Boxplot = function(item, painter) {
+    boxplot_draw = function(item, painter) {
         if (verbose) {
             message("Drawing boxplots")
             ntime = Sys.time()
@@ -152,17 +163,20 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
                 qlineWidth(painter) = 1
             }
         }
-        if (verbose) 
+        if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
-    pcpBrushStart = function(item, event) {
+    brush_mouse_press = function(item, event) {
         .bstart <<- as.numeric(event$pos())
+        # on right click, we can resize the brush; left click: only move the brush
+        if (event$button() == Qt$Qt$RightButton) {
+            .bmove <<- FALSE
+        }
+        if (event$button() == Qt$Qt$LeftButton) {
+            .bmove <<- TRUE
+        }
     }
-    pcpMove = function(item, event) {
-        .bmove <<- !.bmove
-        message("Brush status: ", ifelse(.bmove, "MOVE", "DRAW"))
-    }
-    pcpIdentify = function(layer, event) {
+    identify_mouse_move = function(layer, event) {
         if (verbose) {
             message("identifying mouse location and looking for segments within range")
             ntime = Sys.time()
@@ -170,30 +184,32 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
         pos = event$pos()
         .bpos <<- as.numeric(pos)
         # simple click: don't change .brange
-        if (!all(.bpos == .bstart) && !.bmove) 
+        if (!all(.bpos == .bstart) && (!.bmove)) {
             .brange <<- .bpos - .bstart
-        .brushed <<- rep(FALSE, n)
+        }
+        # use an extra variable here instead of manipulating row.attr$.brushed, which will cause updating brush_layer
+        .brushed = rep(FALSE, n)
         rect = qrect(matrix(c(.bpos - .brange, .bpos + .brange), 2, byrow = TRUE))
         hits = layer$locate(rect) + 1
         hits = ceiling(hits/(p - 1))
         .brushed[hits] = TRUE
-        .brushed <<- .brushed
-        if (verbose) 
+        row.attr$.brushed = .brushed
+        if (verbose)
             message(format(difftime(Sys.time(), ntime)))
-        qupdate(pcp.brush)
     }
-    pcpBrush = function(item, painter) {
+    brush_draw = function(item, painter) {
         if (verbose) {
             message("drawing brushed segments")
             ntime = Sys.time()
         }
-        
+
         if (!any(is.na(.bpos))) {
             qlineWidth(painter) = 2
             #qdash(painter)=c(1,3,1,3)
-            qdrawRect(painter, .bpos[1] - .brange[1], .bpos[2] - .brange[2], .bpos[1] + 
+            qdrawRect(painter, .bpos[1] - .brange[1], .bpos[2] - .brange[2], .bpos[1] +
                 .brange[1], .bpos[2] + .brange[2], stroke = .bcolor)
         }
+        .brushed = row.attr$.brushed
         if (sum(.brushed, na.rm = TRUE) >= 1) {
             qlineWidth(painter) = 3
             qstrokeColor(painter) = .bcolor
@@ -204,48 +220,53 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
             nn = length(tmpx)
             qdrawSegment(painter, tmpx[-nn], tmpy[-nn], tmpx[-1], tmpy[-1])
         }
-        if (verbose) 
+        if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
-    
+
     scene = qscene()
-    root = qlayer(scene)
+    root_layer = qlayer(scene)
     # title
-    pcp.title = qlayer(root, function(item, painter) {
+    title_layer = qlayer(root_layer, function(item, painter) {
         qdrawText(painter, main, (lims[1] + lims[2])/2, 0, "center", "bottom")
     }, limits = qrect(c(lims[1], lims[2]), c(0, 1)), clip = FALSE, row = 0, col = 1)
     # y-axis
-    pcp.yaxis = qlayer(root, function(item, painter) {
-        qdrawText(painter, yticklab, 0.9, ytickloc, "right", "center")
+    yaxis_layer = qlayer(root_layer, function(item, painter) {
+        qdrawText(painter, yticklab, 0.7, ytickloc, "right", "center")
         # qdrawSegment(painter, .92, ytickloc, 1, ytickloc, stroke='black')
     }, limits = qrect(c(0, 1), c(lims[3], lims[4])), clip = FALSE, row = 1, col = 0)
     # x-axis
-    pcp.xaxis = qlayer(root, function(item, painter) {
+    xaxis_layer = qlayer(root_layer, function(item, painter) {
         qdrawText(painter, xticklab, xtickloc, 0.9, "center", "top")
         xlabWidth = max(xr * mar[c(2, 4)], max(qstrWidth(painter, xticklab[c(1, length(xticklab))]))/2)
         lims[, 1] <<- xspan + c(-1, 1) * xlabWidth
         # qdrawSegment(painter,xtickloc,.92,xtickloc,1,stroke='black')
     }, limits = qrect(c(lims[1], lims[2]), c(0, 1)), clip = FALSE, row = 2, col = 1)
-    pcp.grid = qlayer(root, pcp_Grid, limits = qrect(lims), clip = FALSE, row = 1, 
+    grid_layer = qlayer(root_layer, grid_draw, limits = qrect(lims), clip = FALSE, row = 1,
         col = 1)
-    pcp.main = qlayer(root, pcp_Segment, mousePressFun = pcpBrushStart, mouseReleaseFun = pcpIdentify, 
-        mouseDoubleClickFun = pcpMove, mouseMove = pcpIdentify, limits = qrect(lims), 
-        clip = FALSE, row = 1, col = 1)
+    main_layer = qlayer(root_layer, main_draw, mousePressFun = brush_mouse_press, mouseReleaseFun = identify_mouse_move,
+        mouseMove = identify_mouse_move, limits = qrect(lims), clip = FALSE, row = 1, col = 1)
     if (boxplot) {
-        pcp.boxplot = qlayer(root, pcp_Boxplot, limits = qrect(lims), clip = FALSE, 
+        boxplot_layer = qlayer(root_layer, boxplot_draw, limits = qrect(lims), clip = FALSE,
             row = 1, col = 1)
     }
-    pcp.brush = qlayer(root, pcpBrush, limits = qrect(lims), clip = FALSE, row = 1, 
+    brush_layer = qlayer(root_layer, brush_draw, limits = qrect(lims), clip = FALSE, row = 1,
         col = 1)
-    
-    
-    layout = root$gridLayout()
+
+    # update the brush layer in case of any modifications to the mutaframe
+    if (is.mutaframe(row.attr)) {
+	add_listener(row.attr, function(i, j) {
+	    qupdate(brush_layer)
+	})
+    }
+
+    layout = root_layer$gridLayout()
     layout$setRowStretchFactor(0, 1)
-    layout$setRowStretchFactor(1, 6)
+    layout$setRowStretchFactor(1, 5)
     layout$setRowStretchFactor(2, 1)
     layout$setColumnStretchFactor(0, 1)
-    layout$setColumnStretchFactor(1, 6)
-    
+    layout$setColumnStretchFactor(1, 5)
+
     view = qplotView(scene = scene)
     view
-} 
+}
