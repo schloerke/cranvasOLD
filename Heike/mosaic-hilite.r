@@ -34,7 +34,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
         .level <- 0
     }
 
-    if (.level == 0) fmarg <- ""
+    if (.level == 0) fmarg <- character(0)
     else {
       if (nmarg <= .level) { 
         fmarg <- form$marg
@@ -44,6 +44,8 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
     }
     # piece everything together
     formstring <- paste(form$wt,"~ ")
+
+print(fmarg)
 
     if (length(fmarg) > 0) {
       formstring <- paste(formstring, paste(fmarg, collapse= "+"))
@@ -470,7 +472,7 @@ print(summary(df$.brushed))
         formstring <- paste(form$wt,"~ ")
 
         if (length(form$marg) > 0) {
-          formstring <- paste(formstring, paste(form$marg, collapse= "+"))
+		  formstring <- paste(formstring, paste(form$marg, collapse= "+"))
         } else {
           formstring <- paste(formstring,"1")
         }
@@ -479,7 +481,6 @@ print(summary(df$.brushed))
           formstring <- paste(formstring, "|", paste(form$cond, 
             collapse= "+"))
         }
-        
         formula <<- as.formula(formstring)
         datachanged <- TRUE
     }
@@ -531,8 +532,9 @@ ra$.brushed <- happy$marital =="married"
 plot1 <- qmosaic(happy, ~ health+sex+happy, c("vspine","hspine","hspine"))  
 #print(plot1)
 
-#plot1 <- qmosaic(happy, ~ degree+sex+happy, c("vspine","hspine","hspine"))  
+plot2 <- qmosaic(happy, ~ degree+sex+happy, c("vspine","hspine","hspine"))  
 print(plot1)
+print(plot2)
 #happym <- mutaframe(happy)
 #qmosaic(happym, ~ health+sex+happy, c("vspine","hspine","hspine"))  
 
