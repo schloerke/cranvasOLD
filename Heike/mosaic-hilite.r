@@ -1,16 +1,23 @@
 source("../utilities/api-sketch.r")
 source("../utilities/helper.r")
 source("../utilities/axes.r")
+source("../utilities/interaction.R")
 rm(hbar)
 rm(vbar)
 source("labels.r")
 require(stringr)
 require(productplots)
 
+require(plumbr)
+
+id <- function(x) return(x)
+
+# assume that data is mutaframe
 qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = TRUE, na.rm = FALSE, subset=NULL, colour="grey30", main=NULL, ...) {
   odata <- data
+  row.attr <- get_row_attr(data)
   
-  data <- prodcalc(odata, formula, divider, cascade, scale_max, na.rm = na.rm)
+  data <- prodcalc(data.frame(odata), formula, divider, cascade, scale_max, na.rm = na.rm)
   .level <- max(data$level)-1
 
   extract.formula <- function(formula) {
@@ -27,7 +34,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
         .level <- 0
     }
 
-    if (.level == 0) fmarg <- ""
+    if (.level == 0) fmarg <- character(0)
     else {
       if (nmarg <= .level) { 
         fmarg <- form$marg
@@ -54,15 +61,15 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 
 
   setuphilite <- function(formula) {
-    if (is.null(odata$hilite)) odata$hilite <- FALSE
+    if (is.null(row.attr$.brushed)) row.attr$.brushed <- rep(FALSE, nrow(odata))
     
     formulahil <- NULL
     dividerhil <- NULL
         
-    if (sum(odata$hilite, na.rm=T) > 0) {
+    if (sum(row.attr$.brushed, na.rm=T) > 0) {
       #  browser()
       form <- parse_product_formula(formula)
-      fmarg <- c("hilite", form$marg)
+      fmarg <- c(".brushed", form$marg)
       fcond <- form$cond
       
       formstring <- paste(form$wt,"~ ")
@@ -90,7 +97,8 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
   #  formulahil <<- hils[[1]]
   #  dividerhil <<- hils[[2]]
   
-  #  datahil <- prodcalc(odata, formulahil, dividerhil, cascade, scale_max, na.rm = na.rm)
+  #  datahil <- prodcalc(data.frame(odata), formulahil, dividerhil, cascade, scale_max, na.rm = na.rm)
+	datahil <- NULL
 
   #browser()
 
@@ -193,7 +201,6 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
   # Brushing -----------------------------------------------------------------
   .startBrush <- NULL
   .endBrush <- NULL
-  .hilitingchanged <- TRUE
   .brush <- FALSE
 
   drawBrush <- function(item, painter, exposed) {
@@ -211,19 +218,21 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 
     formulahil <<- hils[[1]]
     dividerhil <<- hils[[2]]
-    datahil <<- prodcalc(odata, formulahil, dividerhil, cascade, 
+	df <- data.frame(odata)
+	df$.brushed <- row.attr$.brushed
+
+    datahil <<- prodcalc(df, formulahil, dividerhil, cascade, 
       scale_max, na.rm = na.rm)
   }
 
   brushing_draw <- function(item, painter, exposed, ...) {
     if (TRUE) {
-      if (.hilitingchanged) {
-          recalchiliting()
-          .hilitingchanged <<- FALSE
-      }
 
-      if (.brush) hdata <- subset(data, (hilite==TRUE) & (level == (.level)))
-      else hdata <- subset(datahil, (hilite==TRUE) & (level == (.level+1)))
+      if (.brush) hdata <- subset(data, (.brushed==TRUE) & (level == (.level)))
+      else {
+        recalchiliting()
+      	hdata <- subset(datahil, (.brushed==TRUE) & (level == (.level+1)))
+      }
       
       if (nrow(hdata)>0) {
       
@@ -240,6 +249,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
       drawBrush(item, painter, exposed)
     }
   }
+
   brushing_mouse_press <- function(item, event, ...) {  
     .brush <<- TRUE
     if (is.null(.startBrush)) {
@@ -258,16 +268,24 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
   brushing_mouse_release <- function(item, event, ...) {    
     .endBrush <<- as.numeric(event$pos())
     setHiliting()    
-
-    odata$hilite <<- FALSE
-    odata$hilite[getSelected()] <<- TRUE
-    .brush <<- FALSE
-    .hilitingchanged <<- TRUE
-    
     qupdate(brushing_layer)
+ 
+    
+    .brush <<- FALSE
+    
     
     .startBrush <<- NULL
     .endBrush <<- NULL
+
+    .brushed <- rep(FALSE, nrow(odata))
+    .brushed[getSelected()] <- TRUE
+
+    row.attr$.brushed <- .brushed
+#    print("changed?")
+#    print(summary(row.attr$.brushed))
+
+#      recalchiliting()
+#	  qupdate(brushing_layer)
   }
 
   setHiliting <- function() {
@@ -276,44 +294,28 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
     top = max(.startBrush[2], .endBrush[2])
     bottom = min(.startBrush[2], .endBrush[2])
 
-    data$hilite <<- (data$level == .level) & (data$l <= right) & 
+    data$.brushed <<- (data$level == .level) & (data$l <= right) & 
       (data$r >= left) & (data$b <= top) & (data$t >= bottom)  
   }
 
   getSelected <- function() {
-    hdata <- subset(data, (hilite==TRUE) & (level == .level))[,.activevars]
+    hdata <- subset(data, (.brushed==TRUE) & (level == .level), drop=FALSE)[,.activevars, drop=FALSE]
 
-    if (length(.activevars) >=2) {
-      #  browser()
-      conds <- adply(hdata, 1, function (x) {
-          cond <- adply(cbind(names(x),as.character(unlist(x))), 1,
-            function(y) {
-            cstr <- ""
-              if (is.na(y[2])) cstr <- paste("is.na(",y[1],")", sep="")
-              else cstr <- paste("(",y[1],"=='",y[2],"')",sep="")
-              return(cstr)
-          }) 
-        return(paste(cond$V1, collapse=" & "))
-      })
-    } else {
-      conds <- ldply(hdata, function (x) {
-        cond <- paste(.activevars ,paste("'",as.character(unlist(x)),"'",sep=""), sep="==")
-        cond[which(is.na(x))] <- paste("is.na(",.activevars[1],")", sep="")
-        return(paste(cond, collapse=" & "))
-      })
-    } 
+	hdata$ID <- 1:nrow(hdata)
+	res.melt <- melt(hdata,id.var="ID")
+	res.cond <- adply(res.melt, 1, function(x) {
+      if (is.na(x$value)) cstr <- paste("is.na(",x$variable,")", sep="")
+      else cstr <- paste("(",x$variable,"=='",x$value,"')",sep="")
+      return(cond=cstr)
+    })
+    res.cond <- res.cond[,-3]
+    names(res.cond)[3] <- "value"
+    cast.res <- cast(res.cond, ID~., function(x) return(paste(x, collapse=" & ")))
 
-    if (ncol(conds) > 1) {
-      cond1 <- paste("(",conds[,ncol(conds)],")", sep="", collapse=" | ")      
-    } else {
-      cond1 <- "TRUE"
-    }
+    cond1 <- paste("(",cast.res[,2],")", sep="",collapse=" | ")
   
-    idx <- with(odata, which(eval(parse(text=cond1))))
+    idx <- with(data.frame(odata), which(eval(parse(text=cond1))))
 
-    # print(cond1)
-    # print("hilited")
-    # print(length(idx))
     return(idx)
   }
 
@@ -337,7 +339,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 
     # Work out label text
     idx <- setdiff(names(data),c("l","t","r","b", ".wt","level",
-      "hilite"))[1:.level]    
+      ".brushed"))[1:.level]    
     infodata <- as.character(unlist(info[1,idx]))
     infostring <- paste(idx, infodata,collapse="\n", sep=":")
     
@@ -370,12 +372,10 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
     if (key == Qt$Qt$Key_Up) {        # arrow up
       if (.level > 1) {
         .level <<- .level - 1
-        .hilitingchanged <<- TRUE
       }
     } else if (key == Qt$Qt$Key_Down) {        # arrow down
       if (.level < max(data$level)) {
         .level <<- .level + 1
-        .hilitingchanged <<- TRUE
       }
     } else if (key == Qt$Qt$Key_Left) {        # arrow left
     # move variable into mosaic plot from left
@@ -449,7 +449,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
         formstring <- paste(form$wt,"~ ")
 
         if (length(form$marg) > 0) {
-          formstring <- paste(formstring, paste(form$marg, collapse= "+"))
+		  formstring <- paste(formstring, paste(form$marg, collapse= "+"))
         } else {
           formstring <- paste(formstring,"1")
         }
@@ -458,15 +458,15 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
           formstring <- paste(formstring, "|", paste(form$cond, 
             collapse= "+"))
         }
-        
         formula <<- as.formula(formstring)
         datachanged <- TRUE
     }
     
     if (datachanged) {
-      .hilitingchanged <<- TRUE
 
-      data <<- prodcalc(odata, formula, divider, cascade, scale_max, 
+	  df <- data.frame(odata)
+	  df$.brushed <- row.attr$.brushed
+      data <<- prodcalc(df, formula, divider, cascade, scale_max, 
         na.rm = na.rm)
     }
 
@@ -491,20 +491,14 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
   querylayer = qlayer(scene, query_draw, limits = lims, clip = FALSE,
     hoverMoveFun = query_hover, hoverLeaveFun = query_hover_leave)
 
+  # update the brush layer in case of any modifications to the mutaframe
+  if (is.mutaframe(row.attr)) {
+	add_listener(row.attr, function(i,j) {
+
+	  qupdate(brushing_layer)
+	})
+  }
+
   qplotView(scene = scene)
 }
 
-happy$hilite <- happy$marital =="married"
-plot1 <- qmosaic(happy, ~ health+sex+happy, c("vspine","hspine","hspine"))  
-#print(plot1)
-
-#plot1 <- qmosaic(happy, ~ health+sex+happy, c("fluct","hspine"))  
-print(plot1)
-#happym <- mutaframe(happy)
-#qmosaic(happym, ~ health+sex+happy, c("vspine","hspine","hspine"))  
-
-#qmosaic(mutaframe(happy), ~ health+sex+happy, c("vspine","hspine","hspine"))  
-
-#tc <- as.data.frame(Titanic)
-#plot1 <- qmosaic(tc, Freq~Survived+Sex+Class+Age, c("vspine","hspine","hspine","hspine"))
-#print(plot1)
