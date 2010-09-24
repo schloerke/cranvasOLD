@@ -27,7 +27,13 @@ qmutaframe = function(data, ...) {
     ## if (!is.null(dot_names) && all_in(row_attrs, dot_names)) {
 
     ## }
+
+    ## prevent converting from characters to factors
+    opts = options(stringsAsFactors = FALSE)
+    p = ncol(data)
     mf = mutaframe(data, ...)
+    options(opts)
+    attr(mf, 'p') = p
 
     mf
 }
