@@ -45,8 +45,6 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
     # piece everything together
     formstring <- paste(form$wt,"~ ")
 
-print(fmarg)
-
     if (length(fmarg) > 0) {
       formstring <- paste(formstring, paste(fmarg, collapse= "+"))
     } else {
@@ -217,22 +215,18 @@ print(fmarg)
   
   recalchiliting <- function() {
     hils <- setuphilite(formula=as.formula(extract.formula(formula)))  
-print("recalc hiliting ")
 
     formulahil <<- hils[[1]]
     dividerhil <<- hils[[2]]
 	df <- data.frame(odata)
 	df$.brushed <- row.attr$.brushed
-print(summary(df$.brushed))
+
     datahil <<- prodcalc(df, formulahil, dividerhil, cascade, 
       scale_max, na.rm = na.rm)
   }
 
   brushing_draw <- function(item, painter, exposed, ...) {
     if (TRUE) {
-#print(paste("hiliting changed",.hilitingchanged))
-#print(paste("brushing?",.brush))
-
 
       if (.brush) hdata <- subset(data, (.brushed==TRUE) & (level == (.level)))
       else {
@@ -285,8 +279,7 @@ print(summary(df$.brushed))
 
     .brushed <- rep(FALSE, nrow(odata))
     .brushed[getSelected()] <- TRUE
-#    print("mouse release")
-#    print(summary(.brushed))
+
     row.attr$.brushed <- .brushed
 #    print("changed?")
 #    print(summary(row.attr$.brushed))
@@ -306,39 +299,23 @@ print(summary(df$.brushed))
   }
 
   getSelected <- function() {
-    hdata <- subset(data, (.brushed==TRUE) & (level == .level))[,.activevars]
+    hdata <- subset(data, (.brushed==TRUE) & (level == .level), drop=FALSE)[,.activevars, drop=FALSE]
 
-    if (length(.activevars) >=2) {
-      #  browser()
-      conds <- adply(hdata, 1, function (x) {
-          cond <- adply(cbind(names(x),as.character(unlist(x))), 1,
-            function(y) {
-            cstr <- ""
-              if (is.na(y[2])) cstr <- paste("is.na(",y[1],")", sep="")
-              else cstr <- paste("(",y[1],"=='",y[2],"')",sep="")
-              return(cstr)
-          }) 
-        return(paste(cond$V1, collapse=" & "))
-      })
-    } else {
-      conds <- ldply(hdata, function (x) {
-        cond <- paste(.activevars ,paste("'",as.character(unlist(x)),"'",sep=""), sep="==")
-        cond[which(is.na(x))] <- paste("is.na(",.activevars[1],")", sep="")
-        return(paste(cond, collapse=" & "))
-      })
-    } 
+	hdata$ID <- 1:nrow(hdata)
+	res.melt <- melt(hdata,id.var="ID")
+	res.cond <- adply(res.melt, 1, function(x) {
+      if (is.na(x$value)) cstr <- paste("is.na(",x$variable,")", sep="")
+      else cstr <- paste("(",x$variable,"=='",x$value,"')",sep="")
+      return(cond=cstr)
+    })
+    res.cond <- res.cond[,-3]
+    names(res.cond)[3] <- "value"
+    cast.res <- cast(res.cond, ID~., function(x) return(paste(x, collapse=" & ")))
 
-    if (ncol(conds) > 1) {
-      cond1 <- paste("(",conds[,ncol(conds)],")", sep="", collapse=" | ")      
-    } else {
-      cond1 <- "TRUE"
-    }
+    cond1 <- paste("(",cast.res[,2],")", sep="",collapse=" | ")
   
     idx <- with(data.frame(odata), which(eval(parse(text=cond1))))
 
-    # print(cond1)
-    # print("hilited")
-    # print(length(idx))
     return(idx)
   }
 
@@ -529,12 +506,12 @@ happy <- qmutaframe(happy)
 ra <- get_row_attr(happy)
 ra$.brushed <- happy$marital =="married"
 
-plot1 <- qmosaic(happy, ~ health+sex+happy, c("vspine","hspine","hspine"))  
+#plot1 <- qmosaic(happy, ~ health+sex+happy, c("vspine","hspine","hspine"))  
 #print(plot1)
-
+plot1 <- qmosaic(happy, ~ happy, c("hbar"))  
 plot2 <- qmosaic(happy, ~ degree+sex+happy, c("vspine","hspine","hspine"))  
 print(plot1)
-print(plot2)
+#print(plot2)
 #happym <- mutaframe(happy)
 #qmosaic(happym, ~ health+sex+happy, c("vspine","hspine","hspine"))  
 
