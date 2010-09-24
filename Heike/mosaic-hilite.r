@@ -502,21 +502,3 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
   qplotView(scene = scene)
 }
 
-happy <- qmutaframe(happy)
-ra <- get_row_attr(happy)
-ra$.brushed <- happy$marital =="married"
-
-#plot1 <- qmosaic(happy, ~ health+sex+happy, c("vspine","hspine","hspine"))  
-#print(plot1)
-plot1 <- qmosaic(happy, ~ happy, c("hbar"))  
-plot2 <- qmosaic(happy, ~ degree+sex+happy, c("vspine","hspine","hspine"))  
-print(plot1)
-#print(plot2)
-#happym <- mutaframe(happy)
-#qmosaic(happym, ~ health+sex+happy, c("vspine","hspine","hspine"))  
-
-#qmosaic(mutaframe(happy), ~ health+sex+happy, c("vspine","hspine","hspine"))  
-
-#tc <- as.data.frame(Titanic)
-#plot1 <- qmosaic(tc, Freq~Survived+Sex+Class+Age, c("vspine","hspine","hspine","hspine"))
-#print(plot1)
