@@ -1,10 +1,12 @@
-###
+
 ##' Create a Mutaframe from Data with Several Attributes for Future Interaction
 ##'
 ##' Create a Mutaframe from Data with Several Attributes for Future Interaction
 ##' @title Create a Mutaframe from Data with Several Attributes for Future Interaction
-##' @param data a data frame (typically); it will be coerced to a data frame
-##' @param ... other attributes corresponding to rows such as colours, sizes and so on
+##' @param data a data frame (typically); it will be coerced to a data
+##' frame
+##' @param ... other attributes corresponding to rows such as colours,
+##' sizes and so on
 ##' @return a mutaframe
 ##' @author Yihui Xie
 qmutaframe = function(data, ...) {
@@ -16,24 +18,22 @@ qmutaframe = function(data, ...) {
     ## row attributes needed by all plotting functions
     row_attrs=c('.color', '.size', '.brushed')
     ## once in a blue moon...
-    conflict_attrs = all_in(row_attrs, colnames(data))
+    conflict_attrs = row_attrs %in% colnames(data)
     if(any(conflict_attrs)) {
         stop(sprintf('variable names conflicts: %s already exist(s) in data',
                      paste(row_attrs[conflict_attrs], collapse = ', ')))
     }
-    ## all possible row attributes that _might_ be needed
-    ## row_attrs=c(row_attrs, '.shape', '.ltype')
-    ## dot_names=names(list(...))
-    ## if (!is.null(dot_names) && all_in(row_attrs, dot_names)) {
-
-    ## }
 
     ## prevent converting from characters to factors
-    opts = options(stringsAsFactors = FALSE)
-    p = ncol(data)
+    old_opts = options(stringsAsFactors = FALSE)
     mf = mutaframe(data, ...)
-    options(opts)
-    attr(mf, 'p') = p
+    options(old_opts)
+
+    ## we need to store some attributes somewhere which are not corresponding to rows
+    ## e.g.
+    attr(mf, '.brush.color') = 'yellow'
 
     mf
 }
+
+f=function(x)x
