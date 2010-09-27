@@ -80,9 +80,7 @@ qparallel = function(data, vars, scale = "range", horizontal = TRUE,
 
         ## get the plotting data: we don't want to change the original mutaframe
         ##   so get an independent copy here
-        old_opts = options(stringsAsFactors = FALSE)
-        plot_data = as.data.frame(data[, vars])
-        options(old_opts)
+        plot_data = as.data.frame(data[, vars], stringsAsFactors = FALSE)
 
         ## constant columns (or nearly constants -- for safety with floating numbers)
         const.col = sapply(plot_data, function(x) {
