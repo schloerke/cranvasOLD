@@ -1,7 +1,11 @@
-
-##' Create a Mutaframe from Data with Several Attributes for Future Interaction
+##' Create a mutaframe from data with several attributes for future interaction
 ##'
-##' Create a Mutaframe from Data with Several Attributes for Future Interaction
+##' Create a mutaframe from data with several attributes for future interaction:
+##' first check if the names of some predefined row attributes (e.g. .color, .brushed)
+##' exist in the data (will issue an error if this happens); then augment the ...
+##' arguments to the data and convert the augmented data to a mutaframe; in the end
+##' add some attributes to the mutaframe to control the appearance of elements for
+##' interaction (e.g. the color of the brush).
 ##' @title Create a Mutaframe from Data with Several Attributes for Future Interaction
 ##' @param data a data frame (typically); it will be coerced to a data
 ##' frame
@@ -12,9 +16,6 @@
 qmutaframe = function(data, ...) {
     if (!is.data.frame(data)) data = as.data.frame(data)
     ## check if the attribute exists
-    all_in = function(x1, x2) {
-	sapply(x1, '%in%', x2)
-    }
     ## row attributes needed by all plotting functions
     row_attrs=c('.color', '.size', '.brushed')
     ## once in a blue moon...
@@ -35,5 +36,3 @@ qmutaframe = function(data, ...) {
 
     mf
 }
-
-f=function(x)x
