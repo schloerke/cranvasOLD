@@ -15,19 +15,22 @@
 ##' @author Yihui Xie <\url{http://yihui.name}>
 ##' @examples
 ##' iris0 = qmutaframe(iris, .color = 'red', .brushed = FALSE)
+##' ## the line width >= 2 does not work for me, so use 1
+##' set_brush_attr(iris0, '.brushed.size', 1)
 ##' qparallel(iris0)
-##' attr(iris0, '.brush.attr')$.brushed.size = 1
+##' ## random colors
+##' iris0$.color = sample(1:8, nrow(iris), replace = TRUE)
 ##' ## change the colors to green
 ##' iris0$.color = 'green'
-##' ## or other random colors
-##' iris0$.color = sample(1:8, nrow(iris), replace = TRUE)
 ##' ## 'brushing' by command line
 ##' for (i in 1:10) {
 ##'     iris0$.brushed = sample(c(TRUE, FALSE), nrow(iris), replace = TRUE)
 ##'     Sys.sleep(1)
 ##' }
 ##' ## change the brush color to green
-##' attr(iris0, '.brush.attr')$.brush.color = 'green'
+##' set_brush_attr(iris0, '.brush.color', 'green')
+##' ## change brushed lines to black
+##' set_brush_attr(iris0, '.brushed.color', 'black')
 qmutaframe = function(data, ...) {
     if (!is.data.frame(data)) data = as.data.frame(data)
     ## check if the attribute exists
@@ -56,11 +59,13 @@ qmutaframe = function(data, ...) {
 
     mf
 }
+
+
 ##' Logical operations under different selection mode.
 ##'
 ##' There are five selection modes:
 ##' \describe{
-##'   \item{none}{ignore previous selection and completely start over}
+##'   \item{none}{ignore previous selection and completely start over again}
 ##'   \item{and}{select the intersection, i.e. the objects that are selected by two successive brushing operations}
 ##'   \item{or}{select the union, i.e. any objects selected by all previous operations and the current operation}
 ##'   \item{xor}{toggle the selection}
@@ -87,3 +92,36 @@ mode_selection = function(x, y, mode = 'none'){
     switch(mode, none = y, and = x & y, or = x | y, xor = xor(x, y), not = x & !y,
            y)
 }
+
+
+
+##' Get or set brush attributes
+##'
+##' Get or set brush attributes
+##' @aliases get_brush_attr set_brush_attr
+##' @usage get_brush_attr(data, attr)
+##' set_brush_attr(data, attr, value)
+##' @title Get or Set Brush Attributes
+##' @param data the mutaframe created by \code{\link{qmutaframe}},
+##' with an attribute '.brush.attr'
+##' @param attr the name of the brush attribute, e.g. '.brush.color'
+##' (the color of the brush), '.brushed.color' (the color of the
+##' objects selected by the brush), '.brush.size' (the line width of
+##' the brush), and '.brushed.size' (the size of the selected objects,
+##' e.g. line width or size of points)
+##' @return the brush attribute (or as a side effect, change the attribute)
+##' @author Yihui Xie <\url{http://yihui.name}>
+get_brush_attr = function(data, attr) {
+    attr(data, '.brush.attr')[[attr]]
+}
+set_brush_attr = function(data, attr, value) {
+    attr(data, '.brush.attr')[[attr]] = value
+}
+## a weird issue here: I want to define a function `brush_attr<-` but failed;
+## if I use brush_attr(data, attr) <- value, the 'data' object will be changed to 'value'. Why?
+## brush_attr = function(data, attr) {
+##     attr(data, '.brush.attr')[[attr]]
+## }
+## `brush_attr<-` = function(data, attr, value) {
+##     attr(data, '.brush.attr')[[attr]] = value
+## }

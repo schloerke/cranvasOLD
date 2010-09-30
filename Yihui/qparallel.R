@@ -79,7 +79,7 @@ qparallel = function(data, vars, scale = "range", horizontal = TRUE,
 
         ## get the plotting data: we don't want to change the original mutaframe
         ##   so get an independent copy here
-        plot_data = as.data.frame(data[, vars], stringsAsFactors = FALSE)
+        plot_data = as.data.frame(data[, vars], stringsAsFactors = TRUE)
 
         ## constant columns (or nearly constants -- for safety with floating numbers)
         const.col = sapply(plot_data, function(x) {
@@ -156,7 +156,6 @@ qparallel = function(data, vars, scale = "range", horizontal = TRUE,
         segy0 <<- as.vector(t.default(y[, 1:(p - 1)]))
         segy1 <<- as.vector(t.default(y[, 2:p]))
         nn <<- n * (p - 1)
-        #segcol <<- rep(data$.color, each = p - 1)
 
         ## for boxplots
         if (boxplot)
@@ -241,11 +240,12 @@ qparallel = function(data, vars, scale = "range", horizontal = TRUE,
     identify_key_press = function(layer, event) {
         ## Key X: XOR; O: OR; A: AND; N: NOT
         i = which(event$key() == c(Qt$Qt$Key_A, Qt$Qt$Key_O, Qt$Qt$Key_X, Qt$Qt$Key_N))
-        if (length(i)) .brush.attr$.brush.mode = c('and', 'or', 'xor', 'not')[i]
+        if (length(i))
+            set_brush_attr(data, '.brush.mode', c('and', 'or', 'xor', 'not')[i])
     }
     identify_key_release = function(layer, event) {
         ## set brush mode to 'none' when release the key
-        .brush.attr$.brush.mode = 'none'
+        set_brush_attr(data, '.brush.mode', 'none')
     }
 
     ## identify segments being brushed when the mouse is moving
@@ -265,7 +265,7 @@ qparallel = function(data, vars, scale = "range", horizontal = TRUE,
         hits = layer$locate(rect) + 1
         hits = ceiling(hits/(p - 1))
         .new.brushed[hits] = TRUE
-        data$.brushed = mode_selection(data$.brushed, .new.brushed, mode = .brush.attr$.brush.mode)
+        data$.brushed = mode_selection(data$.brushed, .new.brushed, mode = get_brush_attr(data, '.brush.mode'))
         if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
@@ -279,16 +279,16 @@ qparallel = function(data, vars, scale = "range", horizontal = TRUE,
 
         if (!any(is.na(.bpos))) {
             ## I have troubles with line width >=2; reason not clear yet
-            qlineWidth(painter) = .brush.attr$.brush.size
+            qlineWidth(painter) = get_brush_attr(data, '.brush.size')
             ##qdash(painter)=c(1,3,1,3)
             qdrawRect(painter, .bpos[1] - .brange[1], .bpos[2] - .brange[2],
                       .bpos[1] + .brange[1], .bpos[2] + .brange[2],
-                      stroke = .brush.attr$.brush.color)
+                      stroke = get_brush_attr(data, '.brush.color'))
         }
         .brushed = data$.brushed
         if (sum(.brushed, na.rm = TRUE) >= 1) {
-            qlineWidth(painter) = .brush.attr$.brushed.size
-            qstrokeColor(painter) = .brush.attr$.brushed.color
+            qlineWidth(painter) = get_brush_attr(data, '.brushed.size')
+            qstrokeColor(painter) = get_brush_attr(data, '.brushed.color')
             x = x[.brushed, , drop = FALSE]
             y = y[.brushed, , drop = FALSE]
             tmpx = as.vector(t.default(cbind(x, NA)))
