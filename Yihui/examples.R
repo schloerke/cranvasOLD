@@ -17,6 +17,8 @@ library(RColorBrewer)
 iris.col = brewer.pal(3, "Set1")[as.integer(iris$Species)]
 qiris = qmutaframe(iris, .brushed = FALSE, .color = iris.col)
 
+set_brush_attr(qiris, '.brushed.size', 1)
+
 qparallel(qiris)
 qparallel(qiris, scale = "I")
 qparallel(qiris, scale = "var")
@@ -60,9 +62,12 @@ xna = qmutaframe(sapply(iris, function(x) {
     x[sample(length(x), 50)] = NA
     x
 }))
+set_brush_attr(xna, '.brush.size', 1)
 qparallel(xna)
 
-qparallel(qmutaframe(mtcars))
+qmtcars = qmutaframe(mtcars)
+set_brush_attr(qmtcars, '.brush.size', 1)
+qparallel(qmtcars)
 
 ## test speed
 test.mat1 = qmutaframe(matrix(rnorm(1000 * 10), ncol = 10),
