@@ -16,6 +16,7 @@
 ##' @examples
 ##' iris0 = qmutaframe(iris, .color = 'red', .brushed = FALSE)
 ##' qparallel(iris0)
+##' attr(iris0, '.brush.attr')$.brushed.size = 1
 ##' ## change the colors to green
 ##' iris0$.color = 'green'
 ##' ## or other random colors
@@ -23,7 +24,10 @@
 ##' ## 'brushing' by command line
 ##' for (i in 1:10) {
 ##'     iris0$.brushed = sample(c(TRUE, FALSE), nrow(iris), replace = TRUE)
+##'     Sys.sleep(1)
 ##' }
+##' ## change the brush color to green
+##' attr(iris0, '.brush.attr')$.brush.color = 'green'
 qmutaframe = function(data, ...) {
     if (!is.data.frame(data)) data = as.data.frame(data)
     ## check if the attribute exists
@@ -62,6 +66,7 @@ qmutaframe = function(data, ...) {
 ##'   \item{xor}{toggle the selection}
 ##'   \item{not}{negation, i.e. exclude the objects under two successive brushing operations}
 ##' }
+##' We can hold the key while brushing: A for 'and', O for 'or', X for 'xor' and N for 'not'.
 ##' @title Logical Operations Under Different Selection Mode
 ##' @param x logical: the previous selection status
 ##' @param y logical: the current selection status

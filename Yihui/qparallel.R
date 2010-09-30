@@ -32,8 +32,7 @@ qparallel = function(data, vars, scale = "range", horizontal = TRUE,
     mar = c(0.04, 0.04, 0.04, 0.04), main, verbose = getOption("verbose")) {
 
     ## parameters for the brush
-    ## brush color
-    .bcolor = "yellow"
+    .brush.attr = attr(data, '.brush.attr')
     ## background color
     .bgcolor = "grey80"
     ## .bgcolor = rgb(0,0,0,0)
@@ -157,7 +156,7 @@ qparallel = function(data, vars, scale = "range", horizontal = TRUE,
         segy0 <<- as.vector(t.default(y[, 1:(p - 1)]))
         segy1 <<- as.vector(t.default(y[, 2:p]))
         nn <<- n * (p - 1)
-        segcol <<- rep(data$.color, each = p - 1)
+        #segcol <<- rep(data$.color, each = p - 1)
 
         ## for boxplots
         if (boxplot)
@@ -166,8 +165,8 @@ qparallel = function(data, vars, scale = "range", horizontal = TRUE,
     }
 
     ## automatic box width
-        if (missing(boxwex))
-            boxwex = max(1/p, 0.2)
+    if (missing(boxwex))
+        boxwex = max(1/p, 0.2)
 
     ## do the transformation now
     transform_data()
@@ -191,6 +190,7 @@ qparallel = function(data, vars, scale = "range", horizontal = TRUE,
             ntime = Sys.time()
             message("drawing pcp segments")
         }
+        segcol = rep(data$.color, each = p - 1)
         qdrawSegment(painter, segx0, segy0, segx1, segy1, stroke = segcol)
         if (verbose)
             message(format(difftime(Sys.time(), ntime)))
@@ -237,6 +237,17 @@ qparallel = function(data, vars, scale = "range", horizontal = TRUE,
         }
     }
 
+    ## monitor keypress event
+    identify_key_press = function(layer, event) {
+        ## Key X: XOR; O: OR; A: AND; N: NOT
+        i = which(event$key() == c(Qt$Qt$Key_A, Qt$Qt$Key_O, Qt$Qt$Key_X, Qt$Qt$Key_N))
+        if (length(i)) .brush.attr$.brush.mode = c('and', 'or', 'xor', 'not')[i]
+    }
+    identify_key_release = function(layer, event) {
+        ## set brush mode to 'none' when release the key
+        .brush.attr$.brush.mode = 'none'
+    }
+
     ## identify segments being brushed when the mouse is moving
     identify_mouse_move = function(layer, event) {
         if (verbose) {
@@ -249,14 +260,12 @@ qparallel = function(data, vars, scale = "range", horizontal = TRUE,
         if (!all(.bpos == .bstart) && (!.bmove)) {
             .brange <<- .bpos - .bstart
         }
-        ## use an extra variable here instead of manipulating data$.brushed,
-        ##     which will cause updating brush_layer
-        .brushed = rep(FALSE, n)
+        .new.brushed = rep(FALSE, n)
         rect = qrect(matrix(c(.bpos - .brange, .bpos + .brange), 2, byrow = TRUE))
         hits = layer$locate(rect) + 1
         hits = ceiling(hits/(p - 1))
-        .brushed[hits] = TRUE
-        data$.brushed = .brushed
+        .new.brushed[hits] = TRUE
+        data$.brushed = mode_selection(data$.brushed, .new.brushed, mode = .brush.attr$.brush.mode)
         if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
@@ -270,16 +279,16 @@ qparallel = function(data, vars, scale = "range", horizontal = TRUE,
 
         if (!any(is.na(.bpos))) {
             ## I have troubles with line width >=2; reason not clear yet
-            ##qlineWidth(painter) = 2
+            qlineWidth(painter) = .brush.attr$.brush.size
             ##qdash(painter)=c(1,3,1,3)
             qdrawRect(painter, .bpos[1] - .brange[1], .bpos[2] - .brange[2],
                       .bpos[1] + .brange[1], .bpos[2] + .brange[2],
-                      stroke = .bcolor)
+                      stroke = .brush.attr$.brush.color)
         }
         .brushed = data$.brushed
         if (sum(.brushed, na.rm = TRUE) >= 1) {
-            ##qlineWidth(painter) = 3
-            qstrokeColor(painter) = .bcolor
+            qlineWidth(painter) = .brush.attr$.brushed.size
+            qstrokeColor(painter) = .brush.attr$.brushed.color
             x = x[.brushed, , drop = FALSE]
             y = y[.brushed, , drop = FALSE]
             tmpx = as.vector(t.default(cbind(x, NA)))
@@ -313,8 +322,10 @@ qparallel = function(data, vars, scale = "range", horizontal = TRUE,
     grid_layer = qlayer(root_layer, grid_draw, limits = qrect(lims), row = 1, col = 1)
 
     main_layer = qlayer(root_layer, main_draw,
-    mousePressFun = brush_mouse_press, mouseReleaseFun = identify_mouse_move,
-    mouseMove = identify_mouse_move, limits = qrect(lims), row = 1, col = 1)
+        mousePressFun = brush_mouse_press, mouseReleaseFun = identify_mouse_move,
+        mouseMove = identify_mouse_move, keyPressFun = identify_key_press,
+        keyReleaseFun = identify_key_release,
+        limits = qrect(lims), row = 1, col = 1)
 
     if (boxplot) {
         boxplot_layer = qlayer(root_layer, boxplot_draw, limits = qrect(lims),
@@ -325,15 +336,20 @@ qparallel = function(data, vars, scale = "range", horizontal = TRUE,
 
     ## update the brush layer in case of any modifications to the mutaframe
     add_listener(data, function(i, j) {
-        if (any(j %in% c('.brushed'))) qupdate(brush_layer) else {
-            transform_data()
-            qupdate(grid_layer)
-            qupdate(xaxis_layer)
-            qupdate(yaxis_layer)
-            qupdate(main_layer)
-            if (boxplot) qupdate(boxplot_layer)
-        }
+        switch(j, .brushed = qupdate(brush_layer),
+               .color = qupdate(main_layer), {
+                   transform_data()
+                   qupdate(grid_layer)
+                   qupdate(xaxis_layer)
+                   qupdate(yaxis_layer)
+                   qupdate(main_layer)
+                   if (boxplot) qupdate(boxplot_layer)
+               })
     })
+    ## update the brush layer if brush attributes change
+    add_listener(.brush.attr, function(i, j) {
+        qupdate(brush_layer)
+        })
 
     layout = root_layer$gridLayout()
     layout$setRowStretchFactor(0, 1)
