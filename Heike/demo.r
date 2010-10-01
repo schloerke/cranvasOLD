@@ -23,7 +23,7 @@ qparallel(qiris)
 
 setwd("../Heike")
 source("mosaic-hilite.r")
-qmosaic(qiris, ~X1.Species,"hbar")
+qmosaic(qiris, ~Species,"hbar")
 
 set_brush_attr(qiris, '.brushed.color', "orange")
 
@@ -38,10 +38,10 @@ set_brush_attr(qhappy, '.brushed.color', "yellow")
 
 #plot1 <- qmosaic(happy, ~ health+sex+happy, c("vspine","hspine","hspine"))  
 #print(plot1)
-plot1 <- qmosaic(happy, ~ happy, c("hbar"))  
-plot2 <- qmosaic(happy, ~ degree+sex+happy, c("vspine","hspine","hspine"))  
+plot1 <- qmosaic(qhappy, ~ happy, c("hbar"))  
+plot2 <- qmosaic(qhappy, ~ degree+sex+happy, c("vspine","hspine","hspine"))  
 print(plot1)
-#print(plot2)
+print(plot2)
 #happym <- mutaframe(happy)
 #qmosaic(happym, ~ health+sex+happy, c("vspine","hspine","hspine"))  
 

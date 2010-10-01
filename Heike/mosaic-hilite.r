@@ -27,6 +27,8 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 #  df.brushed <- factor(df.brushed, levels=c("FALSE","TRUE"))
 #print(formula)  
   data <- prodcalc(df, formula, divider, cascade, scale_max, na.rm = na.rm)
+  if (is.null(data$.brushed)) data$.brushed <- FALSE
+  
   .level <- max(data$level)-1
 
   extract.formula <- function(formula) {
@@ -107,7 +109,9 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
   #  dividerhil <<- hils[[2]]
   
   #  datahil <- prodcalc(data.frame(odata), formulahil, dividerhil, cascade, scale_max, na.rm = na.rm)
-	datahil <- NULL
+# set up a hiliting structure with 0 rows:
+	datahil <- data.frame(data[1,])
+	datahil <- datahil[-1,]
 
   #browser()
 
@@ -228,18 +232,26 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
     formulahil <<- hils[[1]]
     dividerhil <<- hils[[2]]
 	df <- data.frame(odata)
+
+	
+	    
     df$.brushed <- factor(df$.brushed, levels=c("TRUE","FALSE"))
 
-    datahil <<- prodcalc(df, formulahil, dividerhil, cascade, 
+    if (!is.null(formulahil)) 
+    	datahil <<- prodcalc(df, formulahil, dividerhil, cascade, 
       scale_max, na.rm = na.rm)
+    else if (nrow(datahil)>0) datahil <<- datahil[-(1:nrow(datahil)),]
   }
 
   brushing_draw <- function(item, painter, exposed, ...) {
     if (TRUE) {
-
-      if (.brush) hdata <- subset(data, (.brushed==TRUE) & (level == (.level)))
-      else {
-        recalchiliting()
+      if (.brush) {
+#		if (is.null(data$.brushed)) 
+#          data$.brushed <- FALSE
+      	hdata <- subset(data, (.brushed==TRUE) & (level == (.level)))
+      } else {
+	    recalchiliting()
+	#	if (is.null(datahil$.brushed)) datahil$.brushed <- FALSE
       	hdata <- subset(datahil, (.brushed==TRUE) & (level == (.level+1)))
       }
       
@@ -287,10 +299,8 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
     .startBrush <<- NULL
     .endBrush <<- NULL
 
-    .brushed <- rep(FALSE, nrow(odata))
-    .brushed[getSelected()] <- TRUE
+	 setSelected()
 
-    odata$.brushed <- .brushed
 #    print("changed?")
 #    print(summary(row.attr$.brushed))
 
@@ -308,25 +318,32 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
       (data$r >= left) & (data$b <= top) & (data$t >= bottom)  
   }
 
-  getSelected <- function() {
+  setSelected <- function() {
     hdata <- subset(data, (.brushed==TRUE) & (level == .level), drop=FALSE)[,.activevars, drop=FALSE]
-
-	hdata$ID <- 1:nrow(hdata)
-	res.melt <- melt(hdata,id.var="ID")
-	res.cond <- adply(res.melt, 1, function(x) {
-      if (is.na(x$value)) cstr <- paste("is.na(",x$variable,")", sep="")
-      else cstr <- paste("(",x$variable,"=='",x$value,"')",sep="")
-      return(cond=cstr)
-    })
-    res.cond <- res.cond[,-3]
-    names(res.cond)[3] <- "value"
-    cast.res <- cast(res.cond, ID~., function(x) return(paste(x, collapse=" & ")))
-
-    cond1 <- paste("(",cast.res[,2],")", sep="",collapse=" | ")
-  
-    idx <- with(data.frame(odata), which(eval(parse(text=cond1))))
-
-    return(idx)
+	if (nrow(hdata) > 0) {
+		hdata$ID <- 1:nrow(hdata)
+		res.melt <- melt(hdata,id.var="ID")
+		res.cond <- adply(res.melt, 1, function(x) {
+			if (is.na(x$value)) cstr <- paste("is.na(",x$variable,")", sep="")
+			else cstr <- paste("(",x$variable,"=='",x$value,"')",sep="")
+			return(cond=cstr)
+		})
+		res.cond <- res.cond[,-3]
+		names(res.cond)[3] <- "value"
+		cast.res <- cast(res.cond, ID~., function(x) return(paste(x, collapse=" & ")))
+		
+		cond1 <- paste("(",cast.res[,2],")", sep="",collapse=" | ")
+		idx <- with(data.frame(odata), which(eval(parse(text=cond1))))
+		
+		.brushed <- rep(FALSE, nrow(odata))
+		if (length(idx)) .brushed[idx] <- TRUE
+		
+		odata$.brushed <- .brushed
+	} else {
+		odata$.brushed <- FALSE
+	}
+ #   idx <- with(data.frame(odata), which(eval(parse(text=cond1))))
+ #   return(idx)
   }
 
     
@@ -472,13 +489,13 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
         datachanged <- TRUE
     }
     
-#    if (datachanged) {
+    if (datachanged) {
 
-#	  df <- data.frame(odata)
+	  df <- data.frame(odata)
 ##	  df$.brushed <- row.attr$.brushed
-#      data <<- prodcalc(df, formula, divider, cascade, scale_max, 
-#        na.rm = na.rm)
-#    }
+      data <<- prodcalc(df, formula, divider, cascade, scale_max, 
+        na.rm = na.rm)
+    }
 
     # should be updating the data set, then start all fresh ...
     # need to figure out how to properly deal with hiliting of parts of the
