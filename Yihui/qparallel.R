@@ -1,144 +1,201 @@
 source("../utilities/interaction.R")
 source("../utilities/optimization.R")
 
-#' Create a parallel co-ordinates plot
-#' Create a parallel co-ordinates plot from a data frame or matrix, with each line representing a row
-#'
-#' @param data a data frame or matrix
-#' @param vars variables to show in par-coords - can be a character vector (names), or a formula like '~ x1 + x2'
-#' @param scale standardizing method - 'range' --> [0, 1], 'I' --> do nothing, 'var' --> mean 0 var 1, 'custom_function_name' --> use your own function (see examples.R)
-#' @param col colour vector (will be cycled to the same length as nrow(data))
-#' @param horizontal logical - arrange variables in horizontal or vertical direction
-#' @param boxplot overlay boxplots on top of par-coords
-#' @param boxwex width of boxplots
-#' @param jitter NULL (no jittering) or a character vector to jitter variables (usually those categorical vars)
-#' @param amount jitter amount
-#' @param mar margin (in proportion to the whole canvas)
-#' @param main the title
-#' @param verbose print some extra information (mainly the time consumed in each step)
-#' @author Yihui Xie \\url{http://yihui.name}
+##' Parallel Coordinates Plot
+##' Create a parallel coordinates plot from a data frame or matrix, with each line representing a row
+##'
+##' @title Parallel Coordinates Plot
+##' @param data a mutaframe which is typically built upon a data frame
+##' along with several row attributes
+##' @param vars variables to show; can be a character vector (column
+##' names), an integer vector (column indices) or a formula like '~ x1
+##' + x2'
+##' @param scale standardizing method - 'range' --> [0, 1], 'I' --> do
+##' nothing, 'var' --> mean 0 var 1, 'custom_function_name' --> use
+##' your own function (see examples.R)
+##' @param horizontal logical: arrange variables in horizontal or
+##' vertical direction
+##' @param boxplot logical: overlay boxplots on top of the par-coords
+##' plot or not
+##' @param boxwex width of boxplots
+##' @param jitter NULL (no jittering) or a character vector to jitter
+##' variables (usually those categorical vars)
+##' @param amount jitter amount
+##' @param mar margin (in proportion to the whole canvas)
+##' @param main the title
+##' @param verbose print some extra information (mainly the time
+##' consumed in each step)
+##' @return NULL
+##' @author Yihui Xie <\url{http://yihui.name}>
+qparallel = function(data, vars, scale = "range", horizontal = TRUE,
+    boxplot = FALSE, boxwex, jitter = NULL, amount = NULL,
+    mar = c(0.04, 0.04, 0.04, 0.04), main, verbose = getOption("verbose")) {
 
-# some brushing parameters are not put in the function arguments yet
-
-qparallel = function(data, vars = names(data), scale = "range", col = "black",
-    horizontal = TRUE, boxplot = FALSE, boxwex, jitter = NULL, amount = NULL, mar = c(0.04,
-        0.04, 0.04, 0.04), main, verbose = getOption("verbose")) {
     ## parameters for the brush
-    # brush color
-    .bcolor = "yellow"
-    # background color
+    .brush.attr = attr(data, '.brush.attr')
+    ## background color
     .bgcolor = "grey80"
-    # .bgcolor = rgb(0,0,0,0)
-    # mouse position
+    ## .bgcolor = rgb(0,0,0,0)
+    ## mouse position
     .bpos = c(NA, NA)
-    # drag start
+    ## drag start
     .bstart = c(NA, NA)
-    # move brush?
+    ## move brush?
     .bmove = TRUE
 
-    # before we do anything, extract the mutaframes needed
-    row.attr = get_row_attr(data)
+    ## check if an attribute exists
+    has_attr = function(attr) {
+        attr %in% names(data)
+    }
 
-    # the title string
+    ## the title string
     dataname = deparse(substitute(data))
     if (missing(main)) {
         main = paste("Parallel Coordinates Plot of", dataname)
     }
-    # margins for the plot region
-    mar = rep(mar, length.out = 4)
-    scale = switch(scale, range = function(x) {
-        xna = x[!is.na(x)]
-        (x - min(xna))/(max(xna) - min(xna))
-    }, var = base:::scale, I = identity, get(scale))
-    data = as.data.frame(data)
-    if (!is.null(vars)) {
-        if (class(vars) == "formula")
-            vars = attr(terms(vars, data = data), "term.labels")
-        data = subset(data, select = vars)
-    }
-    else vars = names(data)
-    ## TODO: handle missing values
 
-    # constant columns (or nearly constants -- for safety with floating numbers)
-    const.col = sapply(data, function(x) {
-        x = na.omit(x)
-        x = as.numeric(x)
-        length(x) == 0 || diff(range(x)) < 1e-6
-    })
-    if (any(const.col)) {
-        data = data[, !const.col]
-        vars = vars[!const.col]
-        warning("removed constant column(s) ", paste(which(const.col), collapse = ","))
+    ## variable selection: select all variables not with '.' prefix by default;
+    ##   or parse the formula to get var names; or just use the usual way to
+    ##   select vars, e.g. by colnames, or integers
+    if (missing(vars)) vars = grep('^[^.]', names(data), value = TRUE)
+    if (class(vars) == "formula")
+        vars = attr(terms(vars, data = as.data.frame(data)), "term.labels")
+
+    if (length(vars) <= 1L)
+        stop("parallel cooridinates plots need at least 2 variables!")
+
+    ## obtain colors from the original mutaframe
+    if (!has_attr('.color')) data$.color = 'black'
+    ## brushed
+    if (!has_attr('.brushed')) data$.brushed = FALSE
+
+    ## a long way of transformation
+    ## creat some 'global' variables first
+    x = y = n = nn = numcol = p = segx0 = segy0 = segx1 = segy1 = segcol =
+        xr = yr = xspan = yspan = xticklab = yticklab = xtickloc = ytickloc =
+            .brange = lims = NULL
+
+    transform_data = function() {
+
+        ## get the plotting data: we don't want to change the original mutaframe
+        ##   so get an independent copy here
+        plot_data = as.data.frame(data[, vars], stringsAsFactors = TRUE)
+
+        ## constant columns (or nearly constants -- for safety with floating numbers)
+        const.col = sapply(plot_data, function(x) {
+            x = na.omit(x)
+            x = as.numeric(x)
+            length(x) == 0 || diff(range(x)) < 1e-6
+        })
+        ## remove constant columns and give a warning message
+        if (any(const.col)) {
+            plot_data = plot_data[, !const.col]
+            warning("removed constant column(s) ",
+                    paste(vars[const.col], collapse = ","))
+            vars = vars[!const.col]
+        }
+
+        ## TODO: handle missing values
+
+        ## which columns are numeric? we don't want boxplots for non-numeric vars
+        numcol <<- sapply(plot_data, class) == "numeric"
+        plot_data = sapply(plot_data, as.numeric)
+        ## must make them global; I wish there could be 'mutavectors'
+        p <<- ncol(plot_data)
+        n <<- nrow(plot_data)
+
+        ## jittering
+        if (!is.null(jitter)) {
+            if (class(jitter) == "formula")
+                jitter = attr(terms(vars, data = plot_data), "term.labels")
+            if (is.character(jitter)) {
+                plot_data[, jitter] = apply(plot_data[, jitter, drop = FALSE],
+                         2, base::jitter, amount = amount)
+            }
+        }
+
+        ## standardizing
+        scale = switch(scale, range = function(x) {
+            xna = x[!is.na(x)]
+            (x - min(xna))/(max(xna) - min(xna))
+        }, var = base:::scale, I = identity, get(scale))
+        plot_data = apply(plot_data, 2, scale)
+
+        ## switch x and y according to the direction
+        if (horizontal) {
+            x <<- col(plot_data)
+            y <<- plot_data
+            xtickloc <<- 1:p
+            xticklab <<- vars
+            ytickloc <<- pretty(y)
+            yticklab <<- format(ytickloc)
+        }
+        else {
+            x <<- plot_data
+            y <<- col(plot_data)
+            xtickloc <<- pretty(x)
+            xticklab <<- format(xtickloc)
+            ytickloc <<- 1:p
+            yticklab <<- vars
+        }
+        xspan <<- range(x, na.rm = TRUE)
+        yspan <<- range(y, na.rm = TRUE)
+        xr <<- diff(xspan)
+        yr <<- diff(yspan)
+
+        ## brush range: horizontal and vertical
+        .brange <<- c(xr, yr)/20
+        ## margins for the plot region
+        mar = rep(mar, length.out = 4)
+        lims <<- matrix(c(xspan + c(-1, 1) * xr * mar[c(2, 4)],
+                          yspan + c(-1, 1) * yr * mar[c(1, 3)]), 2)
+
+        ## creating starting and ending vectors, because indexing in real-time can be slow
+        segx0 <<- as.vector(t.default(x[, 1:(p - 1)]))
+        segx1 <<- as.vector(t.default(x[, 2:p]))
+        segy0 <<- as.vector(t.default(y[, 1:(p - 1)]))
+        segy1 <<- as.vector(t.default(y[, 2:p]))
+        nn <<- n * (p - 1)
+
+        ## for boxplots
+        if (boxplot)
+            bxpstats <<- apply(plot_data, 2,
+                               function(x) boxplot.stats(x, do.conf = FALSE)$stats)
     }
-    # which columns are numeric? we don't want boxplots for non-numeric vars
-    numcol = sapply(data, class) == "numeric"
-    data = sapply(data, as.numeric)
-    p = ncol(data)
-    # we need >= 2 columns
-    stopifnot(p > 1)
-    n = nrow(data)
-    col = rep(col, length.out = n)
-    if (!is.null(jitter) && is.character(jitter)) {
-        data[, jitter] = apply(data[, jitter, drop = FALSE], 2, base::jitter, amount = amount)
-    }
-    data = apply(data, 2, scale)
-    # for boxplots
-    bxpstats = apply(data, 2, function(x) boxplot.stats(x, do.conf = FALSE)$stats)
-    # automatic box width
+
+    ## automatic box width
     if (missing(boxwex))
         boxwex = max(1/p, 0.2)
-    # switch x and y according to the direction
-    if (horizontal) {
-        x = col(data)
-        y = data
-        xtickloc = 1:p
-        xticklab = vars
-        ytickloc = pretty(y)
-        yticklab = format(ytickloc)
-    }
-    else {
-        x = data
-        y = col(data)
-        xtickloc = pretty(x)
-        xticklab = format(xtickloc)
-        ytickloc = 1:p
-        yticklab = vars
-    }
-    xspan = range(x, na.rm = TRUE)
-    yspan = range(y, na.rm = TRUE)
-    xr = diff(xspan)
-    yr = diff(yspan)
 
-    # brush range: horizontal and vertical
-    .brange = c(xr, yr)/20
-    lims = matrix(c(xspan + c(-1, 1) * xr * mar[c(2, 4)], yspan + c(-1, 1) * yr *
-        mar[c(1, 3)]), 2)
+    ## do the transformation now
+    transform_data()
 
-    # creating starting and ending vectors, because indexing in real-time can be slow
-    segx0 = as.vector(t.default(x[, 1:(p - 1)]))
-    segx1 = as.vector(t.default(x[, 2:p]))
-    segy0 = as.vector(t.default(y[, 1:(p - 1)]))
-    segy1 = as.vector(t.default(y[, 2:p]))
-    nn = n * (p - 1)
-    segcol = rep(col, each = p - 1)
+    ## convention of notation:
+    ## *_draw means a drawing function for a layer; *_event is an even callback; *_layer is a layer object
 
-    # convention of notation:
-    # *_draw means a drawing function for a layer; *_event is an even callback; *_layer is a layer object
+    ## background grid
     grid_draw = function(item, painter) {
-        qdrawRect(painter, lims[1, 1], lims[1, 2], lims[2, 1], lims[2, 2], stroke = .bgcolor,
-            fill = .bgcolor)
-        qdrawSegment(painter, xtickloc, lims[1, 2], xtickloc, lims[2, 2], stroke = "white")
-        qdrawSegment(painter, lims[1, 1], ytickloc, lims[2, 1], ytickloc, stroke = "white")
+        qdrawRect(painter, lims[1, 1], lims[1, 2], lims[2, 1], lims[2, 2],
+                  stroke = .bgcolor, fill = .bgcolor)
+        qdrawSegment(painter, xtickloc, lims[1, 2], xtickloc, lims[2, 2],
+                     stroke = "white")
+        qdrawSegment(painter, lims[1, 1], ytickloc, lims[2, 1], ytickloc,
+                     stroke = "white")
     }
+
+    ## par-coords segments
     main_draw = function(item, painter) {
         if (verbose) {
             ntime = Sys.time()
             message("drawing pcp segments")
         }
+        segcol = rep(data$.color, each = p - 1)
         qdrawSegment(painter, segx0, segy0, segx1, segy1, stroke = segcol)
         if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
+
+    ## (optional) boxplots
     boxplot_draw = function(item, painter) {
         if (verbose) {
             message("Drawing boxplots")
@@ -166,9 +223,11 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
         if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
+
+    ## record the coordinates of the mouse on click
     brush_mouse_press = function(item, event) {
         .bstart <<- as.numeric(event$pos())
-        # on right click, we can resize the brush; left click: only move the brush
+        ## on right click, we can resize the brush; left click: only move the brush
         if (event$button() == Qt$Qt$RightButton) {
             .bmove <<- FALSE
         }
@@ -176,6 +235,20 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
             .bmove <<- TRUE
         }
     }
+
+    ## monitor keypress event
+    identify_key_press = function(layer, event) {
+        ## Key X: XOR; O: OR; A: AND; N: NOT
+        i = which(event$key() == c(Qt$Qt$Key_A, Qt$Qt$Key_O, Qt$Qt$Key_X, Qt$Qt$Key_N))
+        if (length(i))
+            set_brush_attr(data, '.brush.mode', c('and', 'or', 'xor', 'not')[i])
+    }
+    identify_key_release = function(layer, event) {
+        ## set brush mode to 'none' when release the key
+        set_brush_attr(data, '.brush.mode', 'none')
+    }
+
+    ## identify segments being brushed when the mouse is moving
     identify_mouse_move = function(layer, event) {
         if (verbose) {
             message("identifying mouse location and looking for segments within range")
@@ -183,20 +256,21 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
         }
         pos = event$pos()
         .bpos <<- as.numeric(pos)
-        # simple click: don't change .brange
+        ## simple click: don't change .brange
         if (!all(.bpos == .bstart) && (!.bmove)) {
             .brange <<- .bpos - .bstart
         }
-        # use an extra variable here instead of manipulating row.attr$.brushed, which will cause updating brush_layer
-        .brushed = rep(FALSE, n)
+        .new.brushed = rep(FALSE, n)
         rect = qrect(matrix(c(.bpos - .brange, .bpos + .brange), 2, byrow = TRUE))
         hits = layer$locate(rect) + 1
         hits = ceiling(hits/(p - 1))
-        .brushed[hits] = TRUE
-        row.attr$.brushed = .brushed
+        .new.brushed[hits] = TRUE
+        data$.brushed = mode_selection(data$.brushed, .new.brushed, mode = get_brush_attr(data, '.brush.mode'))
         if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
+
+    ## draw the segments under the brush with another appearance
     brush_draw = function(item, painter) {
         if (verbose) {
             message("drawing brushed segments")
@@ -204,15 +278,17 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
         }
 
         if (!any(is.na(.bpos))) {
-            qlineWidth(painter) = 2
-            #qdash(painter)=c(1,3,1,3)
-            qdrawRect(painter, .bpos[1] - .brange[1], .bpos[2] - .brange[2], .bpos[1] +
-                .brange[1], .bpos[2] + .brange[2], stroke = .bcolor)
+            ## I have troubles with line width >=2; reason not clear yet
+            qlineWidth(painter) = get_brush_attr(data, '.brush.size')
+            ##qdash(painter)=c(1,3,1,3)
+            qdrawRect(painter, .bpos[1] - .brange[1], .bpos[2] - .brange[2],
+                      .bpos[1] + .brange[1], .bpos[2] + .brange[2],
+                      stroke = get_brush_attr(data, '.brush.color'))
         }
-        .brushed = row.attr$.brushed
+        .brushed = data$.brushed
         if (sum(.brushed, na.rm = TRUE) >= 1) {
-            qlineWidth(painter) = 3
-            qstrokeColor(painter) = .bcolor
+            qlineWidth(painter) = get_brush_attr(data, '.brushed.size')
+            qstrokeColor(painter) = get_brush_attr(data, '.brushed.color')
             x = x[.brushed, , drop = FALSE]
             y = y[.brushed, , drop = FALSE]
             tmpx = as.vector(t.default(cbind(x, NA)))
@@ -226,39 +302,54 @@ qparallel = function(data, vars = names(data), scale = "range", col = "black",
 
     scene = qscene()
     root_layer = qlayer(scene)
-    # title
+    ## title
     title_layer = qlayer(root_layer, function(item, painter) {
         qdrawText(painter, main, (lims[1] + lims[2])/2, 0, "center", "bottom")
-    }, limits = qrect(c(lims[1], lims[2]), c(0, 1)), clip = FALSE, row = 0, col = 1)
-    # y-axis
+    }, limits = qrect(c(lims[1], lims[2]), c(0, 1)), row = 0, col = 1)
+    ## y-axis
     yaxis_layer = qlayer(root_layer, function(item, painter) {
         qdrawText(painter, yticklab, 0.7, ytickloc, "right", "center")
-        # qdrawSegment(painter, .92, ytickloc, 1, ytickloc, stroke='black')
-    }, limits = qrect(c(0, 1), c(lims[3], lims[4])), clip = FALSE, row = 1, col = 0)
-    # x-axis
+        ## qdrawSegment(painter, .92, ytickloc, 1, ytickloc, stroke='black')
+    }, limits = qrect(c(0, 1), c(lims[3], lims[4])), row = 1, col = 0)
+    ## x-axis
     xaxis_layer = qlayer(root_layer, function(item, painter) {
         qdrawText(painter, xticklab, xtickloc, 0.9, "center", "top")
         xlabWidth = max(xr * mar[c(2, 4)], max(qstrWidth(painter, xticklab[c(1, length(xticklab))]))/2)
         lims[, 1] <<- xspan + c(-1, 1) * xlabWidth
-        # qdrawSegment(painter,xtickloc,.92,xtickloc,1,stroke='black')
-    }, limits = qrect(c(lims[1], lims[2]), c(0, 1)), clip = FALSE, row = 2, col = 1)
-    grid_layer = qlayer(root_layer, grid_draw, limits = qrect(lims), clip = FALSE, row = 1,
-        col = 1)
-    main_layer = qlayer(root_layer, main_draw, mousePressFun = brush_mouse_press, mouseReleaseFun = identify_mouse_move,
-        mouseMove = identify_mouse_move, limits = qrect(lims), clip = FALSE, row = 1, col = 1)
-    if (boxplot) {
-        boxplot_layer = qlayer(root_layer, boxplot_draw, limits = qrect(lims), clip = FALSE,
-            row = 1, col = 1)
-    }
-    brush_layer = qlayer(root_layer, brush_draw, limits = qrect(lims), clip = FALSE, row = 1,
-        col = 1)
+        ## qdrawSegment(painter,xtickloc,.92,xtickloc,1,stroke='black')
+    }, limits = qrect(c(lims[1], lims[2]), c(0, 1)), row = 2, col = 1)
 
-    # update the brush layer in case of any modifications to the mutaframe
-    if (is.mutaframe(row.attr)) {
-	add_listener(row.attr, function(i, j) {
-	    qupdate(brush_layer)
-	})
+    grid_layer = qlayer(root_layer, grid_draw, limits = qrect(lims), row = 1, col = 1)
+
+    main_layer = qlayer(root_layer, main_draw,
+        mousePressFun = brush_mouse_press, mouseReleaseFun = identify_mouse_move,
+        mouseMove = identify_mouse_move, keyPressFun = identify_key_press,
+        keyReleaseFun = identify_key_release,
+        limits = qrect(lims), row = 1, col = 1)
+
+    if (boxplot) {
+        boxplot_layer = qlayer(root_layer, boxplot_draw, limits = qrect(lims),
+        row = 1, col = 1)
     }
+    brush_layer = qlayer(root_layer, brush_draw, limits = qrect(lims),
+    row = 1, col = 1)
+
+    ## update the brush layer in case of any modifications to the mutaframe
+    add_listener(data, function(i, j) {
+        switch(j, .brushed = qupdate(brush_layer),
+               .color = qupdate(main_layer), {
+                   transform_data()
+                   qupdate(grid_layer)
+                   qupdate(xaxis_layer)
+                   qupdate(yaxis_layer)
+                   qupdate(main_layer)
+                   if (boxplot) qupdate(boxplot_layer)
+               })
+    })
+    ## update the brush layer if brush attributes change
+    add_listener(.brush.attr, function(i, j) {
+        qupdate(brush_layer)
+        })
 
     layout = root_layer$gridLayout()
     layout$setRowStretchFactor(0, 1)

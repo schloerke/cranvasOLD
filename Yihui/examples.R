@@ -13,66 +13,87 @@ source("qparallel.R")
 library(RColorBrewer)
 
 ## old iris...
-#  create mutaframes inside the data first
-qiris = qmutaframe(iris)
-
+#  create a mutaframe containing row attributes first
 iris.col = brewer.pal(3, "Set1")[as.integer(iris$Species)]
+qiris = qmutaframe(iris, .brushed = FALSE, .color = iris.col)
 
-qparallel(qiris, col = iris.col)
+set_brush_attr(qiris, '.brushed.size', 1)
+
+qparallel(qiris)
 qparallel(qiris, scale = "I")
 qparallel(qiris, scale = "var")
 
 # try other standardizing methods
 st2 = function(x) ((x - min(x))/(max(x) - min(x)))^2
-qparallel(iris, scale = "st2")
+qparallel(qiris, scale = "st2")
 
 ## subsetting
-qparallel(iris, vars = c("Sepal.Length", "Sepal.Width", "Species"))
+qparallel(qiris, vars = c("Sepal.Length", "Sepal.Width", "Species"))
 ## or formula interface
-qparallel(iris, vars = ~Sepal.Length + Sepal.Width)
+qparallel(qiris, vars = ~Sepal.Length + Sepal.Width)
 # '.' means all variables in the data frame as usual
-qparallel(iris, vars = ~.)
+qparallel(qiris, vars = ~.)
 
 ## vertical
-qparallel(iris, col = iris.col, horizontal = FALSE)
+qparallel(qiris, horizontal = FALSE)
 
 ## jitter
-qparallel(iris, jitter = "Species", amount = 0.3)
+qparallel(qiris, jitter = "Species", amount = 0.3)
 
 ## with boxplots
-qparallel(iris, col = rgb(1, 0, 0, 0.5), boxplot = TRUE)
-qparallel(iris, scale = "I", col = rgb(1, 0, 0, 0.5), boxplot = TRUE)
-qparallel(iris, col = rgb(1, 0, 0, 0.5), boxplot = TRUE, horizontal = FALSE)
+qparallel(qiris, boxplot = TRUE)
+qparallel(qiris, scale = "I", boxplot = TRUE)
+qparallel(qiris, boxplot = TRUE, horizontal = FALSE)
 
-## verbose timing
-qparallel(iris, col = rgb(1, 0, 0, 0.5), verbose = TRUE)
+## set color and print verbose timing
+qiris$.color = rgb(1, 0, 0, 0.5)
+qparallel(qiris, verbose = TRUE)
+
+## the plot will be updated if we modify the mutaframe
+qparallel(qiris)
+for (i in 1:30) {
+    qiris$Sepal.Length[1] = i
+    qiris$.color[1] = sample(colors(), 1)
+    Sys.sleep(.5)
+}
 
 ## what if there are missing values?
-xna = sapply(iris, function(x) {
+xna = qmutaframe(sapply(iris, function(x) {
     x[sample(length(x), 50)] = NA
     x
-})
+}))
+set_brush_attr(xna, '.brush.size', 1)
 qparallel(xna)
 
-qparallel(mtcars)
+qmtcars = qmutaframe(mtcars)
+set_brush_attr(qmtcars, '.brush.size', 1)
+qparallel(qmtcars)
 
 ## test speed
-qparallel(matrix(rnorm(1000 * 10), ncol = 10), col = rgb(1, 0, 0, 0.2),
-    mar = c(0.2, 0.1, 0.1, 0.1))
-qparallel(matrix(rnorm(1000 * 15), ncol = 15), col = rgb(1, 0, 0, 0.2),
-    boxplot = TRUE)
-# slow for brushing in my laptop
-qparallel(matrix(rnorm(6000 * 10), ncol = 10), col = rgb(1, 0, 0, 0.2),
-    verbose = TRUE)
-# 1 million segments to torture Qt!!
-qparallel(matrix(rbeta(1e+05 * 11, 5, 30), ncol = 11), col = rgb(1, 0,
-    0, 0.05), verbose = TRUE)
+test.mat1 = qmutaframe(matrix(rnorm(1000 * 10), ncol = 10),
+    .color = rgb(1, 0, 0, 0.2))
+qparallel(test.mat, mar = c(0.2, 0.1, 0.1, 0.1))
+
+test.mat2 = qmutaframe(matrix(rnorm(1000 * 15), ncol = 15),
+    .color = rgb(1, 0, 0, 0.2))
+qparallel(test.mat2, boxplot = TRUE)
+
+## slow for brushing in my laptop
+test.mat3 = qmutaframe(matrix(rnorm(5000 * 10), ncol = 10),
+     .color = rgb(1, 0, 0, 0.05))
+qparallel(test.mat3, verbose = TRUE)
+
+## 1 million segments to torture Qt!!
+qparallel(qmutaframe(matrix(rbeta(1e+05 * 11, 5, 30), ncol = 11),
+                     .color = rgb(1, 0, 0, 0.05)), verbose = TRUE)
 
 # linking two parcoords plots: split the data into 2 parts
-testdata = as.data.frame(matrix(rnorm(2000 * 10), ncol = 10))
-qparallel(testdata, sprintf("V%d", 1:5))
-qparallel(testdata, sprintf("V%d", 6:10))
+testdata = qmutaframe(as.data.frame(matrix(rnorm(2000 * 10), ncol = 10)))
+qparallel(testdata, vars = sprintf("V%d", 1:5))
+qparallel(testdata, vars = sprintf("V%d", 6:10))
 
+
+## examples below need to be fixed
 
 ## residential data: 18221x8
 if (!require("YaleToolkit")) install.packages("YaleToolkit")

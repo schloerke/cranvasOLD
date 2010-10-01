@@ -1,20 +1,46 @@
+library(qtpaint)
+library(plumbr)
+library(productplots)
 
+# iris data: 
+# link parallel coordinate plot and barchart
+
+setwd("../Yihui")
+source("qparallel.R")
+
+## color palette
+library(RColorBrewer)
+
+## old iris...
+#  create mutaframes inside the data first
+
+iris.col = brewer.pal(3, "Set1")[as.integer(iris$Species)]
+qiris = qmutaframe(iris, .brushed = FALSE, .color = iris.col)
+
+set_brush_attr(qiris, '.brushed.size', 2)
+
+qparallel(qiris)
+
+setwd("../Heike")
+source("mosaic-hilite.r")
+qmosaic(qiris, ~X1.Species,"hbar")
+
+set_brush_attr(qiris, '.brushed.color', "orange")
 
 ###################################
 
 # mosaics on their own
-source("mosaic-hilite.r")
 
-require(productplots)
-qhappy <- qmutaframe(happy)
 
-ra <- get_row_attr(qhappy)
-ra$.brushed <- qhappy$marital =="married"
+qhappy <- qmutaframe(happy, .brushed = FALSE)
+set_brush_attr(qhappy, '.brushed.color', "yellow")
 
-plot1 <- qmosaic(qhappy, ~ health+sex+happy, c("vspine","hspine","hspine"))  
+
+#plot1 <- qmosaic(happy, ~ health+sex+happy, c("vspine","hspine","hspine"))  
+#print(plot1)
+plot1 <- qmosaic(happy, ~ happy, c("hbar"))  
+plot2 <- qmosaic(happy, ~ degree+sex+happy, c("vspine","hspine","hspine"))  
 print(plot1)
-plot2 <- qmosaic(qhappy, ~ degree+sex+happy, c("vspine","hspine","hspine"))  
-print(plot2)
 #print(plot2)
 #happym <- mutaframe(happy)
 #qmosaic(happym, ~ health+sex+happy, c("vspine","hspine","hspine"))  

@@ -14,10 +14,19 @@ id <- function(x) return(x)
 
 # assume that data is mutaframe
 qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = TRUE, na.rm = FALSE, subset=NULL, colour="grey30", main=NULL, ...) {
+  ## check if an attribute exist
+  has_attr = function(attr) {
+      attr %in% names(data)
+  }
+
+#  row.attr <- get_row_attr(data)
+  if (!has_attr('.brushed')) data$.brushed = FALSE
+
   odata <- data
-  row.attr <- get_row_attr(data)
-  
-  data <- prodcalc(data.frame(odata), formula, divider, cascade, scale_max, na.rm = na.rm)
+  df <- data.frame(odata)
+#  df.brushed <- factor(df.brushed, levels=c("FALSE","TRUE"))
+#print(formula)  
+  data <- prodcalc(df, formula, divider, cascade, scale_max, na.rm = na.rm)
   .level <- max(data$level)-1
 
   extract.formula <- function(formula) {
@@ -61,12 +70,12 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
 
 
   setuphilite <- function(formula) {
-    if (is.null(row.attr$.brushed)) row.attr$.brushed <- rep(FALSE, nrow(odata))
+ #   if (is.null(row.attr$.brushed)) row.attr$.brushed <- rep(FALSE, nrow(odata))
     
     formulahil <- NULL
     dividerhil <- NULL
         
-    if (sum(row.attr$.brushed, na.rm=T) > 0) {
+    if (sum(odata$.brushed, na.rm=T) > 0) {
       #  browser()
       form <- parse_product_formula(formula)
       fmarg <- c(".brushed", form$marg)
@@ -219,7 +228,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
     formulahil <<- hils[[1]]
     dividerhil <<- hils[[2]]
 	df <- data.frame(odata)
-	df$.brushed <- row.attr$.brushed
+    df$.brushed <- factor(df$.brushed, levels=c("TRUE","FALSE"))
 
     datahil <<- prodcalc(df, formulahil, dividerhil, cascade, 
       scale_max, na.rm = na.rm)
@@ -240,8 +249,9 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
         bottom <- hdata$b
         left <- hdata$l
         right <- hdata$r
-    
-        qdrawRect(painter, left, bottom, right, top, fill="darkred")
+
+		brushcolor <- get_brush_attr(odata, '.brushed.color')    
+        qdrawRect(painter, left, bottom, right, top, fill=brushcolor)
       }
     }
 
@@ -280,7 +290,7 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
     .brushed <- rep(FALSE, nrow(odata))
     .brushed[getSelected()] <- TRUE
 
-    row.attr$.brushed <- .brushed
+    odata$.brushed <- .brushed
 #    print("changed?")
 #    print(summary(row.attr$.brushed))
 
@@ -462,13 +472,13 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
         datachanged <- TRUE
     }
     
-    if (datachanged) {
+#    if (datachanged) {
 
-	  df <- data.frame(odata)
-	  df$.brushed <- row.attr$.brushed
-      data <<- prodcalc(df, formula, divider, cascade, scale_max, 
-        na.rm = na.rm)
-    }
+#	  df <- data.frame(odata)
+##	  df$.brushed <- row.attr$.brushed
+#      data <<- prodcalc(df, formula, divider, cascade, scale_max, 
+#        na.rm = na.rm)
+#    }
 
     # should be updating the data set, then start all fresh ...
     # need to figure out how to properly deal with hiliting of parts of the
@@ -492,9 +502,8 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
     hoverMoveFun = query_hover, hoverLeaveFun = query_hover_leave)
 
   # update the brush layer in case of any modifications to the mutaframe
-  if (is.mutaframe(row.attr)) {
-	add_listener(row.attr, function(i,j) {
-
+  if (is.mutaframe(odata)) {
+	add_listener(odata, function(i,j) {
 	  qupdate(brushing_layer)
 	})
   }
