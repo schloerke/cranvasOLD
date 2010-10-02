@@ -19,6 +19,9 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
       attr %in% names(data)
   }
 
+  ## parameters for the brush
+  .brush.attr = attr(data, '.brush.attr')
+
 #  row.attr <- get_row_attr(data)
   if (!has_attr('.brushed')) data$.brushed = FALSE
 
@@ -262,7 +265,9 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
         left <- hdata$l
         right <- hdata$r
 
-		brushcolor <- get_brush_attr(odata, '.brushed.color')    
+#  .brush.attr = attr(odata, '.brush.attr')
+
+		brushcolor <- .brush.attr[,".brushed.color"]   
         qdrawRect(painter, left, bottom, right, top, fill=brushcolor)
       }
     }
@@ -521,9 +526,15 @@ qmosaic <- function(data, formula, divider = mosaic(), cascade = 0, scale_max = 
   # update the brush layer in case of any modifications to the mutaframe
   if (is.mutaframe(odata)) {
 	add_listener(odata, function(i,j) {
-	  qupdate(brushing_layer)
+	  if (j == ".brushed") {
+	  	qupdate(brushing_layer)
+	  }
 	})
   }
+  add_listener(.brush.attr, function(i, j) {
+# wouldn't need to call recalchiliting ...
+    qupdate(brushing_layer)
+  })
 
   qplotView(scene = scene)
 }
