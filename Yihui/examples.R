@@ -6,17 +6,18 @@
 library(qtpaint)
 library(plumbr)
 
-# options(verbose = TRUE)
+## options(verbose = TRUE)
 source("qparallel.R")
 
 ## color palette
 library(RColorBrewer)
 
 ## old iris...
-#  create a mutaframe containing row attributes first
+##  create a mutaframe containing row attributes first
 iris.col = brewer.pal(3, "Set1")[as.integer(iris$Species)]
 qiris = qmutaframe(iris, .brushed = FALSE, .color = iris.col)
 
+## currently I can only work with line width 1
 set_brush_attr(qiris, '.brushed.size', 1)
 
 qparallel(qiris)
@@ -62,11 +63,11 @@ xna = qmutaframe(sapply(iris, function(x) {
     x[sample(length(x), 50)] = NA
     x
 }))
-set_brush_attr(xna, '.brush.size', 1)
+set_brush_attr(xna, '.brushed.size', 1)
 qparallel(xna)
 
 qmtcars = qmutaframe(mtcars)
-set_brush_attr(qmtcars, '.brush.size', 1)
+set_brush_attr(qmtcars, '.brushed.size', 1)
 qparallel(qmtcars)
 
 ## test speed
@@ -98,11 +99,12 @@ qparallel(testdata, vars = sprintf("V%d", 6:10))
 ## residential data: 18221x8
 if (!require("YaleToolkit")) install.packages("YaleToolkit")
 library(YaleToolkit)
-data(NewHavenResidential)
-qparallel(NewHavenResidential, col = rgb(1, 0, 0, 0.1), verbose = TRUE)
+qnhr = qmutaframe(NewHavenResidential, .color = rgb(1, 0, 0, 0.1))
+set_brush_attr(qnhr, '.brushed.size', 1)
+qparallel(qnhr)
 
-qparallel(NewHavenResidential, vars = names(NewHavenResidential)[1:4], col = rgb(1, 0, 0, 0.1))
-qparallel(NewHavenResidential, vars = names(NewHavenResidential)[5:8], col = rgb(1, 0, 0, 0.1))
+qparallel(qnhr, vars = names(NewHavenResidential)[1:4])
+qparallel(qnhr, vars = names(NewHavenResidential)[5:8])
 
 
 # ggplot2
@@ -113,30 +115,22 @@ ggpcp(NewHavenResidential) + geom_line()
 library(lattice)
 parallel(NewHavenResidential)
 
-qparallel(NewHavenResidential, col = brewer.pal(3, "Set1")[as.integer(NewHavenResidential$zone)])
+qnhr$.color = brewer.pal(3, "Set1")[as.integer(NewHavenResidential$zone)]
+qparallel(qnhr)
 
-qparallel(NewHavenResidential, col = rgb(1, 0, 0, 0.1), horizontal = FALSE)
+qparallel(qnhr, horizontal = FALSE)
 
 # jitter is hopeless for huge data...
-qparallel(NewHavenResidential, col = rgb(1, 0, 0, 0.01), jitter = "zone",
-    amount = 0.3)
-qparallel(NewHavenResidential, col = rgb(1, 0, 0, 0.01), jitter = c("bedrms",
-    "zone"), amount = 0.2)
+qnhr$.color = rgb(1, 0, 0, 0.01)
+qparallel(qnhr, jitter = "zone", amount = 0.3)
+qparallel(qnhr, jitter = c("bedrms", "zone"), amount = 0.2)
 
-if (FALSE) {
-    ## Tengfei's Data
-    chrom2 = read.csv("~/Downloads/chrom2.csv")
-    qparallel(chrom2, mar = c(0.1, 0.1, 0.05, 0.1))
-    qparallel(chrom2, col = rgb(1, 0, 0, 0.2), mar = c(0.1, 0.1, 0.05, 0.1))
-    qparallel(chrom2, horizontal = FALSE, mar = c(0.1, 0.1, 0.05, 0.1))
-
-    ld = read.csv("~/Downloads/ld.csv")
-    qparallel(ld, col = rgb(0, 1, 0, 0.2), mar = c(0.1, 0.1, 0.05, 0.1))
-}
 
 library(animation)
 data(pollen)
-qparallel(pollen, col = rgb(0, 0, 1, 0.01))
+qpollen = qmutaframe(pollen, .color = rgb(0, 0, 1, 0.01))
+set_brush_attr(qpollen, '.brushed.size', 1)
+qparallel(qpollen)
 
 ## some speed tests; personal use only
 if (FALSE) {
