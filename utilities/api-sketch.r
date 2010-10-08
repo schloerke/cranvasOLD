@@ -125,7 +125,8 @@ update.cranvas <- function(object, ...) {
 new_plot <- function(width, height, xrange = c(0, 1), yrange = c(0, 1)) {
   limits <- qrect(xrange, yrange)
   marks <- list()
-  layers <- mutaframe()
+  # layers <- mutaframe()
+	layers <- list()
   scene <- Qt$QGraphicsScene()
   root <- qlayer(scene)
   root$geometry<-qrect(0,0,width,height)
