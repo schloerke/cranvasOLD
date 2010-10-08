@@ -8,13 +8,13 @@
 #Spin-o-gram
 #  hist plot with width as count
 
-No more bar chart
+(No more bar chart)
 
 √ Fix histogram
 
 1-d - continous
   √ histogram
-  √ dot plot 
+  BUSY - dot plot 
   density plot
   ?(ash)
   
