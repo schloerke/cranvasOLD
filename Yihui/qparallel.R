@@ -239,9 +239,9 @@ qparallel = function(data, vars, scale = "range", horizontal = TRUE,
     ## monitor keypress event
     identify_key_press = function(layer, event) {
         ## Key X: XOR; O: OR; A: AND; N: NOT
-        i = which(event$key() == c(Qt$Qt$Key_A, Qt$Qt$Key_O, Qt$Qt$Key_X, Qt$Qt$Key_N))
+        i = which(event$key() == c(Qt$Qt$Key_A, Qt$Qt$Key_O, Qt$Qt$Key_X, Qt$Qt$Key_N, Qt$Qt$Key_C))
         if (length(i))
-            set_brush_attr(data, '.brush.mode', c('and', 'or', 'xor', 'not')[i])
+            set_brush_attr(data, '.brush.mode', c('and', 'or', 'xor', 'not', 'complement')[i])
     }
     identify_key_release = function(layer, event) {
         ## set brush mode to 'none' when release the key

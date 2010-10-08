@@ -70,8 +70,9 @@ qmutaframe = function(data, ...) {
 ##'   \item{or}{select the union, i.e. any objects selected by all previous operations and the current operation}
 ##'   \item{xor}{toggle the selection}
 ##'   \item{not}{negation, i.e. exclude the objects under two successive brushing operations}
+##'   \item{complement}{the complement of the current selection}
 ##' }
-##' We can hold the key while brushing: A for 'and', O for 'or', X for 'xor' and N for 'not'.
+##' We can hold the key while brushing: A for 'and', O for 'or', X for 'xor', N for 'not' and C for 'complement'.
 ##' @title Logical Operations Under Different Selection Mode
 ##' @param x logical: the previous selection status
 ##' @param y logical: the current selection status
@@ -86,11 +87,12 @@ qmutaframe = function(data, ...) {
 ##' mode_selection(x1, x2, 'or')
 ##' mode_selection(x1, x2, 'xor')
 ##' mode_selection(x1, x2, 'not')
+##' mode_selection(x1, x2, 'complement')
 mode_selection = function(x, y, mode = 'none'){
     ## a series of logical operations
     ## if mode is not specified, return y, the current status
     switch(mode, none = y, and = x & y, or = x | y, xor = xor(x, y), not = x & !y,
-           y)
+           complement = !y, y)
 }
 
 
