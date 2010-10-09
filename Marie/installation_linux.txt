@@ -37,8 +37,8 @@ sudo make install
 Note: requires git
 
 in terminal, navigate to where you want source saved to:
-git://github.com/ggobi/qtbase.git
-git://github.com/ggobi/qtpaint.git
+git clone git://github.com/ggobi/qtbase.git
+git clone git://github.com/ggobi/qtpaint.git
 
 3.a.1  tool: Cmake
 
@@ -61,7 +61,7 @@ install.packages("qtpaint", repos=NULL, type = "source")
 Note: requires git
 
 In terminal navigate to where you want to save plumbr
-git://github.com/ggobi/plumbr.git
+git clone git://github.com/ggobi/plumbr.git
 
 4.a installation
 from R:
