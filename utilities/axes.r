@@ -224,9 +224,11 @@ draw_grid_with_positions <- function(
 #'  draw_x_axes(make_new_plot(make_window_ranges(dataRanges)), dataRanges)
 draw_x_axes <- function(plotObj, dataRanges, name = NULL,row = 0L,col = 0L) {
   xRangeLabels <- make_pretty_axes(dataRanges[1:2], dataRanges[1], dataRanges[2])
-  
   draw_x_axes_with_labels(plotObj, dataRanges, xRangeLabels, xRangeLabels, name,row=row,col=col)
-
+}
+draw_x_axes_fun <- function(plotObj, dataRanges, name = NULL) {
+  xRangeLabels <- make_pretty_axes(dataRanges[1:2], dataRanges[1], dataRanges[2])
+  draw_x_axes_with_labels_fun(plotObj, dataRanges, xRangeLabels, xRangeLabels, name)
 }
 
 #' draw x axes
@@ -367,6 +369,12 @@ draw_y_axes <- function(plotObj, dataRanges, name = NULL,row = 0L,col = 0L) {
   
   draw_y_axes_with_labels(plotObj, dataRanges, as.character(yRangeLabels), yRangeLabels, name,row,col)
 }
+draw_y_axes_fun <- function(plotObj, dataRanges, name = NULL) {
+  yRangeLabels <- pretty(dataRanges[3:4])
+  yRangeLabels <- make_pretty_axes(dataRanges[3:4], dataRanges[3], dataRanges[4])
+  draw_y_axes_with_labels_fun(plotObj, dataRanges, yRangeLabels, yRangeLabels, name)
+}
+
 
 #' draw y axes
 #' draws the y axes with the labels and label positions given

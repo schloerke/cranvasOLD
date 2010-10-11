@@ -1,0 +1,30 @@
+These are the installation instructions in order to get up and running with qtplot.
+
+MacOSX
+
+1. Install Qt from http://qt.nokia.com/ 
+   Use the LGPL version, and the SDK complete development environment
+
+2. cmake 2.8.1 or later needs to be installed from cmake.org
+Need to ensure that it makes the command line scripts
+
+3. gcc installed from Xcode Apple Developer web site 
+
+4. Might need to set PATH so that both are visible.
+
+5. Change into the directory where you want to keep the libraries, and get a copy of qtbase and qtpaint (qtinterfaces) from  https://r-forge.r-project.org/scm/?group_id=454
+
+6. Install the libraries:
+
+R CMD INSTALL qtbase --preclean
+R CMD INSTALL qtpaint --preclean
+
+7. Similarly, install plumbr from https://r-forge.r-project.org/projects/plumbr/
+
+8. The local code for qparallel, qscatterplot, qmosaic, ... cranvas code in http://github.com/bigbear/cranvas
+
+9. For qmosaic you'll also need to install the productplots package from  http://github.com/hadley/productplots
+
+
+
+
