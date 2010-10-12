@@ -1,5 +1,6 @@
 source("../utilities/interaction.R")
 source("../utilities/optimization.R")
+source("../utilities/data.R")
 
 ##' Parallel Coordinates Plot
 ##' Create a parallel coordinates plot from a data frame or matrix, with each line representing a row
@@ -13,6 +14,7 @@ source("../utilities/optimization.R")
 ##' @param scale standardizing method - 'range' --> [0, 1], 'I' --> do
 ##' nothing, 'var' --> mean 0 var 1, 'custom_function_name' --> use
 ##' your own function (see examples.R)
+##' @param na.action the function to deal with missing values
 ##' @param horizontal logical: arrange variables in horizontal or
 ##' vertical direction
 ##' @param boxplot logical: overlay boxplots on top of the par-coords
@@ -27,7 +29,8 @@ source("../utilities/optimization.R")
 ##' consumed in each step)
 ##' @return NULL
 ##' @author Yihui Xie <\url{http://yihui.name}>
-qparallel = function(data, vars, scale = "range", horizontal = TRUE,
+qparallel = function(data, vars, scale = "range", na.action = na.impute,
+    horizontal = TRUE,
     boxplot = FALSE, boxwex, jitter = NULL, amount = NULL,
     mar = c(0.04, 0.04, 0.04, 0.04), main, verbose = getOption("verbose")) {
 
@@ -95,14 +98,15 @@ qparallel = function(data, vars, scale = "range", horizontal = TRUE,
             vars = vars[!const.col]
         }
 
-        ## TODO: handle missing values
-
         ## which columns are numeric? we don't want boxplots for non-numeric vars
         numcol <<- sapply(plot_data, class) == "numeric"
         plot_data = sapply(plot_data, as.numeric)
         ## must make them global; I wish there could be 'mutavectors'
         p <<- ncol(plot_data)
         n <<- nrow(plot_data)
+
+        ## handle missing values
+        plot_data = na.action(plot_data)
 
         ## jittering
         if (!is.null(jitter)) {
