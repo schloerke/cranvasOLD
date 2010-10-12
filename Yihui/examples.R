@@ -17,9 +17,6 @@ library(RColorBrewer)
 iris.col = brewer.pal(3, "Set1")[as.integer(iris$Species)]
 qiris = qmutaframe(iris, .brushed = FALSE, .color = iris.col)
 
-## currently I can only work with line width 1
-set_brush_attr(qiris, '.brushed.size', 1)
-
 qparallel(qiris)
 qparallel(qiris, scale = "I")
 qparallel(qiris, scale = "var")
@@ -63,11 +60,9 @@ xna = qmutaframe(sapply(iris, function(x) {
     x[sample(length(x), 50)] = NA
     x
 }))
-set_brush_attr(xna, '.brushed.size', 1)
 qparallel(xna)
 
 qmtcars = qmutaframe(mtcars)
-set_brush_attr(qmtcars, '.brushed.size', 1)
 qparallel(qmtcars)
 
 ## test speed
@@ -100,7 +95,6 @@ qparallel(testdata, vars = sprintf("V%d", 6:10))
 if (!require("YaleToolkit")) install.packages("YaleToolkit")
 library(YaleToolkit)
 qnhr = qmutaframe(NewHavenResidential, .color = rgb(1, 0, 0, 0.1))
-set_brush_attr(qnhr, '.brushed.size', 1)
 qparallel(qnhr)
 
 qparallel(qnhr, vars = names(NewHavenResidential)[1:4])
@@ -129,7 +123,6 @@ qparallel(qnhr, jitter = c("bedrms", "zone"), amount = 0.2)
 library(animation)
 data(pollen)
 qpollen = qmutaframe(pollen, .color = rgb(0, 0, 1, 0.01))
-set_brush_attr(qpollen, '.brushed.size', 1)
 qparallel(qpollen)
 
 ## some speed tests; personal use only
