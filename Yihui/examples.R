@@ -62,8 +62,12 @@ xna = qmutaframe(sapply(iris, function(x) {
 }))
 qparallel(xna)
 
+## centering
+qparallel(qiris, scale = 'I', center = median)
+
 qmtcars = qmutaframe(mtcars)
 qparallel(qmtcars)
+qparallel(qmtcars, center = median)
 
 ## test speed
 test.mat1 = qmutaframe(matrix(rnorm(1000 * 10), ncol = 10),

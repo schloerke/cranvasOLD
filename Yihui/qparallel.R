@@ -15,6 +15,9 @@ source("../utilities/data.R")
 ##' nothing, 'var' --> mean 0 var 1, 'custom_function_name' --> use
 ##' your own function (see examples.R)
 ##' @param na.action the function to deal with missing values
+##' @param center the function to calculate where to center all the
+##' axes (e.g. center at the medians), or a numeric value, or
+##' \code{NULL} (do not center)
 ##' @param horizontal logical: arrange variables in horizontal or
 ##' vertical direction
 ##' @param boxplot logical: overlay boxplots on top of the par-coords
@@ -30,7 +33,7 @@ source("../utilities/data.R")
 ##' @return NULL
 ##' @author Yihui Xie <\url{http://yihui.name}>
 qparallel = function(data, vars, scale = "range", na.action = na.impute,
-    horizontal = TRUE,
+    center = NULL, horizontal = TRUE,
     boxplot = FALSE, boxwex, jitter = NULL, amount = NULL,
     mar = c(0.04, 0.04, 0.04, 0.04), main, verbose = getOption("verbose")) {
 
@@ -124,6 +127,13 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
             (x - min(xna))/(max(xna) - min(xna))
         }, var = base:::scale, I = identity, get(scale))
         plot_data = apply(plot_data, 2, scale)
+
+        ## centering
+        if (!is.null(center)){
+            plot_data = apply(plot_data, 2, function(xx) {
+                xx - ifelse(is.function(center), center(xx), as.numeric(center))
+            })
+        }
 
         ## switch x and y according to the direction
         if (horizontal) {
