@@ -64,6 +64,8 @@ qparallel(xna)
 
 ## centering
 qparallel(qiris, scale = 'I', center = median)
+## to check we are really centered at the medians
+qparallel(qiris, center = median, boxplot = TRUE)
 
 qmtcars = qmutaframe(mtcars)
 qparallel(qmtcars)
