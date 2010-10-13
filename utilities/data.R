@@ -18,6 +18,8 @@ na.impute = function(x, method = 'below.min') {
         xx
     })
 }
+
+
 ##' Give a column-wise scalar summary of the data frame or matrix.
 ##'
 ##' For numeric columns, the function specified by \code{fun} will be applied (\code{median()} by default); for other types of columns, the mode will be caculated (i.e. the categories that have the maximum frequencies) and the returned value is a single string with the category labels separated by \code{', '}.

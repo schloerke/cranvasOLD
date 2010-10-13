@@ -308,11 +308,15 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
             tmpy = as.vector(t.default(cbind(y, NA)))
             nn = length(tmpx)
             qdrawSegment(painter, tmpx[-nn], tmpy[-nn], tmpx[-1], tmpy[-1])
+
+            ## show data labels and row ids
             if (get_brush_attr(data, '.label')) {
                 ## retrieve labels from the original data (possibly w/ transformation)
                 .label.fun = get(get_brush_attr(data, '.label.fun'))
                 .brush.labels = .label.fun(data[.brushed, vars])
-                .brush.labels = paste(vars, .brush.labels, sep = ': ', collapse = '\n')
+                .vars = c('case id', vars)
+                .brush.labels = c(paste(head(rownames(data)[.brushed], 10), collapse = ', '), .brush.labels)
+                .brush.labels = paste(.vars, .brush.labels, sep = ': ', collapse = '\n')
                 qstrokeColor(painter) = 'black'
                 qdrawText(painter, .brush.labels, .bpos[1], .bpos[2], valign="top", halign="left")
             }
