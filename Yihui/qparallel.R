@@ -292,7 +292,6 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         }
 
         if (!any(is.na(.bpos))) {
-            ## I have troubles with line width >=2; reason not clear yet
             qlineWidth(painter) = get_brush_attr(data, '.brush.size')
             ##qdash(painter)=c(1,3,1,3)
             qdrawRect(painter, .bpos[1] - .brange[1], .bpos[2] - .brange[2],
@@ -309,6 +308,14 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
             tmpy = as.vector(t.default(cbind(y, NA)))
             nn = length(tmpx)
             qdrawSegment(painter, tmpx[-nn], tmpy[-nn], tmpx[-1], tmpy[-1])
+            if (get_brush_attr(data, '.label')) {
+                ## retrieve labels from the original data (possibly w/ transformation)
+                .label.fun = get(get_brush_attr(data, '.label.fun'))
+                .brush.labels = .label.fun(data[.brushed, vars])
+                .brush.labels = paste(vars, .brush.labels, sep = ': ', collapse = '\n')
+                qstrokeColor(painter) = 'black'
+                qdrawText(painter, .brush.labels, .bpos[1], .bpos[2], valign="top", halign="left")
+            }
         }
         if (verbose)
             message(format(difftime(Sys.time(), ntime)))

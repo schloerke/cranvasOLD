@@ -1,12 +1,13 @@
-##' Create a mutaframe from data with several attributes for future interaction
+##' Create a mutaframe from data with several attributes for interaction
 ##'
-##' Create a mutaframe from data with several attributes for future interaction:
+##' Create a mutaframe from data with several attributes for interaction:
 ##' first check if the names of some predefined row attributes (e.g. .color, .brushed)
 ##' exist in the data (will issue an error if this happens); then augment the ...
 ##' arguments to the data and convert the augmented data to a mutaframe; in the end
 ##' add some attributes to the mutaframe to control the appearance of elements for
-##' interaction (e.g. the color of the brush).
-##' @title Create a Mutaframe from Data with Several Attributes for Future Interaction
+##' interaction (e.g. the color of the brush, the size of the brushed objects, and
+##' whether to show the labels of the brushed objects).
+##' @title Create a Mutaframe from Data with Several Attributes for Interaction
 ##' @param data a data frame (typically); it will be coerced to a data
 ##' frame
 ##' @param ... other attributes corresponding to rows such as colors,
@@ -50,7 +51,8 @@ qmutaframe = function(data, ...) {
     ## we need to store some attributes somewhere which are not corresponding to rows
     ## e.g. attrs related to the brush (scalars)
     attr(mf, '.brush.attr') = mutaframe(.brush.color = 'yellow', .brush.size = 1,
-        .brushed.color = 'yellow', .brushed.size = 2, .brush.mode = 'none')
+        .brushed.color = 'yellow', .brushed.size = 2, .brush.mode = 'none',
+        .label = FALSE, .label.fun = 'summary_one')
     ## here '.brush.mode' is explained in the documentation of mode_selection()
 
     ## and other possible attributes
