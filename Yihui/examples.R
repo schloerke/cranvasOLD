@@ -70,6 +70,8 @@ qparallel(qiris, center = median, boxplot = TRUE)
 
 ## labeling
 set_brush_attr(qiris, '.label', TRUE)
+## we can also change the row names and the labels will change accordingly
+rownames(qiris) = paste(abbreviate(iris$Species), 1:50, sep = '')
 
 qmtcars = qmutaframe(mtcars)
 qparallel(qmtcars)
