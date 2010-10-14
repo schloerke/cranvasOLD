@@ -139,21 +139,21 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         if (horizontal) {
             x <<- col(plot_data)
             y <<- plot_data
-            xtickloc <<- 1:p
-            xticklab <<- vars
-            ytickloc <<- pretty(y)
-            yticklab <<- format(ytickloc)
+            xtickloc = 1:p
+            xticklab = vars
+            ytickloc = pretty(y)
+            yticklab = format(ytickloc)
         }
         else {
             x <<- plot_data
             y <<- col(plot_data)
-            xtickloc <<- pretty(x)
-            xticklab <<- format(xtickloc)
-            ytickloc <<- 1:p
-            yticklab <<- vars
+            xtickloc = pretty(x)
+            xticklab = format(xtickloc)
+            ytickloc = 1:p
+            yticklab = vars
         }
-        xspan <<- range(x, na.rm = TRUE)
-        yspan <<- range(y, na.rm = TRUE)
+        xspan <<- range(x)
+        yspan <<- range(y)
         xr <<- diff(xspan)
         yr <<- diff(yspan)
 
@@ -163,6 +163,13 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         mar = rep(mar, length.out = 4)
         lims <<- matrix(c(xspan + c(-1, 1) * xr * mar[c(2, 4)],
                           yspan + c(-1, 1) * yr * mar[c(1, 3)]), 2)
+        ## adjust axis ticks locations (some may exceed the range of 'lims')
+        idx = (xtickloc > lims[1, 1]) & (xtickloc < lims[2, 1])
+        xtickloc <<- xtickloc[idx]
+        xticklab <<- xticklab[idx]
+        idx = (ytickloc > lims[1, 2]) & (ytickloc < lims[2, 2])
+        ytickloc <<- ytickloc[idx]
+        yticklab <<- yticklab[idx]
 
         ## creating starting and ending vectors, because indexing in real-time can be slow
         segx0 <<- as.vector(t.default(x[, 1:(p - 1)]))
@@ -333,14 +340,12 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
     }, limits = qrect(c(lims[1], lims[2]), c(0, 1)), row = 0, col = 1)
     ## y-axis
     yaxis_layer = qlayer(root_layer, function(item, painter) {
-        qdrawText(painter, yticklab, 0.7, ytickloc, "right", "center")
+        qdrawText(painter, yticklab, 0.9, ytickloc, "right", "center")
         ## qdrawSegment(painter, .92, ytickloc, 1, ytickloc, stroke='black')
     }, limits = qrect(c(0, 1), c(lims[3], lims[4])), row = 1, col = 0)
     ## x-axis
     xaxis_layer = qlayer(root_layer, function(item, painter) {
         qdrawText(painter, xticklab, xtickloc, 0.9, "center", "top")
-        xlabWidth = max(xr * mar[c(2, 4)], max(qstrWidth(painter, xticklab[c(1, length(xticklab))]))/2)
-        lims[, 1] <<- xspan + c(-1, 1) * xlabWidth
         ## qdrawSegment(painter,xtickloc,.92,xtickloc,1,stroke='black')
     }, limits = qrect(c(lims[1], lims[2]), c(0, 1)), row = 2, col = 1)
 
@@ -357,7 +362,9 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         row = 1, col = 1)
     }
     brush_layer = qlayer(root_layer, brush_draw, limits = qrect(lims),
-    row = 1, col = 1)
+        row = 1, col = 1)
+    ## legend layer (currently only acts as place holder)
+    legend_layer = qlayer(root_layer, row = 1, col = 2)
 
     ## update the brush layer in case of any modifications to the mutaframe
     add_listener(data, function(i, j) {
@@ -377,11 +384,15 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         })
 
     layout = root_layer$gridLayout()
-    layout$setRowStretchFactor(0, 1)
-    layout$setRowStretchFactor(1, 5)
-    layout$setRowStretchFactor(2, 1)
-    layout$setColumnStretchFactor(0, 1)
-    layout$setColumnStretchFactor(1, 5)
+    ## layout$setRowStretchFactor(0, 1)
+    ## layout$setRowStretchFactor(1, 5)
+    ## layout$setRowStretchFactor(2, 1)
+    ## layout$setColumnStretchFactor(0, 1)
+    ## layout$setColumnStretchFactor(1, 5)
+    layout$setRowMaximumHeight(0, 30)
+    layout$setColumnMaximumWidth(0, 40)
+    layout$setRowMaximumHeight(2, 30)
+    layout$setColumnMaximumWidth(2, 10)
 
     view = qplotView(scene = scene)
     view
