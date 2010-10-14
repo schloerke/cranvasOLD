@@ -384,13 +384,10 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         })
 
     layout = root_layer$gridLayout()
-    ## layout$setRowStretchFactor(0, 1)
-    ## layout$setRowStretchFactor(1, 5)
-    ## layout$setRowStretchFactor(2, 1)
-    ## layout$setColumnStretchFactor(0, 1)
-    ## layout$setColumnStretchFactor(1, 5)
     layout$setRowMaximumHeight(0, 30)
-    layout$setColumnMaximumWidth(0, 40)
+    ## the y-axis layer needs 'dynamic' width determined by #{characters}
+    ## here is a formula by my rule of thumb: 9 * nchar + 5
+    layout$setColumnMaximumWidth(0, 9 * max(nchar(yticklab)) + 5)
     layout$setRowMaximumHeight(2, 30)
     layout$setColumnMaximumWidth(2, 10)
 
