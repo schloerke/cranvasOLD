@@ -2,7 +2,6 @@
 #qtpaint v 0.7.9
 #svn 425
 library(qtpaint)
-options(error=recover)
 
 #####################################################################
 ###In-progress Example###
