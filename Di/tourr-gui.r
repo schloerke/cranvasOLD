@@ -224,9 +224,18 @@ create_tour <- function(data, var_selected, cat_selected, axes_location, tour_ty
   } else {
     col <- rep("black", nrow(data))
   }
-  cat(length(col), "\n")
-  col[data$.brushed] <- bcol
-  cat("create_tour brush values ", data$.brushed[1], data$.brushed[500], "colours ", col[1], col[500], "\n")
+#  cat(length(col), "\n")
+#  if (!is.null(data$.color)) {
+#    col <- data$.color
+#    cat("Setting colors\n")
+#  }
+#  else
+#    col <- rep("black", nrow(data))
+#  if (!is.null(data$.brushed)) {
+    col[data$.brushed] <- bcol
+    cat("Setting brush colors\n")
+#  }
+  cat("create_tour brush values ", data$.brushed[1], data$.brushed[500], "colours ", data$.color[1], col[1], data$.color[500], col[500], "\n")
   
   # Work out which type of tour to use
   tour <- switch(tour_type,
