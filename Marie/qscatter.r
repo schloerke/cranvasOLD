@@ -100,6 +100,7 @@ qscatter <- function (data, na.rm = F, form, main = NULL) {
     data$.brushed <- FALSE
   }
   
+  print(head(as.data.frame(data)))
   if (length(form) != 3) {
     stop("invalid formula, requires x ~ y format")
   } else {
@@ -161,8 +162,11 @@ qscatter <- function (data, na.rm = F, form, main = NULL) {
   sx <- get_axisPosY(data = df, colName = .levelY)
 
  
-  ## parameters for event handling
-#  .level <- max(data$level)-1
+  ## parameters event handling
+  .startBrush <- NULL
+  .endBrush <- NULL
+  .brush <- FALSE
+
 
 ################################ end data processing & parameters
 
@@ -209,6 +213,23 @@ scatter.all <- function(item, painter, exposed) {
   qdrawCircle(painter, x = x, y = y, r = radius, fill = fill, stroke = stroke) 
     
 }
+
+brush.draw <- function(item, painter, exposed) {
+  df <- as.data.frame(odata)
+  if(!.brush) {
+    hdata <- subset(df, (.brushed == T))
+  }
+  
+  if (nrow(hdata) > 0) {
+    x <- subset(hdata, select = .levelX)[,1]
+    y <- subset(hdata, select = .levelY)[,1]
+    fill <- .brush.attr[,".brushed.color"]   
+    stroke <- .brush.attr[,".brushed.color"]   
+    radius <- 2
+    
+    qdrawCircle( painter, x = x, y = y, r = radius, fill = fill, stroke = stroke)
+  }
+}
   
 ########## end layers
 
@@ -220,7 +241,25 @@ scatter.all <- function(item, painter, exposed) {
   assign("test", plot1, pos = 1)
   bglayer <- add_layer(parent = plot1, mark = coords, userlimits = lims)
   datalayer <- add_layer(parent = plot1, mark = scatter.all, userlimits = lims)
+  brushlayer <- add_layer(parent = plot1, mark = brush.draw, userlimits = lims)
   view <- qplotView(scene = plot1$scene)
   view$setWindowTitle(extract.formula(form))
-  return(view)
+
+######################
+# add some listeners #
+######################
+  if (is.mutaframe(odata)) {
+    func <- function(i,j) {
+      if (j == ".brushed") {
+        qupdate(brushlayer$layer)
+      }
+    }
+	
+	  add_listener(odata, func)
+  }
+
+  print(view) 
+  
+  Sys.sleep(2)
+  odata[1,6] <- T
 }
