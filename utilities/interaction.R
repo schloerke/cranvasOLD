@@ -52,7 +52,7 @@ qmutaframe = function(data, ...) {
     ## e.g. attrs related to the brush (scalars)
     attr(mf, '.brush.attr') = mutaframe(.brush.color = 'yellow', .brush.size = 1,
         .brushed.color = 'yellow', .brushed.size = 2, .brush.mode = 'none',
-        .label = FALSE, .label.fun = 'summary_one')
+        .label.show = FALSE, .label.fun = 'summary_one', .label.color = 'red')
     ## here '.brush.mode' is explained in the documentation of mode_selection()
 
     ## and other possible attributes

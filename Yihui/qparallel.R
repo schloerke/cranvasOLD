@@ -158,7 +158,7 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         yr <<- diff(yspan)
 
         ## brush range: horizontal and vertical
-        .brange <<- c(xr, yr)/20
+        .brange <<- c(xr, yr)/30
         ## margins for the plot region
         mar = rep(mar, length.out = 4)
         lims <<- matrix(c(xspan + c(-1, 1) * xr * mar[c(2, 4)],
@@ -317,14 +317,14 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
             qdrawSegment(painter, tmpx[-nn], tmpy[-nn], tmpx[-1], tmpy[-1])
 
             ## show data labels and row ids
-            if (get_brush_attr(data, '.label')) {
+            if (get_brush_attr(data, '.label.show')) {
                 ## retrieve labels from the original data (possibly w/ transformation)
                 .label.fun = get(get_brush_attr(data, '.label.fun'))
                 .brush.labels = .label.fun(data[.brushed, vars])
                 .vars = c('case id', vars)
                 .brush.labels = c(paste(head(rownames(data)[.brushed], 10), collapse = ', '), .brush.labels)
                 .brush.labels = paste(.vars, .brush.labels, sep = ': ', collapse = '\n')
-                qstrokeColor(painter) = 'black'
+                qstrokeColor(painter) = get_brush_attr(data, '.label.color')
                 qdrawText(painter, .brush.labels, .bpos[1], .bpos[2], valign="top", halign="left")
             }
         }
