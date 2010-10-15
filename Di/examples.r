@@ -1,30 +1,27 @@
-setwd("/Users/dicook/cranvas/code")
-load(".RData")
-
 library(qtpaint)
 library(plumbr)
 library(RColorBrewer)
 
 # options(verbose = TRUE)
 # Yihui
-source("utilities/optimization.R")
-source("utilities/interaction.R")
-source("utilities/data.R")
-source("Yihui/qparallel.R")
+source("../utilities/optimization.R")
+source("../utilities/interaction.R")
+source("../utilities/data.R")
+source("../Yihui/qparallel.R")
 
 ## old iris...
 #  create mutaframes inside the data first
-iris.col = brewer.pal(3, "Set1")[as.integer(iris$Species)]
-qiris = qmutaframe(iris, .brushed = FALSE, .color = iris.col)
-
-set_brush_attr(qiris, '.brushed.size', 1)
-
-qparallel(qiris)
-qparallel(qiris)
+# iris.col = brewer.pal(3, "Set1")[as.integer(iris$Species)]
+# qiris = qmutaframe(iris, .brushed = FALSE, .color = iris.col)
+# 
+# set_brush_attr(qiris, '.brushed.size', 1)
+# 
+# qparallel(qiris)
+# qparallel(qiris)
 
 # Hadley's tour
-source("Hadley/tourr-gui.r") 
-gui_xy(olive)
+source("../Hadley/tourr-gui.r") 
+# gui_xy(olive)
 
 # Di's modifications
 library(qtbase)
@@ -37,14 +34,11 @@ library(RGtk2)
 library(gWidgets)
 library(plumbr)
 library(RColorBrewer)
-source("utilities/interaction.R")
-source("Di/tourr-gui.r")
+source("../utilities/interaction.R")
+source("tourr-gui.r")
 
-qolive <- qmutaframe(olive, .brushed=FALSE)
-gui_xy(qolive)
-
-olive.col = brewer.pal(3, "Set1")[as.integer(olive$region)]
-qolive = qmutaframe(olive, .brushed = FALSE, .color = olive.col)
+olive.col <- brewer.pal(3, "Set1")[as.integer(olive$region)]
+qolive <- qmutaframe(olive, .brushed = FALSE, .color = olive.col)
 qparallel(qolive)
 gui_xy(qolive)
 
