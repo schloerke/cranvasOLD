@@ -7,10 +7,10 @@ library(RColorBrewer)
 
 # options(verbose = TRUE)
 # Yihui
-source("Yihui/qparallel.R")
-source("utilities/interaction.R")
 source("utilities/optimization.R")
-
+source("utilities/interaction.R")
+source("utilities/data.R")
+source("Yihui/qparallel.R")
 
 ## old iris...
 #  create mutaframes inside the data first
@@ -26,6 +26,7 @@ qparallel(qiris)
 source("Hadley/tourr-gui.r") 
 gui_xy(olive)
 
+# Di's modifications
 library(qtbase)
 library(qtpaint)
 library(ggplot2, warn.conflicts = FALSE)
@@ -35,10 +36,16 @@ library(colorspace)
 library(RGtk2)
 library(gWidgets)
 library(plumbr)
+library(RColorBrewer)
 source("utilities/interaction.R")
 source("Di/tourr-gui.r")
 
 qolive <- qmutaframe(olive, .brushed=FALSE)
+gui_xy(qolive)
+
+olive.col = brewer.pal(3, "Set1")[as.integer(olive$region)]
+qolive = qmutaframe(olive, .brushed = FALSE, .color = olive.col)
+qparallel(qolive)
 gui_xy(qolive)
 
 qolive$.brushed[1:300]<-TRUE
