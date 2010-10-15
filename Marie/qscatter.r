@@ -259,7 +259,5 @@ brush.draw <- function(item, painter, exposed) {
   }
 
   print(view) 
-  
-  Sys.sleep(2)
-  odata[1,6] <- T
+
 }
