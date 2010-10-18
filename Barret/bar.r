@@ -53,7 +53,7 @@ column_coerce <- function(data, column, defaultVal) {
 #'		qhist(mtcars$disp, horizontal = TRUE, fill = "gold", stroke = "red4")
 #'
 #'		# stacked items
-#'		qhist(mtcars$disp, mtcars$cyl, stroke = "black", position = "stack")
+#'		qhist(mtcars$disp, mtcars$cyl, stroke = "black", position = "stack", title = "mtcars - stack")
 #'
 #'		# raw value items
 #'		qhist(mtcars$disp, mtcars$cyl, stroke = "black", position = "identity")
@@ -301,7 +301,17 @@ qhist <- function(
 		
 		# Nothing under mouse
 		if (nrow(section) == 0) return()
-
+		
+		# Highlight the rect
+		qdrawRect(painter,
+			xleft = c(section$bottom), #left
+			ybottom = c(section$left), # bottom 
+			xright = c(section$top), # right
+			ytop = c(section$right), # top
+			stroke = c("orange"),
+			fill = c(NA)# fill
+		)
+		
 		# Work out label text
 		infostring <- paste("\nlabel:", section[1,"label"], "group:", section[1,"group"],collapse="\n", sep=" ")
 		
