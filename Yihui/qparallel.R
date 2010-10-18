@@ -322,7 +322,11 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
                 .label.fun = get(get_brush_attr(data, '.label.fun'))
                 .brush.labels = .label.fun(data[.brushed, vars])
                 .vars = c('case id', vars)
-                .brush.labels = c(paste(head(rownames(data)[.brushed], 10), collapse = ', '), .brush.labels)
+                ## truncate the id strings if too long
+                .caseid = ifelse(sum(.brushed) == 1, rownames(data)[.brushed],
+                    truncate_str(paste(rownames(data)[.brushed], collapse = ', '),
+                                 max(nchar(c(.brush.labels, .vars)))))
+                .brush.labels = c(.caseid, .brush.labels)
                 .brush.labels = paste(.vars, .brush.labels, sep = ': ', collapse = '\n')
                 qstrokeColor(painter) = get_brush_attr(data, '.label.color')
                 qdrawText(painter, .brush.labels, .bpos[1], .bpos[2], valign="top", halign="left")
@@ -341,12 +345,12 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
     ## y-axis
     yaxis_layer = qlayer(root_layer, function(item, painter) {
         qdrawText(painter, yticklab, 0.9, ytickloc, "right", "center")
-        ## qdrawSegment(painter, .92, ytickloc, 1, ytickloc, stroke='black')
+        qdrawSegment(painter, .91, ytickloc, 1, ytickloc, stroke='black')
     }, limits = qrect(c(0, 1), c(lims[3], lims[4])), row = 1, col = 0)
     ## x-axis
     xaxis_layer = qlayer(root_layer, function(item, painter) {
         qdrawText(painter, xticklab, xtickloc, 0.9, "center", "top")
-        ## qdrawSegment(painter,xtickloc,.92,xtickloc,1,stroke='black')
+        qdrawSegment(painter, xtickloc, .91, xtickloc, 1, stroke='black')
     }, limits = qrect(c(lims[1], lims[2]), c(0, 1)), row = 2, col = 1)
 
     grid_layer = qlayer(root_layer, grid_draw, limits = qrect(lims), row = 1, col = 1)
