@@ -1,7 +1,7 @@
 #bprint <- function(...) {
 #  ignore <- ...
 #}
-source("Barret/bprint.r")
+source("../Barret/bprint.r")
 
 #' pretty axes
 #' make 'pretty' axes and make sure that they are within the minimum and maximum
