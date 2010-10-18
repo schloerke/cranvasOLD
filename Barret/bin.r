@@ -91,6 +91,7 @@ zero_then_top_by_order <- function(vec) {
 #' @param color vect to color by
 #' @param fill vect to fill by
 #' @param stroke vect to outline by
+#' @param ash whether to use ash or hist
 #' @param ... other params passed to \code{\link[graphics]{hist}}
 #' @author Barret Schloerke \email{bigbear@@iastate.edu}
 #' @keywords internal
@@ -99,7 +100,7 @@ zero_then_top_by_order <- function(vec) {
 #' 	continuous_to_bars(mtcars$disp, mtcars$cyl, position = "identity", stroke = "black")
 #' 	continuous_to_bars(mtcars$disp, mtcars$cyl, position = "relative", stroke = "black")
 #' 	continuous_to_bars(mtcars$disp, mtcars$cyl, position = "stack", stroke = "black")
-continuous_to_bars <- function(data = NULL, splitBy = NULL, position = "none", color = NULL, fill = NULL, stroke = NULL, ...) {
+continuous_to_bars <- function(data = NULL, splitBy = NULL, position = "none", color = NULL, fill = NULL, stroke = NULL, ash = FALSE, ...) {
   
   original = list(
       data = data, 
@@ -109,11 +110,14 @@ continuous_to_bars <- function(data = NULL, splitBy = NULL, position = "none", c
       fill = fill,
       position = position
     ) 
-  
-  breaks <- suppressWarnings(hist(data[[1]],plot=FALSE,...))$breaks
+	
+  if(identical(ash, FALSE))
+  	breaks <- suppressWarnings(hist(data,plot=FALSE,...))$breaks
+	else
+		stop("ash not defined yet")
   break_len <- length(breaks)
 
-  bar_top <- table(cut(data[[1]], breaks = breaks), splitBy)  
+  bar_top <- table(cut(data, breaks = breaks), splitBy)  
   
   data_pos <- melt(bar_top)
   names(data_pos) <- c("label", "group", "top")
