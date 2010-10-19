@@ -396,5 +396,6 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
     layout$setColumnMaximumWidth(2, 10)
 
     view = qplotView(scene = scene)
+    view$setWindowTitle(main)
     view
 }
