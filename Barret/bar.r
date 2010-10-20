@@ -53,7 +53,7 @@ column_coerce <- function(data, column, defaultVal) {
 #'		qhist(mtcars$disp, horizontal = TRUE, fill = "gold", stroke = "red4")
 #'
 #'		# stacked items
-#'		qhist(mtcars$disp, mtcars$cyl, stroke = "black", position = "stack")
+#'		qhist(mtcars$disp, mtcars$cyl, stroke = "black", position = "stack", title = "mtcars - stack")
 #'
 #'		# raw value items
 #'		qhist(mtcars$disp, mtcars$cyl, stroke = "black", position = "identity")
@@ -73,23 +73,26 @@ qhist <- function(
 	stroke = NULL,
 	title = NULL,
 	name = names(data),
+	ash = FALSE,
 	...
 ) {
 	
-	data <- muta_coerce(data)
-	data <- column_coerce(data, ".brushed", FALSE)
-	o_data <- data.frame(data)
+	mf_data <- data
+	mf_data <- muta_coerce(mf_data)
+	mf_data <- column_coerce(mf_data, ".brushed", FALSE)
+	n_data <- data.frame(mf_data)
 	
-	bars_info <- continuous_to_bars(o_data, splitBy, position, color, fill, stroke, ...)
-	bars <- bars_info$data
-	color <- bars$color  
+	
+	bars_info <- continuous_to_bars(n_data[,1], splitBy, position, color, fill, stroke, ...)
+	# bars <- bars_info$data
+	# color <- bars$color  
 	
 	
 	# contains c(x_min, x_max, y_min, y_max)
 	if (horizontal) {
-		ranges <- c(make_data_ranges(c(0, bars$top)), make_data_ranges(bars_info$breaks))
+		ranges <- c(make_data_ranges(c(0, bars_info$data$top)), make_data_ranges(bars_info$breaks))
 	} else {
-		ranges <- c(make_data_ranges(bars_info$breaks), make_data_ranges( c(0, bars$top)))
+		ranges <- c(make_data_ranges(bars_info$breaks), make_data_ranges( c(0, bars_info$data$top)))
 	}
 	
 	if (horizontal) {
@@ -124,21 +127,21 @@ qhist <- function(
 	hist.all <- function(item, painter, exposed) {
 		if (horizontal) {
 			qdrawRect(painter,
-				xleft = c(bars$bottom), #left
-				ybottom = c(bars$left), # bottom 
-				xright = c(bars$top), # right
-				ytop = c(bars$right), # top
-				stroke = c(bars$stroke),
-				fill = c(bars$fill)# fill
+				xleft = c(bars_info$data$bottom), #left
+				ybottom = c(bars_info$data$left), # bottom 
+				xright = c(bars_info$data$top), # right
+				ytop = c(bars_info$data$right), # top
+				stroke = c(bars_info$data$stroke),
+				fill = c(bars_info$data$fill)# fill
 			)
 		} else {
 			qdrawRect(painter,
-				xleft = c(bars$left), #left
-				ybottom = c(bars$bottom), # bottom 
-				xright = c(bars$right), # right
-				ytop = c(bars$top), # top
-				stroke = c(bars$stroke),
-				fill = c(bars$fill)# fill
+				xleft = c(bars_info$data$left), #left
+				ybottom = c(bars_info$data$bottom), # bottom 
+				xright = c(bars_info$data$right), # right
+				ytop = c(bars_info$data$top), # top
+				stroke = c(bars_info$data$stroke),
+				fill = c(bars_info$data$fill)# fill
 			)
 		}
 	}	
@@ -277,13 +280,64 @@ qhist <- function(
 	# 						#   return(idx)
 	# 					}
 
+	.bar_queryPos <- NULL
+	bar_hover_draw <- function(item, painter, exposed, ...) {
+		# Don't draw when brushing
+		# if (.brush) return()
+		cat("\nBar Hover Draw\n")
+		# Don't draw when brushing
+		if (is.null(.bar_queryPos)) return()
+		
+		if (horizontal) {
+			x <- .bar_queryPos[2]
+			y <- .bar_queryPos[1]
+		} else {
+			x <- .bar_queryPos[1]
+			y <- .bar_queryPos[2]			
+		}
+		
+		section <- subset(bars_info$data, (y <= top) & (y >= bottom) & (x <= right) & (x >=left))
+		print(head(section))
+		
+		# Nothing under mouse
+		if (nrow(section) == 0) return()
+		
+		# Highlight the rect
+		qdrawRect(painter,
+			xleft = c(section$bottom), #left
+			ybottom = c(section$left), # bottom 
+			xright = c(section$top), # right
+			ytop = c(section$right), # top
+			stroke = c("orange"),
+			fill = c(NA)# fill
+		)
+		
+		# Work out label text
+		infostring <- paste("\nlabel:", section[1,"label"], "group:", section[1,"group"],collapse="\n", sep=" ")
+		
+		qstrokeColor(painter) <- "white"
+		cat("\nDraw 'label: ", section[1,"label"],"\nx: ", .bar_queryPos[1], "  y: ", .bar_queryPos[2], "\n")
+		qdrawText(painter, infostring, .bar_queryPos[1], .bar_queryPos[2], valign="top", halign="left")
+	}
 	
-	query_hover <- function(item, event, ...) {
+	bar_hover <- function(item, event, ...) {
+		# if (.brush) return() 
+		
+		.bar_queryPos <<- as.numeric(event$pos())
+		# qupdate(querylayer)
+		
+		cat("\nBar Hover\n")
+		print(as.numeric(event$pos()))
+		qupdate(hoverlayer)
+	}
+	bar_leave <- function(item, event, ...) {
 		# if (.brush) return() 
 		# 
-		# .queryPos <<- as.numeric(event$pos())
+		# .bar_queryPos <<- as.numeric(event$pos())
 		# qupdate(querylayer)
+		cat("\nBar Leave\n")
 		print(as.numeric(event$pos()))
+		qupdate(hoverlayer)
 	}
 
 	windowRanges <- make_window_ranges(ranges, xlab, ylab)
@@ -298,8 +352,8 @@ qhist <- function(
 	datalayer = qlayer(scene, hist.all, limits = lims, clip = FALSE)
 
 
-  querylayer = qlayer(scene, NULL, limits = lims, clip = FALSE,
-    hoverMoveFun = query_hover)
+  hoverlayer = qlayer(scene, bar_hover_draw, limits = lims, clip = FALSE,
+    hoverMoveFun = bar_hover, hoverLeaveFun = bar_leave)
 
 	# brushing_layer = qlayer(scene, brushing_draw, 
 	# 	# mousePressFun = brushing_mouse_press, mouseMoveFun = brushing_mouse_move,  

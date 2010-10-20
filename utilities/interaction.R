@@ -52,7 +52,7 @@ qmutaframe = function(data, ...) {
     ## e.g. attrs related to the brush (scalars)
     attr(mf, '.brush.attr') = mutaframe(.brush.color = 'yellow', .brush.size = 1,
         .brushed.color = 'yellow', .brushed.size = 2, .brush.mode = 'none',
-        .label = FALSE, .label.fun = 'summary_one')
+        .label.show = FALSE, .label.fun = 'summary_one', .label.color = 'red')
     ## here '.brush.mode' is explained in the documentation of mode_selection()
 
     ## and other possible attributes
@@ -129,3 +129,24 @@ set_brush_attr = function(data, attr, value) {
 ## `brush_attr<-` = function(data, attr, value) {
 ##     attr(data, '.brush.attr')[[attr]] = value
 ## }
+
+
+
+##' Truncate Strings
+##'
+##' Truncate a string if its length is greater than a specified \code{length},
+##' with an extra flag appended in the end.
+##' @title Truncate Strings to the Specified Length
+##' @param x a character vector
+##' @param length the desired length
+##' @param extra the characters to be appended to the strings if their lengths are greater than the specified \code{length}
+##' @return the truncated strings
+##' @author Yihui Xie <\url{http://yihui.name}>
+##' @examples
+##' truncate_str('asdfasdf', 5)
+##' truncate_str(c('asdf', 'qwer'), 2)
+##' truncate_str(c('asdf', 'qwer'), c(1, 4))
+##' truncate_str(c('asdf', 'qwer'), 3, '??')
+truncate_str = function(x, length, extra = '...') {
+    paste(substr(x, 1, length), ifelse(nchar(x) > length, extra, ''), sep = '')
+}

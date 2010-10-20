@@ -159,7 +159,7 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         yr <<- diff(yspan)
 
         ## brush range: horizontal and vertical
-        .brange <<- c(xr, yr)/20
+        .brange <<- c(xr, yr)/30
         ## margins for the plot region
         mar = rep(mar, length.out = 4)
         lims <<- matrix(c(xspan + c(-1, 1) * xr * mar[c(2, 4)],
@@ -318,14 +318,18 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
             qdrawSegment(painter, tmpx[-nn], tmpy[-nn], tmpx[-1], tmpy[-1])
 
             ## show data labels and row ids
-            if (get_brush_attr(data, '.label')) {
+            if (get_brush_attr(data, '.label.show')) {
                 ## retrieve labels from the original data (possibly w/ transformation)
                 .label.fun = get(get_brush_attr(data, '.label.fun'))
                 .brush.labels = .label.fun(data[.brushed, vars])
                 .vars = c('case id', vars)
-                .brush.labels = c(paste(head(rownames(data)[.brushed], 10), collapse = ', '), .brush.labels)
+                ## truncate the id strings if too long
+                .caseid = ifelse(sum(.brushed) == 1, rownames(data)[.brushed],
+                    truncate_str(paste(rownames(data)[.brushed], collapse = ', '),
+                                 max(nchar(c(.brush.labels, .vars)))))
+                .brush.labels = c(.caseid, .brush.labels)
                 .brush.labels = paste(.vars, .brush.labels, sep = ': ', collapse = '\n')
-                qstrokeColor(painter) = 'black'
+                qstrokeColor(painter) = get_brush_attr(data, '.label.color')
                 qdrawText(painter, .brush.labels, .bpos[1], .bpos[2], valign="top", halign="left")
             }
         }
@@ -342,12 +346,12 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
     ## y-axis
     yaxis_layer = qlayer(root_layer, function(item, painter) {
         qdrawText(painter, yticklab, 0.9, ytickloc, "right", "center")
-        ## qdrawSegment(painter, .92, ytickloc, 1, ytickloc, stroke='black')
+        qdrawSegment(painter, .91, ytickloc, 1, ytickloc, stroke='black')
     }, limits = qrect(c(0, 1), c(lims[3], lims[4])), row = 1, col = 0)
     ## x-axis
     xaxis_layer = qlayer(root_layer, function(item, painter) {
         qdrawText(painter, xticklab, xtickloc, 0.9, "center", "top")
-        ## qdrawSegment(painter,xtickloc,.92,xtickloc,1,stroke='black')
+        qdrawSegment(painter, xtickloc, .91, xtickloc, 1, stroke='black')
     }, limits = qrect(c(lims[1], lims[2]), c(0, 1)), row = 2, col = 1)
 
     grid_layer = qlayer(root_layer, grid_draw, limits = qrect(lims), row = 1, col = 1)
@@ -393,6 +397,7 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
     layout$setColumnMaximumWidth(2, 10)
 
     view = qplotView(scene = scene)
+    view$setWindowTitle(main)
     view
 }
 

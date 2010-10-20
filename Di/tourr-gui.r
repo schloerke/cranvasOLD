@@ -13,7 +13,7 @@
 
 gui_xy <- function(qdata = qflea, ...) {
 
-  data = data.frame(qdata)
+  data <- data.frame(qdata)
   
   # Get the brush color
   bcol <<- get_brush_attr(qdata, '.brushed.color')
@@ -30,7 +30,9 @@ gui_xy <- function(qdata = qflea, ...) {
       cur_proj <<- NULL
       prev_var <<- svalue(Variables)
     }
+    cat(" Updating tour...",bcol, "\n")
 
+    data <- data.frame(qdata)
     tour <<- create_tour(data, 
       var_selected = svalue(Variables), 
       cat_selected = svalue(Class), 
@@ -39,7 +41,7 @@ gui_xy <- function(qdata = qflea, ...) {
       aps = svalue(sl),
       cur_proj = cur_proj
     )
-    
+    cat("update_tour brush values ", data$.brushed[1], data$.brushed[500], "colours ", tour$colour[1], tour$colour[500], "\n")
     
     tour_anim <<- with(tour, new_tour(data, tour_path, cur_proj))
     TRUE
@@ -187,12 +189,10 @@ gui_xy <- function(qdata = qflea, ...) {
 
   # update the colors if modifications to the mutaframe are made
   add_listener(qdata, function(i, j) {
-    cat("Hello ", bcol, "\n")
-    col <- "black"
-    col[qdata$.brushed] <- bcol
-    data = data.frame(qdata)
+    cat("Hello ", bcol, " change event\n")
+    #data = data.frame(qdata)
+    #tour$colour[qdata$.brushed] <- bcol
     update_tour()
-    #tour$colour[qdata$.brushed] <- col
   })
 
   update_tour()
@@ -205,7 +205,6 @@ gui_xy <- function(qdata = qflea, ...) {
   invisible()
   
 }
-
 
 create_tour <- function(data, var_selected, cat_selected, axes_location, tour_type, aps, cur_proj) {
   if (length(var_selected) < 3) {
@@ -222,11 +221,21 @@ create_tour <- function(data, var_selected, cat_selected, axes_location, tour_ty
     int <- interaction(categ, drop = TRUE)
     pal <- rainbow_hcl(length(levels(int)))
     col <- pal[as.numeric(int)]
-    col[data$.brushed] <- bcol
-    cat(" brush values ", data$.brushed[1], "colours ", col[1],"\n")
   } else {
-    col <- "black"
+    col <- rep("black", nrow(data))
   }
+#  cat(length(col), "\n")
+#  if (!is.null(data$.color)) {
+#    col <- data$.color
+#    cat("Setting colors\n")
+#  }
+#  else
+#    col <- rep("black", nrow(data))
+#  if (!is.null(data$.brushed)) {
+    col[data$.brushed] <- bcol
+    cat("Setting brush colors\n")
+#  }
+  cat("create_tour brush values ", data$.brushed[1], data$.brushed[500], "colours ", data$.color[1], col[1], data$.color[500], col[500], "\n")
   
   # Work out which type of tour to use
   tour <- switch(tour_type,
@@ -237,8 +246,6 @@ create_tour <- function(data, var_selected, cat_selected, axes_location, tour_ty
     "Guided(lda_pp)" = guided_tour(lda_pp(data[,cat_selected])),
     "Local" = local_tour(cur_proj)
   )
-  
-
     
   sel <- data[var_selected]
   # Sphere the data if we're using a guided tour
