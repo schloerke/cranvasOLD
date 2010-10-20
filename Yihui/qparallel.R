@@ -20,6 +20,7 @@ source("../utilities/data.R")
 ##' \code{NULL} (do not center)
 ##' @param horizontal logical: arrange variables in horizontal or
 ##' vertical direction
+##' @param type draw complete segments for all observations or only short ticks to represent observations (the latter can be more efficient in case of large data)
 ##' @param boxplot logical: overlay boxplots on top of the par-coords
 ##' plot or not
 ##' @param boxwex width of boxplots
@@ -33,7 +34,7 @@ source("../utilities/data.R")
 ##' @return NULL
 ##' @author Yihui Xie <\url{http://yihui.name}>
 qparallel = function(data, vars, scale = "range", na.action = na.impute,
-    center = NULL, horizontal = TRUE,
+    center = NULL, horizontal = TRUE, type = c('auto', 'line', 'tick'), 
     boxplot = FALSE, boxwex, jitter = NULL, amount = NULL,
     mar = c(0.04, 0.04, 0.04, 0.04), main, verbose = getOption("verbose")) {
 
@@ -393,4 +394,14 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
 
     view = qplotView(scene = scene)
     view
+}
+
+qglyphSegment <- function(x = 5, b = 0) {
+  glyph <- Qt$QPainterPath()
+  x0 <- x * cos(atan(b))
+  y0 <- x * sin(atan(b))
+  glyph$moveTo(-x0, -y0)
+  glyph$lineTo(x0, y0)
+  glyph$closeSubpath()
+  glyph
 }
