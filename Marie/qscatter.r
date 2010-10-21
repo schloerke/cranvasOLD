@@ -102,10 +102,10 @@ qscatter <- function (data, na.rm = F, form, main = NULL) {
   
   print(head(as.data.frame(data)))
   if (length(form) != 3) {
-    stop("invalid formula, requires x ~ y format")
+    stop("invalid formula, requires y ~ x format")
   } else {
-    .levelX <- as.character( form[[2]] )
-    .levelY <- as.character(form[[3]])
+    .levelX <- as.character( form[[3]] )
+    .levelY <- as.character(form[[2]])
   }
   
   ## local copy of original data
