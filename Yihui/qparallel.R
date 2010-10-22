@@ -20,7 +20,9 @@ source("../utilities/data.R")
 ##' \code{NULL} (do not center)
 ##' @param horizontal logical: arrange variables in horizontal or
 ##' vertical direction
-##' @param type draw complete segments for all observations or only short ticks to represent observations (the latter can be more efficient in case of large data)
+##' @param glyph draw complete segments for all observations or other
+##' types of glyphs to represent observations (the latter can be more
+##' efficient in case of large data)
 ##' @param boxplot logical: overlay boxplots on top of the par-coords
 ##' plot or not
 ##' @param boxwex width of boxplots
@@ -34,7 +36,7 @@ source("../utilities/data.R")
 ##' @return NULL
 ##' @author Yihui Xie <\url{http://yihui.name}>
 qparallel = function(data, vars, scale = "range", na.action = na.impute,
-    center = NULL, horizontal = TRUE, type = c('auto', 'line', 'tick'), 
+    center = NULL, horizontal = TRUE, glyph = c('auto', 'line', 'tick', 'circle', 'square', 'triangle'),
     boxplot = FALSE, boxwex, jitter = NULL, amount = NULL,
     mar = c(0.04, 0.04, 0.04, 0.04), main, verbose = getOption("verbose")) {
 
@@ -76,11 +78,13 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
     ## brushed
     if (!has_attr('.brushed')) data$.brushed = FALSE
 
+    glyph = match.arg(glyph)
+
     ## a long way of transformation
     ## creat some 'global' variables first
     x = y = n = nn = numcol = p = segx0 = segy0 = segx1 = segy1 = segcol =
         xr = yr = xspan = yspan = xticklab = yticklab = xtickloc = ytickloc =
-            .brange = lims = NULL
+            .brange = lims = x0 = y0 = NULL
 
     transform_data = function() {
 
@@ -172,12 +176,19 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         ytickloc <<- ytickloc[idx]
         yticklab <<- yticklab[idx]
 
-        ## creating starting and ending vectors, because indexing in real-time can be slow
-        segx0 <<- as.vector(t.default(x[, 1:(p - 1)]))
-        segx1 <<- as.vector(t.default(x[, 2:p]))
-        segy0 <<- as.vector(t.default(y[, 1:(p - 1)]))
-        segy1 <<- as.vector(t.default(y[, 2:p]))
-        nn <<- n * (p - 1)
+        ## 'auto' means 'line's when n*p<=5000*10, and 'tick's otherwise
+        if (glyph == 'auto') glyph <<- ifelse(n * p <= 50000, 'line', 'tick')
+        if (glyph == 'line') {
+            ## creating starting and ending vectors, because indexing in real-time can be slow
+            segx0 <<- as.vector(t.default(x[, 1:(p - 1)]))
+            segx1 <<- as.vector(t.default(x[, 2:p]))
+            segy0 <<- as.vector(t.default(y[, 1:(p - 1)]))
+            segy1 <<- as.vector(t.default(y[, 2:p]))
+            nn <<- n * (p - 1)
+        } else {
+            x0 <<- as.vector(t.default(x))
+            y0 <<- as.vector(t.default(y))
+        }
 
         ## for boxplots
         if (boxplot)
@@ -195,6 +206,9 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
     ## convention of notation:
     ## *_draw means a drawing function for a layer; *_event is an even callback; *_layer is a layer object
 
+    draw.glyph = switch(glyph, tick = qglyphSegment(), circle = qglyphCircle(),
+        square = qglyphSquare(), triangle = qglyphTriangle())
+
     ## background grid
     grid_draw = function(item, painter) {
         qdrawRect(painter, lims[1, 1], lims[1, 2], lims[2, 1], lims[2, 2],
@@ -211,8 +225,13 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
             ntime = Sys.time()
             message("drawing pcp segments")
         }
-        segcol = rep(data$.color, each = p - 1)
-        qdrawSegment(painter, segx0, segy0, segx1, segy1, stroke = segcol)
+        if (glyph == 'line') {
+            segcol = rep(data$.color, each = p - 1)
+            qdrawSegment(painter, segx0, segy0, segx1, segy1, stroke = segcol)
+        } else {
+            col.glyph = rep(data$.color, each = p)
+            qdrawGlyph(painter, draw.glyph, x0, y0, stroke = col.glyph)
+        }
         if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
@@ -285,7 +304,8 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         .new.brushed = rep(FALSE, n)
         rect = qrect(matrix(c(.bpos - .brange, .bpos + .brange), 2, byrow = TRUE))
         hits = layer$locate(rect) + 1
-        hits = ceiling(hits/(p - 1))
+        ## ticks and lines are of different numbers!
+        hits = ceiling(hits/ifelse(glyph == 'line', p - 1, p))
         .new.brushed[hits] = TRUE
         data$.brushed = mode_selection(data$.brushed, .new.brushed, mode = get_brush_attr(data, '.brush.mode'))
         if (verbose)
@@ -399,14 +419,4 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
     view = qplotView(scene = scene)
     view$setWindowTitle(main)
     view
-}
-
-qglyphSegment <- function(x = 5, b = 0) {
-  glyph <- Qt$QPainterPath()
-  x0 <- x * cos(atan(b))
-  y0 <- x * sin(atan(b))
-  glyph$moveTo(-x0, -y0)
-  glyph$lineTo(x0, y0)
-  glyph$closeSubpath()
-  glyph
 }
