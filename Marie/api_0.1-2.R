@@ -493,7 +493,9 @@ add_layer<-function(  parent,
                    limits = limits,
                    row = row,
                    col = col,
-                   geometry = geometry)
+                   geometry = geometry,
+                   rowSpan = rowspan,
+                   colSpan = colspan)
   layer$setLimits(limits)
   self<- structure(list(layer=layer, limits = limits))
   self
