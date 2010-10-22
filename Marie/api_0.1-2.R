@@ -420,6 +420,7 @@ new_plot <- function(width = 600, height = 400, xrange = c(0, 1), yrange = c(0, 
   scene <- qscene()
   root <- qlayer(scene)
   root$setGeometry(qrect(0,0,width,height))
+
 #  root$setMaximumHeight(height)
 #  root$setMaximumWidth(width)
   self <- structure(list(scene=scene,root=root,limits=limits, size = size), class = "cranvas-plot")
@@ -452,7 +453,9 @@ add_layer<-function(  parent,
                       row=0L,col=0L, 
                       userlimits=NULL,
                       geometry = qrect(0,0,600,400),
-                      clip = F){
+                      clip = F,
+                      colspan = 1L,
+                      rowspan = 1L ){
 
   if(class(mark)[1]=="function"){
     paintFun<-mark
