@@ -4,7 +4,6 @@ source("axes.r")
 source("../utilities/interaction.R")
 rm(hbar)
 rm(vbar)
-#source("cranvas/Heike/labels.r")
 
 qscatter <- function (data, na.rm = F, form, main = NULL, labeled = TRUE) {
 #############################
@@ -45,9 +44,6 @@ qscatter <- function (data, na.rm = F, form, main = NULL, labeled = TRUE) {
   }
   
   get_axisPosX <- function(data, colName) {
-  #print("axisPosX")
-  #print(data)
-  #print(colName)
     cols <- subset(data, select = colName)[,1]
     if(!(length(levels(cols[1])) == 0)) {
       by <- 1/(length(levels(cols[1])) + 1)
@@ -62,11 +58,7 @@ qscatter <- function (data, na.rm = F, form, main = NULL, labeled = TRUE) {
   } 
 
   get_axisPosY <- function(data, colName) {
-  #print("axisPosY")
-  #print(data)
-  #print(colName)
     cols <- subset(data, select = colName)[,1]
-   # print(cols)
     if(!(length(levels(cols[1])) == 0)) {
       by <-1/(length(levels(cols[1])) + 1)
       majorPos <- seq.int(c(0:1), by = by)
@@ -113,39 +105,48 @@ qscatter <- function (data, na.rm = F, form, main = NULL, labeled = TRUE) {
   
   ## transform the data
   df <- data.frame(data)
- # data <- prodcalc(df, formula, divider = "hbar", cascade = 0, scale_max = T, 
-#      na.rm = na.rm)
 
-
-   ## parameters for dataRanges
-#  top <- data$t
- # bottom <- data$b
- # left <- data$l
- # right <- data$r
+  ## parameters for dataRanges
   xlab <- NULL
   ylab <- NULL
   
   ## labels
   ylabels <- NULL
-  yid <- find_yid(data = df, colName = as.character(.levelY))
-  if (!is.na(yid[1])) {
+  if (labeled) {
+    yid <- find_yid(data = df, colName = as.character(.levelY))
+  } else {
+    yid <- NA
+  }
+  
+  if (!is.na(yid[1]) ) {
       ylabels <- get_axisPosY(data = df, colName = .levelY)
   }
   
   xlabels <- NULL
-  xid <- find_xid(data = df, colName = as.character(.levelX))
+  if (labeled) {
+    xid <- find_xid(data = df, colName = as.character(.levelX))
+  } else {
+    xid <- NA
+  }
+  
   if (!is.na(xid[1])) {
       xlabels <- get_axisPosY(data = df, colName = .levelX)
   }
 
   ## parameters for all layers
+  if (labeled) {
   dataRanges <- c(
     make_data_ranges(range(subset(df, select = .levelX))),
     make_data_ranges(range(subset(df, select = .levelY))))
  
   windowRanges <- make_window_ranges(dataRanges, xlab, ylab,
     ytickmarks=ylabels, xtickmarks = xlabels, main=main)
-
+  } else {
+    dataRanges <- c(range(subset(df, select = .levelX)),
+                    range(subset(df, select = .levelY)))
+    windowRanges <- dataRanges
+  }
+  
   lims <- qrect(windowRanges[c(1,2)], windowRanges[c(3,4)])
 
   ## parameters for bglayer
@@ -236,6 +237,7 @@ brush.draw <- function(item, painter, exposed) {
   view <- qplotView(scene = plot1$scene)
   view$setWindowTitle(extract.formula(form))
   view$setMaximumSize(plot1$size)
+  
 ######################
 # add some listeners #
 ######################
