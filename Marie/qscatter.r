@@ -1,83 +1,17 @@
 source("api_0.1-2.R")
 source("helper.r")
 source("axes.r")
+source("shared.r")
 source("../utilities/interaction.R")
 rm(hbar)
 rm(vbar)
-#source("cranvas/Heike/labels.r")
 
-qscatter <- function (data, na.rm = F, form, main = NULL) {
+ 
+qscatter <- function (data, na.rm = F, form, main = NULL, labeled = TRUE) {
 #############################
 # internal helper functions #
 #############################
-  extract.formula <- function(form) {
-    if( length(form) == 2 ) {
-      formstring <- paste(form[[1]], form[[2]])
-    }
-    if( length(form) == 3 ) {
-      formstring <- paste( form[[2]], form[[1]], form[[3]])
-    }    
-    return(formstring)
-    
-  }
   
-  find_xid <- function( data, colName) {
-    cols <- subset(data, select = colName)[,1]
-    if(!(length(levels(cols[1])) == 0)) {
-      xid <- levels(cols[1])
-    } else if (class (cols[1]) == "numeric" || class(cols[1]) == "integer") {
-      xid <- pretty(cols)
-    }
-    return(xid)
-  }
-  
-  find_yid <- function( data, colName) {
-    cols <- subset(data, select = colName)[,1]
-    if(!(length(levels(cols[1])) == 0)) {
-      yid <- levels(cols[1])
-    } else if (class (cols[1]) == "numeric" || class(cols[1]) == "integer") {
-      yid <- pretty(cols)
-    } else {
-      stop("data type not supported")
-    }
-    
-    return(yid)
-  }
-  
-  get_axisPosX <- function(data, colName) {
-  #print("axisPosX")
-  #print(data)
-  #print(colName)
-    cols <- subset(data, select = colName)[,1]
-    if(!(length(levels(cols[1])) == 0)) {
-      by <- 1/(length(levels(cols[1])) + 1)
-      majorPos <- seq.int(c(0:1), by = by)
-    } else if (class (cols[1]) == "numeric" || class(cols[1]) == "integer") {
-      majorPos <- pretty(cols)
-    } else {
-      stop("data type not supported")
-    }
-    
-    return(majorPos)
-  } 
-
-  get_axisPosY <- function(data, colName) {
-  #print("axisPosY")
-  #print(data)
-  #print(colName)
-    cols <- subset(data, select = colName)[,1]
-   # print(cols)
-    if(!(length(levels(cols[1])) == 0)) {
-      by <-1/(length(levels(cols[1])) + 1)
-      majorPos <- seq.int(c(0:1), by = by)
-    } else if (class (cols[1]) == "numeric" || class(cols[1]) == "integer") {
-      majorPos <- pretty(cols)
-    } else {
-      stop("data type not supported")
-    }
-    
-    return(majorPos)
-  } 
 
 
 ############################# end internal helper functions
@@ -102,10 +36,10 @@ qscatter <- function (data, na.rm = F, form, main = NULL) {
   
   print(head(as.data.frame(data)))
   if (length(form) != 3) {
-    stop("invalid formula, requires x ~ y format")
+    stop("invalid formula, requires y ~ x format")
   } else {
-    .levelX <- as.character( form[[2]] )
-    .levelY <- as.character(form[[3]])
+    .levelX <- as.character( form[[3]] )
+    .levelY <- as.character(form[[2]])
   }
   
   ## local copy of original data
@@ -113,48 +47,48 @@ qscatter <- function (data, na.rm = F, form, main = NULL) {
   
   ## transform the data
   df <- data.frame(data)
- # data <- prodcalc(df, formula, divider = "hbar", cascade = 0, scale_max = T, 
-#      na.rm = na.rm)
 
-
-   ## parameters for dataRanges
-#  top <- data$t
- # bottom <- data$b
- # left <- data$l
- # right <- data$r
+  ## parameters for dataRanges
   xlab <- NULL
   ylab <- NULL
   
-  ## parameters for windowRanges
-  .df.title <- FALSE
-  if (is.null(main))  {
-    .df.title <- TRUE
-  }
-  if (.df.title) {
-    main <- as.character(form)
+  ## labels
+  ylabels <- NULL
+  if (labeled) {
+    yid <- find_yid(data = df, colName = as.character(.levelY))
+  } else {
+    yid <- NA
   }
   
-   ## labels
-  ylabels <- NULL
-  yid <- find_yid(data = df, colName = as.character(.levelY))
-  if (!is.na(yid[1])) {
+  if (!is.na(yid[1]) ) {
       ylabels <- get_axisPosY(data = df, colName = .levelY)
   }
   
   xlabels <- NULL
-  xid <- find_xid(data = df, colName = as.character(.levelX))
+  if (labeled) {
+    xid <- find_xid(data = df, colName = as.character(.levelX))
+  } else {
+    xid <- NA
+  }
+  
   if (!is.na(xid[1])) {
       xlabels <- get_axisPosY(data = df, colName = .levelX)
   }
 
   ## parameters for all layers
+  if (labeled) {
   dataRanges <- c(
     make_data_ranges(range(subset(df, select = .levelX))),
     make_data_ranges(range(subset(df, select = .levelY))))
  
   windowRanges <- make_window_ranges(dataRanges, xlab, ylab,
     ytickmarks=ylabels, xtickmarks = xlabels, main=main)
-
+  } else {
+    dataRanges <- c(range(subset(df, select = .levelX)),
+                    range(subset(df, select = .levelY)))
+    windowRanges <- dataRanges
+  }
+  
   lims <- qrect(windowRanges[c(1,2)], windowRanges[c(3,4)])
 
   ## parameters for bglayer
@@ -244,7 +178,8 @@ brush.draw <- function(item, painter, exposed) {
   brushlayer <- add_layer(parent = plot1, mark = brush.draw, userlimits = lims)
   view <- qplotView(scene = plot1$scene)
   view$setWindowTitle(extract.formula(form))
-
+  view$setMaximumSize(plot1$size)
+  
 ######################
 # add some listeners #
 ######################
