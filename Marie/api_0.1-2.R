@@ -415,11 +415,14 @@ structure(defaults(new, object), class = class(object))
 #-------------
 #Create a blank canvas
 new_plot <- function(width = 600, height = 400, xrange = c(0, 1), yrange = c(0, 1)) {
+  size <- qsize(as.integer(c(width, height)))
   limits <- qrect(xrange, yrange)
   scene <- qscene()
   root <- qlayer(scene)
   root$setGeometry(qrect(0,0,width,height))
-  self <- structure(list(scene=scene,root=root,limits=limits), class = "cranvas-plot")
+#  root$setMaximumHeight(height)
+#  root$setMaximumWidth(width)
+  self <- structure(list(scene=scene,root=root,limits=limits, size = size), class = "cranvas-plot")
   self
 }
 #End blank canvas
