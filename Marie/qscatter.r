@@ -6,7 +6,7 @@ rm(hbar)
 rm(vbar)
 #source("cranvas/Heike/labels.r")
 
-qscatter <- function (data, na.rm = F, form, main = NULL) {
+qscatter <- function (data, na.rm = F, form, main = NULL, labeled = TRUE) {
 #############################
 # internal helper functions #
 #############################
@@ -125,16 +125,7 @@ qscatter <- function (data, na.rm = F, form, main = NULL) {
   xlab <- NULL
   ylab <- NULL
   
-  ## parameters for windowRanges
-  .df.title <- FALSE
-  if (is.null(main))  {
-    .df.title <- TRUE
-  }
-  if (.df.title) {
-    main <- as.character(form)
-  }
-  
-   ## labels
+  ## labels
   ylabels <- NULL
   yid <- find_yid(data = df, colName = as.character(.levelY))
   if (!is.na(yid[1])) {
