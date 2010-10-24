@@ -97,14 +97,22 @@ test.mat3 = qmutaframe(matrix(rnorm(5000 * 10), ncol = 10),
      .color = rgb(1, 0, 0, 0.05))
 qparallel(test.mat3, verbose = TRUE)
 
-## 1 million segments to torture Qt!!
-qparallel(qmutaframe(matrix(rbeta(1e+05 * 11, 5, 30), ncol = 11),
-                     .color = rgb(1, 0, 0, 0.05)), verbose = TRUE)
+## speed tests
+## on my laptop, 10000x10 takes 5 secs to build the brushing cache
+## identifying is generally very fast once the cache was built
+qhuge1 = qmutaframe(matrix(rbeta(1e+04 * 10, 5, 30), ncol = 10))
+qparallel(qhuge1, verbose = TRUE)
+## 30000x10 takes 45 seconds
+qhuge2 = qmutaframe(matrix(rbeta(3e+04 * 10, 5, 30), ncol = 10))
+qparallel(qhuge2, verbose = TRUE)
+## 1 million points to torture Qt!!
+qhuge3 = qmutaframe(matrix(rbeta(1e+05 * 10, 5, 30), ncol = 10))
+qparallel(qhuge3, verbose = TRUE)
 
-# linking two parcoords plots: split the data into 2 parts
+## linking two parcoords plots: split the data into 2 parts
 testdata = qmutaframe(as.data.frame(matrix(rnorm(2000 * 10), ncol = 10)))
-qparallel(testdata, vars = sprintf("V%d", 1:5))
-qparallel(testdata, vars = sprintf("V%d", 6:10))
+qparallel(testdata, vars = sprintf("V%d", 1:6))
+qparallel(testdata, vars = sprintf("V%d", 4:10))
 
 
 ## for large data, glyphs (short ticks) are automatically used instead of segments
