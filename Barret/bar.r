@@ -41,6 +41,7 @@ column_coerce <- function(data, column, defaultVal) {
 #'
 #'		# each column is split evenly
 #'		qhist(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - stack") 
+#'		qhist(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - stack", horizontal = FALSE) 
 #'
 #'		# each column has similar height colors
 #'		qhist(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - dodge", position = "dodge") 
@@ -104,7 +105,8 @@ qhist <- function(
 	}
 	
 	
-	# Draw Axes --------------------------------
+	#######################################################
+	# Draw Axes 
 	coords <- function(item, painter, exposed) {
 		# grey background with grid lines
 		if (horizontal) {
@@ -123,7 +125,8 @@ qhist <- function(
 	}
 	
 	
-	# Draw Bars ----------------------------------
+	#######################################################
+	# Draw Bars 
 	hist.all <- function(item, painter, exposed) {
 		if (horizontal) {
 			qdrawRect(painter,
@@ -146,141 +149,156 @@ qhist <- function(
 		}
 	}	
 	
-	# # Brushing -----------------------------------------------------------------
-	# .startBrush <- NULL
-	# .endBrush <- NULL
-	# .brush <- FALSE
-	# 
-	# drawBrush <- function(item, painter, exposed) {
-	# 	left = min(.startBrush[1], .endBrush[1])
-	# 	right = max(.startBrush[1], .endBrush[1])
-	# 	top = max(.startBrush[2], .endBrush[2])
-	# 	bottom = min(.startBrush[2], .endBrush[2])
-	# 
-	# 	qdrawRect(painter, left, bottom, right, top, 
-	# 		fill=rgb(0,0,0,alpha=0.3), stroke="black")  
-	# 	}
-	# 
-	# 	recalchiliting <- function() {
-	# 		hils <- setuphilite(formula=as.formula(extract.formula(formula)))  
-	# 
-	# 		formulahil <<- hils[[1]]
-	# 		dividerhil <<- hils[[2]]
-	# 		df <- data.frame(odata)
-	# 		
-	# 		df$.brushed <- factor(df$.brushed, levels=c("TRUE","FALSE"))
-	# 
-	# 		if (!is.null(formulahil)) 
-	# 			datahil <<- prodcalc(df, formulahil, dividerhil, cascade, scale_max, na.rm = na.rm)
-	# 		else if (nrow(datahil)>0) datahil <<- datahil[-(1:nrow(datahil)),]
-	# 	}
-	# 
-	# 	brushing_draw <- function(item, painter, exposed, ...) {
-	# 		if (TRUE) {
-	# 			if (.brush) {
-	# 				#		if (is.null(data$.brushed)) 
-	# 				#          data$.brushed <- FALSE
-	# 				hdata <- subset(data, (.brushed==TRUE) & (level == (.level)))
-	# 			} else {
-	# 					recalchiliting()
-	# 					#	if (is.null(datahil$.brushed)) datahil$.brushed <- FALSE
-	# 					hdata <- subset(datahil, (.brushed==TRUE) & (level == (.level+1)))
-	# 			}
-	# 
-	# 			if (nrow(hdata)>0) {
-	# 
-	# 				top <- hdata$t
-	# 				bottom <- hdata$b
-	# 				left <- hdata$l
-	# 				right <- hdata$r
-	# 
-	# 				#  .brush.attr = attr(odata, '.brush.attr')
-	# 
-	# 				brushcolor <- .brush.attr[,".brushed.color"]   
-	# 				qdrawRect(painter, left, bottom, right, top, fill=brushcolor)
-	# 			}
-	# 		}
-	# 
-	# 		if (!is.null(.endBrush)) {
-	# 			drawBrush(item, painter, exposed)
-	# 		}
-	# 	}
-	# 
-	# 			brushing_mouse_press <- function(item, event, ...) {  
-	# 				.brush <<- TRUE
-	# 				if (is.null(.startBrush)) {
-	# 					.startBrush <<- as.numeric(event$pos())      
-	# 				}
-	# 				qupdate(brushing_layer)
-	# 			}
-	# 
-	# 			brushing_mouse_move <- function(item, event, ...) {  
-	# 				.endBrush <<- as.numeric(event$pos())
-	# 
-	# 				setHiliting()
-	# 				qupdate(brushing_layer)
-	# 			}
-	# 
-	# 			brushing_mouse_release <- function(item, event, ...) {    
-	# 				.endBrush <<- as.numeric(event$pos())
-	# 				setHiliting()    
-	# 				qupdate(brushing_layer)
-	# 
-	# 
-	# 				.brush <<- FALSE
-	# 
-	# 
-	# 				.startBrush <<- NULL
-	# 				.endBrush <<- NULL
-	# 
-	# 				setSelected()
-	# 
-	# 				#    print("changed?")
-	# 				#    print(summary(row.attr$.brushed))
-	# 
-	# 				#      recalchiliting()
-	# 				#	  qupdate(brushing_layer)
-	# 			}
-	# 
-	# 			setHiliting <- function() {
-	# 				left = min(.startBrush[1], .endBrush[1])
-	# 				right = max(.startBrush[1], .endBrush[1])
-	# 				top = max(.startBrush[2], .endBrush[2])
-	# 				bottom = min(.startBrush[2], .endBrush[2])
-	# 
-	# 				data$.brushed <<- (data$level == .level) & (data$l <= right) & 
-	# 				(data$r >= left) & (data$b <= top) & (data$t >= bottom)  
-	# 			}
-	# 
-	# 			setSelected <- function() {
-	# 				hdata <- subset(data, (.brushed==TRUE) & (level == .level), drop=FALSE)[,.activevars, drop=FALSE]
-	# 				if (nrow(hdata) > 0) {
-	# 					hdata$ID <- 1:nrow(hdata)
-	# 					res.melt <- melt(hdata,id.var="ID")
-	# 					res.cond <- adply(res.melt, 1, function(x) {
-	# 						if (is.na(x$value)) cstr <- paste("is.na(",x$variable,")", sep="")
-	# 						else cstr <- paste("(",x$variable,"=='",x$value,"')",sep="")
-	# 						return(cond=cstr)
-	# 						})
-	# 						res.cond <- res.cond[,-3]
-	# 						names(res.cond)[3] <- "value"
-	# 						cast.res <- cast(res.cond, ID~., function(x) return(paste(x, collapse=" & ")))
-	# 
-	# 						cond1 <- paste("(",cast.res[,2],")", sep="",collapse=" | ")
-	# 						idx <- with(data.frame(odata), which(eval(parse(text=cond1))))
-	# 
-	# 						.brushed <- rep(FALSE, nrow(odata))
-	# 						if (length(idx)) .brushed[idx] <- TRUE
-	# 
-	# 						odata$.brushed <- .brushed
-	# 						} else {
-	# 							odata$.brushed <- FALSE
-	# 						}
-	# 						#   idx <- with(data.frame(odata), which(eval(parse(text=cond1))))
-	# 						#   return(idx)
-	# 					}
+	#######################################################
+	# Brushing 
+	.startBrush <- NULL
+	.endBrush <- NULL
+	.brush <- FALSE
+	 
+	draw_brush_rect <- function(item, painter, exposed) {
+		cat("\ndraw brush rect\n")
+		left = min(.startBrush[1], .endBrush[1])
+		right = max(.startBrush[1], .endBrush[1])
+		top = max(.startBrush[2], .endBrush[2])
+		bottom = min(.startBrush[2], .endBrush[2])
+		
+		qdrawRect(painter, left, bottom, right, top, fill=rgb(0,0,0,alpha=0.7), stroke="black") 
+		cat("\ndraw brush rect - done\n")
+	}
+	
+	brushing_draw <- function(item, painter, exposed, ...) {
+		cat("\nbrushing draw\n")
+		if (TRUE) {
+			# if (.brush) {
+				#		if (is.null(data$.brushed)) 
+				#          data$.brushed <- FALSE
+				# print(str(bars_info$data))
+				section <- subset(bars_info$data, (.brushed == TRUE))
+			# }
+			
+			if (nrow(section) > 0) {
+				#  .brush.attr = attr(odata, '.brush.attr')
+				# brushcolor <- .brush.attr[,".brushed.color"]
+				if (horizontal)
+					qdrawRect(painter, section$bottom, section$right, section$top, section$left, fill = rgb(255/255, 165/255, 0, alpha = 0.3))
+				else
+					qdrawRect(painter, section$left, section$bottom, section$right, section$top, fill = rgb(255/255, 165/255, 0, alpha = 0.3))
+			}
+		}
+		
+		if (!is.null(.endBrush)) {
+			draw_brush_rect(item, painter, exposed)
+		}
+		cat("\nbrushing draw\n")
+	}
+		
+	brushing_mouse_press <- function(item, event, ...) {  
+		cat("\nBrushing mouse press\n")
+		.brush <<- TRUE
+		if (is.null(.startBrush)) {
+			.startBrush <<- as.numeric(event$pos())      
+		}
+		qupdate(brushing_layer)
+		cat("\nBrushing mouse press - done\n")
+	}
+		
+	brushing_mouse_move <- function(item, event, ...) {  
+		cat("\nbrushing mouse move\n")
+		.endBrush <<- as.numeric(event$pos())
 
+		setHiliting()
+		qupdate(brushing_layer)
+		cat("\nbrushing mouse move - done\n")
+	}
+		
+	brushing_mouse_release <- function(item, event, ...) {    
+		cat("\nbrushing mouse release\n")
+		.endBrush <<- as.numeric(event$pos())
+		setHiliting()    
+		qupdate(brushing_layer)
+		
+		
+		.brush <<- FALSE
+		.startBrush <<- NULL
+		.endBrush <<- NULL
+		
+		# setSelected()
+		cat("\nbrushing mouse release - done\n")
+	}
+
+	setHiliting <- function() {
+		cat("\nsetHiliting\n")
+		
+		left = min(.startBrush[1], .endBrush[1])
+		right = max(.startBrush[1], .endBrush[1])
+		top = max(.startBrush[2], .endBrush[2])
+		bottom = min(.startBrush[2], .endBrush[2])
+		
+		if (horizontal) {
+			left = min(.startBrush[2], .endBrush[2])
+			right = max(.startBrush[2], .endBrush[2])
+			top = max(.startBrush[1], .endBrush[1])
+			bottom = min(.startBrush[1], .endBrush[1])
+		}
+		
+		rows <<- (bars_info$data$left <= right) & (bars_info$data$right >= left) &
+			(bars_info$data$bottom <= top) & (bars_info$data$top >= bottom)  
+
+		bars_info$data$.brushed <<- rows
+
+		print(head(subset(bars_info$data, .brushed == TRUE)))
+		cat("count of brushed sections: ", sum(bars_info$data$.brushed), " - ", rows, "\n")
+		cat("count of left(<=", right,"): ", sum(bars_info$data$left <= right), " - ", 
+			# paste(rownames(bars_info$data[bars_info$data$left <= right,]), sep = ", "), 
+			"\n")
+		cat("count of right(>= ", left,"): ", sum(bars_info$data$right >= left), " - ", 
+			# paste(rownames(bars_info$data[bars_info$data$right >= left,]), sep = ", "), 
+			"\n")
+		cat("count of bottom(<= ", top,"): ", sum(bars_info$data$bottom <= top), " - ", 
+			# paste(rownames(bars_info$data[bars_info$data$bottom <= top,]), sep = ", "), 
+			"\n")
+		cat("count of top(>= ", bottom,"): ", sum(bars_info$data$top >= bottom), " - ", 
+			# paste(rownames(bars_info$data[bars_info$data$top >= bottom,]), sep = ", "), 
+			"\n")
+		
+		cat("\nsetHiliting - done\n")
+	}
+
+	# setSelected <- function() {
+	# 	section <- subset(section, .brushed == TRUE, drop = FALSE)
+	# 	
+	# 	if (nrow(hdata) > 0) {
+	# 		hdata$ID <- 1:nrow(section)
+	# 		res.melt <- melt(hdata,id.var="ID")
+	# 		res.cond <- adply(res.melt, 1, function(x) {
+	# 			if (is.na(x$value)) cstr <- paste("is.na(",x$variable,")", sep="")
+	# 			else cstr <- paste("(",x$variable,"=='",x$value,"')",sep="")
+	# 			return(cond=cstr)
+	# 		})
+	# 		
+	# 		res.cond <- res.cond[,-3]
+	# 		names(res.cond)[3] <- "value"
+	# 		cast.res <- cast(res.cond, ID~., function(x) return(paste(x, collapse=" & ")))
+	# 
+	# 		cond1 <- paste("(",cast.res[,2],")", sep="",collapse=" | ")
+	# 		idx <- with(data.frame(odata), which(eval(parse(text=cond1))))
+	# 
+	# 		.brushed <- rep(FALSE, nrow(odata))
+	# 		if (length(idx)) .brushed[idx] <- TRUE
+	# 
+	# 		odata$.brushed <- .brushed
+	# 	} else {
+	# 		odata$.brushed <- FALSE
+	# 	}
+	# 	#   idx <- with(data.frame(odata), which(eval(parse(text=cond1))))
+	# 	#   return(idx)
+	# }
+
+
+	#######################################################
+	# Hover
 	.bar_queryPos <- NULL
+	.bar_hover_section <- list(top = -1, bottom = 1, right = -1, left = 1)
 	bar_hover_draw <- function(item, painter, exposed, ...) {
 		# Don't draw when brushing
 		# if (.brush) return()
@@ -296,28 +314,41 @@ qhist <- function(
 			y <- .bar_queryPos[2]			
 		}
 		
-		section <- subset(bars_info$data, (y <= top) & (y >= bottom) & (x <= right) & (x >=left))
-		print(head(section))
+			section <- subset(bars_info$data, (y <= top) & (y >= bottom) & (x <= right) & (x >=left))
+			# print(head(section))
 		
-		# Nothing under mouse
-		if (nrow(section) == 0) return()
+			# Nothing under mouse
+			if (nrow(section) == 0) return()
 		
-		# Highlight the rect
-		qdrawRect(painter,
-			xleft = c(section$bottom), #left
-			ybottom = c(section$left), # bottom 
-			xright = c(section$top), # right
-			ytop = c(section$right), # top
-			stroke = c("orange"),
-			fill = c(NA)# fill
-		)
+			# Highlight the rect
+			if (horizontal) {
+				qdrawRect(painter,
+					xleft = c(section$bottom), #left
+					ybottom = c(section$right), # bottom 
+					xright = c(section$top), # right
+					ytop = c(section$left), # top
+					stroke = c("orange"),
+					fill = c(NA)# fill
+				)
+			} else {
+				qdrawRect(painter,
+					xleft = c(section$left), #left
+					ybottom = c(section$bottom), # bottom 
+					xright = c(section$right), # right
+					ytop = c(section$top), # top
+					stroke = c("orange"),
+					fill = c(NA)# fill
+				)
+			}
 		
-		# Work out label text
-		infostring <- paste("\nlabel:", section[1,"label"], "group:", section[1,"group"],collapse="\n", sep=" ")
+			# Work out label text
+			infostring <- paste("\nlabel:", section[1,"label"], "group:", section[1,"group"],collapse="\n", sep=" ")
 		
-		qstrokeColor(painter) <- "white"
-		cat("\nDraw 'label: ", section[1,"label"],"\nx: ", .bar_queryPos[1], "  y: ", .bar_queryPos[2], "\n")
-		qdrawText(painter, infostring, .bar_queryPos[1], .bar_queryPos[2], valign="top", halign="left")
+			qstrokeColor(painter) <- "white"
+			cat("\nDraw 'label: ", section[1,"label"],"\nx: ", .bar_queryPos[1], "  y: ", .bar_queryPos[2], "\n")
+			qdrawText(painter, infostring, .bar_queryPos[1], .bar_queryPos[2], valign="top", halign="left")
+			
+			.bar_hover_section <<- list(top = section$top, bottom = section$bottom, left = section$left, right = section$right)
 	}
 	
 	bar_hover <- function(item, event, ...) {
@@ -327,9 +358,22 @@ qhist <- function(
 		# qupdate(querylayer)
 		
 		cat("\nBar Hover\n")
-		print(as.numeric(event$pos()))
-		qupdate(hoverlayer)
+		
+		if (horizontal) {
+			x <- .bar_queryPos[2]
+			y <- .bar_queryPos[1]
+		} else {
+			x <- .bar_queryPos[1]
+			y <- .bar_queryPos[2]			
+		}
+		cat("x: ", x, "\ty: ", y, "\n")
+		cat("top: ", .bar_hover_section$top, "\tbottom: ", .bar_hover_section$bottom, "\tleft: ", .bar_hover_section$left, "\tright: ", .bar_hover_section$right, "\n")
+		
+		if ( !((y <= .bar_hover_section$top) & (y >= .bar_hover_section$bottom) & (x <= .bar_hover_section$right) & (x >= .bar_hover_section$left))) {
+			qupdate(hoverlayer)
+		}
 	}
+	
 	bar_leave <- function(item, event, ...) {
 		# if (.brush) return() 
 		# 
@@ -340,6 +384,9 @@ qhist <- function(
 		qupdate(hoverlayer)
 	}
 
+
+	#######################################################
+	# Layout
 	windowRanges <- make_window_ranges(ranges, xlab, ylab)
 	lims <- qrect(windowRanges[c(1,2)], windowRanges[c(3,4)])
 	
@@ -355,11 +402,11 @@ qhist <- function(
   hoverlayer = qlayer(scene, bar_hover_draw, limits = lims, clip = FALSE,
     hoverMoveFun = bar_hover, hoverLeaveFun = bar_leave)
 
-	# brushing_layer = qlayer(scene, brushing_draw, 
-	# 	# mousePressFun = brushing_mouse_press, mouseMoveFun = brushing_mouse_move,  
-	# 	# mouseReleaseFun = brushing_mouse_release, 
-	# 	limits = lims, clip = FALSE
-	# )
+	brushing_layer = qlayer(scene, brushing_draw, 
+		mousePressFun = brushing_mouse_press, mouseMoveFun = brushing_mouse_move,  
+		mouseReleaseFun = brushing_mouse_release, 
+		limits = lims, clip = FALSE
+	)
 
 	# querylayer = qlayer(scene, query_draw, limits = lims, clip = FALSE,
 	# 	# hoverMoveFun = query_hover, hoverLeaveFun = query_hover_leave

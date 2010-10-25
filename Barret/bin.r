@@ -170,6 +170,7 @@ continuous_to_bars <- function(data = NULL, splitBy = NULL, position = "none", c
   data_pos$fill = f_and_s$fill
   data_pos$stroke = f_and_s$stroke
   data_pos$color = NULL
+	data_pos$.brushed = FALSE
 
   list(
     data = data_pos,
