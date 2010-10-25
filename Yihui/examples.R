@@ -43,6 +43,12 @@ qparallel(qiris, boxplot = TRUE)
 qparallel(qiris, scale = "I", boxplot = TRUE)
 qparallel(qiris, boxplot = TRUE, horizontal = FALSE)
 
+## with points rather than whole lines
+qparallel(qiris, glyph = 'tick')
+qparallel(qiris, glyph = 'circle')
+qparallel(qiris, glyph = 'square')
+qparallel(qiris, glyph = 'triangle')
+
 ## set color and print verbose timing
 qiris$.color = rgb(1, 0, 0, 0.5)
 qparallel(qiris, verbose = TRUE)
@@ -69,7 +75,7 @@ qparallel(qiris, scale = 'I', center = mean)
 qparallel(qiris, center = median, boxplot = TRUE)
 
 ## labeling
-set_brush_attr(qiris, '.label', TRUE)
+set_brush_attr(qiris, '.label.show', TRUE)
 ## we can also change the row names and the labels will change accordingly
 rownames(qiris) = paste(abbreviate(iris$Species), 1:50, sep = '')
 
@@ -80,7 +86,7 @@ qparallel(qmtcars, center = median)
 ## test speed
 test.mat1 = qmutaframe(matrix(rnorm(1000 * 10), ncol = 10),
     .color = rgb(1, 0, 0, 0.2))
-qparallel(test.mat, mar = c(0.2, 0.1, 0.1, 0.1))
+qparallel(test.mat1, mar = c(0.2, 0.1, 0.1, 0.1))
 
 test.mat2 = qmutaframe(matrix(rnorm(1000 * 15), ncol = 15),
     .color = rgb(1, 0, 0, 0.2))
@@ -91,21 +97,30 @@ test.mat3 = qmutaframe(matrix(rnorm(5000 * 10), ncol = 10),
      .color = rgb(1, 0, 0, 0.05))
 qparallel(test.mat3, verbose = TRUE)
 
-## 1 million segments to torture Qt!!
-qparallel(qmutaframe(matrix(rbeta(1e+05 * 11, 5, 30), ncol = 11),
-                     .color = rgb(1, 0, 0, 0.05)), verbose = TRUE)
+## speed tests
+## on my laptop, 10000x10 takes 5 secs to build the brushing cache
+## identifying is generally very fast once the cache was built
+qhuge1 = qmutaframe(matrix(rbeta(1e+04 * 10, 5, 30), ncol = 10))
+qparallel(qhuge1, verbose = TRUE)
+## 30000x10 takes 45 seconds
+qhuge2 = qmutaframe(matrix(rbeta(3e+04 * 10, 5, 30), ncol = 10))
+qparallel(qhuge2, verbose = TRUE)
+## 1 million points to torture Qt!!
+qhuge3 = qmutaframe(matrix(rbeta(1e+05 * 10, 5, 30), ncol = 10))
+qparallel(qhuge3, verbose = TRUE)
 
-# linking two parcoords plots: split the data into 2 parts
+## linking two parcoords plots: split the data into 2 parts
 testdata = qmutaframe(as.data.frame(matrix(rnorm(2000 * 10), ncol = 10)))
-qparallel(testdata, vars = sprintf("V%d", 1:5))
-qparallel(testdata, vars = sprintf("V%d", 6:10))
+qparallel(testdata, vars = sprintf("V%d", 1:6))
+qparallel(testdata, vars = sprintf("V%d", 4:10))
 
 
-## examples below need to be fixed
+## for large data, glyphs (short ticks) are automatically used instead of segments
 
 ## residential data: 18221x8
 if (!require("YaleToolkit")) install.packages("YaleToolkit")
 library(YaleToolkit)
+data(NewHavenResidential)
 qnhr = qmutaframe(NewHavenResidential, .color = rgb(1, 0, 0, 0.1))
 qparallel(qnhr)
 
@@ -182,4 +197,3 @@ if (FALSE) {
     })
 }
 
-# git pull cranvas master
