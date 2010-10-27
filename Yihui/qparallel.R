@@ -18,6 +18,10 @@ source("../utilities/data.R")
 ##' @param center the function to calculate where to center all the
 ##' axes (e.g. center at the medians), or a numeric value, or
 ##' \code{NULL} (do not center)
+##' @param order if \code{TRUE}, reorder the variables by classical
+##' multidimensional scaling so that similar variables will be
+##' arranged nearer; besides, categorical variables will be put to the
+##' last if \code{order} is \code{TRUE}
 ##' @param horizontal logical: arrange variables in horizontal or
 ##' vertical direction
 ##' @param glyph draw complete segments for all observations or other
@@ -36,7 +40,8 @@ source("../utilities/data.R")
 ##' @return NULL
 ##' @author Yihui Xie <\url{http://yihui.name}>
 qparallel = function(data, vars, scale = "range", na.action = na.impute,
-    center = NULL, horizontal = TRUE, glyph = c('auto', 'line', 'tick', 'circle', 'square', 'triangle'),
+    center = NULL, order = FALSE, horizontal = TRUE,
+    glyph = c('auto', 'line', 'tick', 'circle', 'square', 'triangle'),
     boxplot = FALSE, boxwex, jitter = NULL, amount = NULL,
     mar = c(0.04, 0.04, 0.04, 0.04), main, verbose = getOption("verbose")) {
 
@@ -69,6 +74,7 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
     if (missing(vars)) vars = grep('^[^.]', names(data), value = TRUE)
     if (class(vars) == "formula")
         vars = attr(terms(vars, data = as.data.frame(data)), "term.labels")
+    if (is.numeric(vars)) vars = names(data)[as.integer(vars)]
 
     if (length(vars) <= 1L)
         stop("parallel cooridinates plots need at least 2 variables!")
@@ -103,11 +109,20 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
             plot_data = plot_data[, !const.col]
             warning("removed constant column(s) ",
                     paste(vars[const.col], collapse = ","))
-            vars = vars[!const.col]
+            vars <<- vars[!const.col]
         }
 
         ## which columns are numeric? we don't want boxplots for non-numeric vars
         numcol <<- sapply(plot_data, class) == "numeric"
+
+        ## ordering variables by MDS
+        if (order && any(numcol)) {
+            vars <<- c(vars[numcol][order(cmdscale(dist(t(plot_data[, numcol, drop = FALSE])),
+                k = 1))], vars[!numcol])
+            plot_data = plot_data[, vars]
+            numcol <<- sapply(plot_data, class) == "numeric"
+        }
+        
         plot_data = sapply(plot_data, as.numeric)
         ## must make them global; I wish there could be 'mutavectors'
         p <<- ncol(plot_data)
@@ -119,7 +134,8 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         ## jittering
         if (!is.null(jitter)) {
             if (class(jitter) == "formula")
-                jitter = attr(terms(vars, data = plot_data), "term.labels")
+                jitter = attr(terms(jitter, data = plot_data), "term.labels")
+            if (is.numeric(jitter)) jitter = names(data)[as.integer(jitter)]
             if (is.character(jitter)) {
                 plot_data[, jitter] = apply(plot_data[, jitter, drop = FALSE],
                          2, base::jitter, amount = amount)

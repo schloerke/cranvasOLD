@@ -49,6 +49,9 @@ qparallel(qiris, glyph = 'circle')
 qparallel(qiris, glyph = 'square')
 qparallel(qiris, glyph = 'triangle')
 
+## order variables by MDS
+qparallel(qiris, order = TRUE)
+
 ## set color and print verbose timing
 qiris$.color = rgb(1, 0, 0, 0.5)
 qparallel(qiris, verbose = TRUE)
