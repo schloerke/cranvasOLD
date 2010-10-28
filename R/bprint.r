@@ -6,8 +6,8 @@
 #' @examples
 #'  if(if_bprint()) cat("Hello World")
 if_bprint <- function() {
-  TRUE
-#  FALSE
+  # TRUE
+  FALSE
 }
 
 #' Print Item Information

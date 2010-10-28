@@ -1,15 +1,12 @@
-library(ggplot2)
+require(productplots)
+require(qtpaint)
+require(reshape)
+require(plyr)
+require(plumbr)
 
 FILE <- (function() {
   attr(body(sys.function()), "srcfile")
 })()$filename
 PATH <- dirname(FILE)
 
-
-#lapply(dir(file.path(PATH, "./"), full.name=T), source)
-
-#lapply(dir(file.path(PATH, "Barret"), pattern = "\\.(R|r)$", full.name=T), source)
-#lapply(dir(file.path(PATH, "Marie"), full.name=T), source)
-lapply(dir(file.path(PATH, "Yihui"), pattern = "\\.(R|r)$", full.name=T), source)
-
-
+lapply(dir(file.path(PATH, "R"), pattern = "\\.(R|r)$", full.name=T), source)
