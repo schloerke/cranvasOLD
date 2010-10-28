@@ -1,8 +1,9 @@
-source("api_0.1-2.R")
+#source("../cranvas/load.r")
+#source("api_0.1-2.R")
 source("helper.r")
 source("axes.r")
 source("shared.r")
-source("../utilities/interaction.R")
+#source("../utilities/interaction.R")
 rm(hbar)
 rm(vbar)
 
@@ -11,8 +12,8 @@ qscatter <- function (data, na.rm = F, form, main = NULL, labeled = TRUE) {
 #############################
 # internal helper functions #
 #############################
-  
-
+  .radius <- 2	  
+  .alpha <- 1
 
 ############################# end internal helper functions
 
@@ -140,13 +141,23 @@ coords <- function(item, painter, exposed) {
 scatter.all <- function(item, painter, exposed) {
   x <- subset(df, select = .levelX)[,1]
   y <- subset(df, select = .levelY)[,1]
-  fill <- "black"
-  stroke <- "black"
-  radius <- 2
+  if (has_attr(".color")) {
+  	fill <- odata$.color
+  	stroke <- odata$.color
+  } else {
+    fill <- "black"
+    stroke <- "black"
+  }
+  radius <- .radius
+  alpha <- .alpha 	# value in (0,1)
+# how do I change alpha blending? 
   
   qdrawCircle(painter, x = x, y = y, r = radius, fill = fill, stroke = stroke) 
     
 }
+
+
+
 
 brush.draw <- function(item, painter, exposed) {
   df <- as.data.frame(odata)
@@ -159,12 +170,49 @@ brush.draw <- function(item, painter, exposed) {
     y <- subset(hdata, select = .levelY)[,1]
     fill <- .brush.attr[,".brushed.color"]   
     stroke <- .brush.attr[,".brushed.color"]   
-    radius <- 2
+    radius <- .radius
     
     qdrawCircle( painter, x = x, y = y, r = radius, fill = fill, stroke = stroke)
   }
 }
-  
+
+  keyPressFun <- function(item, event, ...) {
+    # print(event$key())
+    key <- event$key()
+
+    if (key == Qt$Qt$Key_Up) {        # arrow up
+	  .radius <<- .radius+1
+
+#  	  for (i in length(datalayer)) qupdate(datalayer[[i]])
+	  qupdate(datalayer[[1]])
+    } else 
+    if (key == Qt$Qt$Key_Down) {        # arrow down
+      if (.radius > 0) {
+        .radius <<- .radius - 1
+
+#  	  for (i in length(datalayer)) qupdate(datalayer[[i]])
+	  qupdate(datalayer[[1]])
+      }
+    } else 
+    if (key == Qt$Qt$Key_Right) {        # arrow right
+	# increase alpha blending
+      if (.alpha < 1) {
+        .alpha <<- .alpha+0.01
+
+#  	  for (i in length(datalayer)) qupdate(datalayer[[i]])
+	  qupdate(datalayer[[1]])
+      }
+    } else 
+    if (key == Qt$Qt$Key_Left) {        # arrow left
+	# decrease alpha blending
+      if (.alpha > 0) {
+        .alpha <<- .alpha-0.01
+
+#  	  for (i in length(datalayer)) qupdate(datalayer[[i]])
+	  qupdate(datalayer[[1]])
+      }
+	}
+  }  
 ########## end layers
 
 ###################
@@ -174,7 +222,7 @@ brush.draw <- function(item, painter, exposed) {
   plot1 <- new_plot()
   assign("test", plot1, pos = 1)
   bglayer <- add_layer(parent = plot1, mark = coords, userlimits = lims)
-  datalayer <- add_layer(parent = plot1, mark = scatter.all, userlimits = lims)
+  datalayer <- add_layer(parent = plot1, mark = scatter.all, keyPressFun = keyPressFun, userlimits = lims)
   brushlayer <- add_layer(parent = plot1, mark = brush.draw, userlimits = lims)
   view <- qplotView(scene = plot1$scene)
   view$setWindowTitle(extract.formula(form))
