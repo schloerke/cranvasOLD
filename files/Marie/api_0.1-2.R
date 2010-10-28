@@ -130,7 +130,7 @@ rect <- function(left = NULL,right=NULL,top=NULL, bottom = NULL, width=NULL, hei
       (!is.null(top) & !is.null(bottom) & !is.null(height))) {
     print("need 2 of 3 in *left,right,width* and *top,bottom,height*")
   }  
-  structure(list(left = left, bottom = bottom, right=right,top=top,height=height,width=width,parent=parent,fill = fill,stroke = stroke), class = c("cranvas", "rect"))
+  structure(list(left = left, bottom = bottom, right = right, top = top, height =height, width = width, parent = parent, fill = fill, stroke = stroke), class = c("cranvas", "rect"))
 }
 
 #Reference from protovis:
@@ -419,7 +419,7 @@ new_plot <- function(width = 600, height = 400, xrange = c(0, 1), yrange = c(0, 
   limits <- qrect(xrange, yrange)
   scene <- qscene()
   root <- qlayer(scene)
-  root$setGeometry(qrect(0,0,width,height))
+  root$setGeometry(qrect(0, 0, width, height))
 
 #  root$setMaximumHeight(height)
 #  root$setMaximumWidth(width)
