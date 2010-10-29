@@ -156,7 +156,6 @@ scatter.all <- function(item, painter, exposed) {
     stroke <- "black"
   }
   radius <- .radius
-  alpha <- .alpha 	# value in (0,1)
   qdrawCircle(painter, x = x, y = y, r = radius, fill = fill, stroke = stroke)  
 }
 
@@ -186,23 +185,30 @@ keyPressFun <- function(item, event, ...) {
     key <- event$key()
 
     if (key == Qt$Qt$Key_Up) {        # arrow up
-	      .radius <<- .radius+1
+		.radius <<- .radius+1
         qupdate(datalayer$layer)
+		qupdate(brushlayer$layer)
     } else if (key == Qt$Qt$Key_Down & .radius > 0) {        # arrow down
         .radius <<- .radius - 1
         qupdate(datalayer$layer)
+		qupdate(datalayer$layer)
     } else if (key == Qt$Qt$Key_Right & .alpha < 1) {        # arrow right
 	# increase alpha blending
         .alpha <<- .alpha + 0.01
         datalayer$layer$setOpacity(.alpha)
-    	  qupdate(datalayer$layer)
+		brushlayer$layer$setOpacity(.alpha)
+        qupdate(datalayer$layer)
+		qupdate(datalayer$layer)
+
     } else if (key == Qt$Qt$Key_Left & .alpha > 0) {        # arrow left
 	# decrease alpha blending
         .alpha <<- .alpha - 0.01
         datalayer$layer$setOpacity(.alpha)
+		brushlayer$layer$setOpacity(.alpha)
         qupdate(datalayer$layer)
     }
-    print (.alpha)
+	
+		
   }  
 ########## end event handlers
 
