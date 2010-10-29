@@ -18,8 +18,6 @@ qscatter <- function (data, form, main = NULL, labeled = TRUE) {
 #############################
 # internal helper functions #
 #############################
-  .radius <- 2	  
-  .alpha <- 1
 
 ############################# end internal helper functions
 
@@ -102,7 +100,10 @@ qscatter <- function (data, form, main = NULL, labeled = TRUE) {
   sy <- get_axisPosX(data = df, colName = .levelX)
   sx <- get_axisPosY(data = df, colName = .levelY)
 
- 
+  ## parameters for datalayer
+  .radius <- 2	  
+  .alpha <- 1
+
   ## parameters event handling
   .startBrush <- NULL
   .endBrush <- NULL
@@ -156,10 +157,7 @@ scatter.all <- function(item, painter, exposed) {
   }
   radius <- .radius
   alpha <- .alpha 	# value in (0,1)
-# how do I change alpha blending? 
-  
-  qdrawCircle(painter, x = x, y = y, r = radius, fill = fill, stroke = stroke) 
-    
+  qdrawCircle(painter, x = x, y = y, r = radius, fill = fill, stroke = stroke)  
 }
 
 brush.draw <- function(item, painter, exposed) {
@@ -189,19 +187,22 @@ keyPressFun <- function(item, event, ...) {
 
     if (key == Qt$Qt$Key_Up) {        # arrow up
 	      .radius <<- .radius+1
-        qupdate(datalayer[[1]])
+        qupdate(datalayer$layer)
     } else if (key == Qt$Qt$Key_Down & .radius > 0) {        # arrow down
         .radius <<- .radius - 1
-        qupdate(datalayer[[1]])
+        qupdate(datalayer$layer)
     } else if (key == Qt$Qt$Key_Right & .alpha < 1) {        # arrow right
 	# increase alpha blending
-        .alpha <<- .alpha+0.01
-    	  qupdate(datalayer[[1]])
+        .alpha <<- .alpha + 0.01
+        datalayer$layer$setOpacity(.alpha)
+    	  qupdate(datalayer$layer)
     } else if (key == Qt$Qt$Key_Left & .alpha > 0) {        # arrow left
 	# decrease alpha blending
-        .alpha <<- .alpha-0.01
-        qupdate(datalayer[[1]])
+        .alpha <<- .alpha - 0.01
+        datalayer$layer$setOpacity(.alpha)
+        qupdate(datalayer$layer)
     }
+    print (.alpha)
   }  
 ########## end event handlers
 
@@ -210,14 +211,13 @@ keyPressFun <- function(item, event, ...) {
 ###################
 
   plot1 <- new_plot()
-  assign("test", plot1, pos = 1)
   bglayer <- add_layer(parent = plot1, mark = coords, userlimits = lims)
   datalayer <- add_layer(parent = plot1, mark = scatter.all, keyPressFun = keyPressFun, userlimits = lims)
   brushlayer <- add_layer(parent = plot1, mark = brush.draw, userlimits = lims)
   view <- qplotView(scene = plot1$scene)
   view$setWindowTitle(extract.formula(form))
   view$setMaximumSize(plot1$size)
-  
+
 ######################
 # add some listeners #
 ######################
