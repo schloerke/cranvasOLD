@@ -1,5 +1,3 @@
-source("bin.r")
-
 #' Create a dot plot
 #' Create a dot plot from 1-D numeric data
 #'

@@ -1,5 +1,3 @@
-source("bin.r")
-
 has_column <- function(data, col) {
 	col %in% names(data)
 }
@@ -12,7 +10,7 @@ muta_coerce <- function(data) {
 	
 	if (!is_mutaframe(data)) {
 		message("Making data into a 'Mutaframe'.")
-		mutaframe(data)
+		qmutaframe(data)
 	} else {
 		data
 	}
@@ -35,38 +33,41 @@ column_coerce <- function(data, column, defaultVal) {
 #' @param ... arguments supplied to hist() or the hist layer
 #' @author Barret Schloerke \email{bigbear@@iastate.edu}
 #' @keywords hplot
-#' @examples
-#'	# toture
-#'		qhist(rnorm(1000000), floor(rnorm(1000000)*3))
+#' @examples # toture
+#'		rows <- 1000000
+#'		bigData <- qmutaframe(data.frame(x = rnorm(rows), y = floor(rnorm(rows) * 7)))
+#'		qhist(bigData)
 #'
 #'		# each column is split evenly
-#'		qhist(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - stack") 
-#'		qhist(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - stack", horizontal = FALSE) 
+#'		qhist(bigData, splitByCol = "y", title = "Toture - stack") 
+#'		qhist(bigData, splitByCol = "y", title = "Toture - stack", horizontal = FALSE) 
 #'
 #'		# each column has similar height colors
-#'		qhist(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - dodge", position = "dodge") 
+#'		qhist(bigData, splitByCol = "y", title = "Toture - dodge", position = "dodge") 
 #'
 #'		# range from 0 to 1
-#'		qhist(rnorm(1000000), floor(runif(1000000)*15), title = "Toture - relative", position = "relative") 
+#'		qhist(bigData, splitByCol = "y", title = "Toture - relative", position = "relative") 
+#'
 #'
 #'  # color tests
 #'		# all color is defined
-#'		qhist(mtcars$disp, horizontal = TRUE, fill = "gold", stroke = "red4")
+#'		qhist(mtcars, "disp", horizontal = TRUE, fill = "gold", stroke = "red4")
 #'
 #'		# stacked items
-#'		qhist(mtcars$disp, mtcars$cyl, stroke = "black", position = "stack", title = "mtcars - stack")
+#'		qhist(mtcars, "disp", "cyl", horizontal = FALSE, stroke = "black", position = "stack", title = "mtcars - stack")
 #'
 #'		# raw value items
-#'		qhist(mtcars$disp, mtcars$cyl, stroke = "black", position = "identity")
+#'		qhist(mtcars, "disp", "cyl", horizontal = FALSE, stroke = "black", position = "identity", title = "mtcars - identity")
 #'
 #'		# dodged items
-#'		qhist(mtcars$disp, mtcars$cyl, stroke = "black", position = "dodge")
+#'		qhist(mtcars, "disp", "cyl", horizontal = FALSE, stroke = "black", position = "dodge", title = "mtcars - dodge")
 #'
 #'		# range from 0 to 1
-#'		qhist(mtcars$disp, mtcars$cyl, stroke = "black", position = "relative")
+#'		qhist(mtcars, "disp", "cyl", horizontal = FALSE, stroke = "black", position = "relative", title = "mtcars - relative")
 qhist <- function(
 	data, 
-	splitBy = rep(1, length(data)), 
+	xCol = 1,
+	splitByCol = -1, 
 	horizontal = TRUE,
 	position = "none",
 	color = NULL,
@@ -78,13 +79,17 @@ qhist <- function(
 	...
 ) {
 	
+	if (splitByCol == -1) {
+		splitByCol <- "qbar_split_column"
+		data[[splitByCol]] <- 1
+	}
+	
 	mf_data <- data
 	mf_data <- muta_coerce(mf_data)
-	mf_data <- column_coerce(mf_data, ".brushed", FALSE)
+	# mf_data <- column_coerce(mf_data, ".brushed", FALSE)
 	n_data <- data.frame(mf_data)
 	
-	
-	bars_info <- continuous_to_bars(n_data[,1], splitBy, position, color, fill, stroke, ...)
+	bars_info <- continuous_to_bars(n_data[,xCol], n_data[, splitByCol], position, color, fill, stroke, ...)
 	# bars <- bars_info$data
 	# color <- bars$color  
 	
@@ -222,7 +227,7 @@ qhist <- function(
 		.startBrush <<- NULL
 		.endBrush <<- NULL
 		
-		# setSelected()
+		setSelected()
 		cat("\nbrushing mouse release - done\n")
 	}
 
@@ -264,35 +269,49 @@ qhist <- function(
 		cat("\nsetHiliting - done\n")
 	}
 
-	# setSelected <- function() {
-	# 	section <- subset(section, .brushed == TRUE, drop = FALSE)
-	# 	
-	# 	if (nrow(hdata) > 0) {
-	# 		hdata$ID <- 1:nrow(section)
-	# 		res.melt <- melt(hdata,id.var="ID")
-	# 		res.cond <- adply(res.melt, 1, function(x) {
-	# 			if (is.na(x$value)) cstr <- paste("is.na(",x$variable,")", sep="")
-	# 			else cstr <- paste("(",x$variable,"=='",x$value,"')",sep="")
-	# 			return(cond=cstr)
-	# 		})
-	# 		
-	# 		res.cond <- res.cond[,-3]
-	# 		names(res.cond)[3] <- "value"
-	# 		cast.res <- cast(res.cond, ID~., function(x) return(paste(x, collapse=" & ")))
-	# 
-	# 		cond1 <- paste("(",cast.res[,2],")", sep="",collapse=" | ")
-	# 		idx <- with(data.frame(odata), which(eval(parse(text=cond1))))
-	# 
-	# 		.brushed <- rep(FALSE, nrow(odata))
-	# 		if (length(idx)) .brushed[idx] <- TRUE
-	# 
-	# 		odata$.brushed <- .brushed
-	# 	} else {
-	# 		odata$.brushed <- FALSE
-	# 	}
-	# 	#   idx <- with(data.frame(odata), which(eval(parse(text=cond1))))
-	# 	#   return(idx)
-	# }
+	setSelected <- function() {
+		section <- subset(bars_info$data, .brushed == TRUE, drop = FALSE)
+		
+		if (nrow(section) > 0) {
+			
+			pos <- bars_info$label_names == unique(section$label)
+			starts <- bars_info$breaks[pos]
+			ends <- starts[-1]
+			ends[length(ends) + 1] <- bars_info$breaks[max(pos) + 1]
+			
+			for (i in seq_along(starts)) {
+				rows <- mf_data[[xCol]] <= ends[i] & mf_data[[xCol]] > starts[i]
+				
+				mf_data$.brushed <- TRUE
+				
+			}
+			
+			# hdata$ID <- 1:nrow(section)
+			# res.melt <- melt(hdata,id.var="ID")
+			# res.cond <- adply(res.melt, 1, function(x) {
+			# 	if (is.na(x$value)) cstr <- paste("is.na(",x$variable,")", sep="")
+			# 	else cstr <- paste("(",x$variable,"=='",x$value,"')",sep="")
+			# 	return(cond=cstr)
+			# })
+			# 
+			# res.cond <- res.cond[,-3]
+			# names(res.cond)[3] <- "value"
+			# cast.res <- cast(res.cond, ID~., function(x) return(paste(x, collapse=" & ")))
+			# 	
+			# cond1 <- paste("(",cast.res[,2],")", sep="",collapse=" | ")
+			# idx <- with(data.frame(odata), which(eval(parse(text=cond1))))
+			# 	
+			# .brushed <- rep(FALSE, nrow(odata))
+			# if (length(idx)) .brushed[idx] <- TRUE
+			# 	
+			# odata$.brushed <- .brushed
+		} else {
+			mf_data$.brushed <- FALSE
+		}
+
+		#   idx <- with(data.frame(odata), which(eval(parse(text=cond1))))
+		#   return(idx)
+	}
 
 
 	#######################################################
@@ -342,7 +361,10 @@ qhist <- function(
 			}
 		
 			# Work out label text
-			infostring <- paste("\nlabel:", section[1,"label"], "group:", section[1,"group"],collapse="\n", sep=" ")
+			infostring <- paste("\nlabel:", section[1,"label"], sep=" ")
+			if (splitByCol != "qbar_split_column") {
+				infostring <- paste(infostring, "group:", section[1,"group"], sep=" ")
+			}
 		
 			qstrokeColor(painter) <- "white"
 			cat("\nDraw 'label: ", section[1,"label"],"\nx: ", .bar_queryPos[1], "  y: ", .bar_queryPos[2], "\n")

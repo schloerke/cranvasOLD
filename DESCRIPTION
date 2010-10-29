@@ -1,0 +1,12 @@
+Package: cranvas
+Type: Package
+Title: Interactive graphics using Qt
+Version: 0.1
+Date: 2010-10-25
+Author: Hadley Wickham <hadley@rice.edu>, Michael Lawrence <lawrence.michael@gene.com>, Heike Hofmann <hofmann@iastate.edu>, Di Cook <dicook@iastate.edu>, Barret Schloerke <bigbear@iastate.edu>, Marie Vendettuoli <mariev@iastate.edu>, Tengfei Yin <tengfei@iastate.edu>, Yihui Xie <xie@iastate.edu>
+Maintainer: Yihui Xie <xie@iastate.edu>
+Description: Interactive graphics using the Qt.  Allows the user to mouse hover, brush, and paint while all graphics of the same data base update accordingly.
+License: ??? BSD? MIT? 
+LazyLoad: yes
+URL: http://www.github.com/bigbear/cranvas
+Depends: qtpaint, reshape, plyr, plumbr, productplots

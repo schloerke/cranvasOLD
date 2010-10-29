@@ -1,18 +1,23 @@
-source("api_0.1-2.R")
+#source("../cranvas/load.r")
+#source("api_0.1-2.R")
 source("helper.r")
 source("axes.r")
 source("shared.r")
 source("../utilities/interaction.R")
-rm(hbar)
-rm(vbar)
+#rm(hbar)
+#rm(vbar)
 
- 
-qscatter <- function (data, na.rm = F, form, main = NULL, labeled = TRUE) {
+#' Draw a scatterplot
+#' 
+#' @param data data.frame source
+#' @param form formula in format y ~x which designates the axis
+#' @param main main title for the plot
+#' @param labeled whether axes should be labeled
+
+qscatter <- function (data, form, main = NULL, labeled = TRUE) {
 #############################
 # internal helper functions #
 #############################
-  
-
 
 ############################# end internal helper functions
 
@@ -95,7 +100,10 @@ qscatter <- function (data, na.rm = F, form, main = NULL, labeled = TRUE) {
   sy <- get_axisPosX(data = df, colName = .levelX)
   sx <- get_axisPosY(data = df, colName = .levelY)
 
- 
+  ## parameters for datalayer
+  .radius <- 2	  
+  .alpha <- 1
+
   ## parameters event handling
   .startBrush <- NULL
   .endBrush <- NULL
@@ -140,12 +148,15 @@ coords <- function(item, painter, exposed) {
 scatter.all <- function(item, painter, exposed) {
   x <- subset(df, select = .levelX)[,1]
   y <- subset(df, select = .levelY)[,1]
-  fill <- "black"
-  stroke <- "black"
-  radius <- 2
-  
-  qdrawCircle(painter, x = x, y = y, r = radius, fill = fill, stroke = stroke) 
-    
+  if (has_attr(".color")) {
+  	fill <- odata$.color
+  	stroke <- odata$.color
+  } else {
+    fill <- "black"
+    stroke <- "black"
+  }
+  radius <- .radius
+  qdrawCircle(painter, x = x, y = y, r = radius, fill = fill, stroke = stroke)  
 }
 
 brush.draw <- function(item, painter, exposed) {
@@ -159,27 +170,60 @@ brush.draw <- function(item, painter, exposed) {
     y <- subset(hdata, select = .levelY)[,1]
     fill <- .brush.attr[,".brushed.color"]   
     stroke <- .brush.attr[,".brushed.color"]   
-    radius <- 2
+    radius <- .radius
     
     qdrawCircle( painter, x = x, y = y, r = radius, fill = fill, stroke = stroke)
   }
 }
-  
 ########## end layers
+
+####################
+## event handlers ##
+####################
+
+keyPressFun <- function(item, event, ...) {
+    key <- event$key()
+
+    if (key == Qt$Qt$Key_Up) {        # arrow up
+		.radius <<- .radius+1
+        qupdate(datalayer$layer)
+		qupdate(brushlayer$layer)
+    } else if (key == Qt$Qt$Key_Down & .radius > 0) {        # arrow down
+        .radius <<- .radius - 1
+        qupdate(datalayer$layer)
+		qupdate(datalayer$layer)
+    } else if (key == Qt$Qt$Key_Right & .alpha < 1) {        # arrow right
+	# increase alpha blending
+        .alpha <<- .alpha + 0.01
+        datalayer$layer$setOpacity(.alpha)
+		brushlayer$layer$setOpacity(.alpha)
+        qupdate(datalayer$layer)
+		qupdate(datalayer$layer)
+
+    } else if (key == Qt$Qt$Key_Left & .alpha > 0) {        # arrow left
+	# decrease alpha blending
+        .alpha <<- .alpha - 0.01
+        datalayer$layer$setOpacity(.alpha)
+		brushlayer$layer$setOpacity(.alpha)
+        qupdate(datalayer$layer)
+    }
+	
+		
+  }  
+########## end event handlers
 
 ###################
 # draw the canvas #
 ###################
 
   plot1 <- new_plot()
-  assign("test", plot1, pos = 1)
   bglayer <- add_layer(parent = plot1, mark = coords, userlimits = lims)
-  datalayer <- add_layer(parent = plot1, mark = scatter.all, userlimits = lims)
+  datalayer <- add_layer(parent = plot1, mark = scatter.all, keyPressFun = keyPressFun, userlimits = lims)
   brushlayer <- add_layer(parent = plot1, mark = brush.draw, userlimits = lims)
   view <- qplotView(scene = plot1$scene)
   view$setWindowTitle(extract.formula(form))
-  view$setMaximumSize(plot1$size)
-  
+ # view$setMaximumSize(plot1$size)
+
 ######################
 # add some listeners #
 ######################
