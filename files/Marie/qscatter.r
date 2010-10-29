@@ -216,7 +216,7 @@ keyPressFun <- function(item, event, ...) {
   brushlayer <- add_layer(parent = plot1, mark = brush.draw, userlimits = lims)
   view <- qplotView(scene = plot1$scene)
   view$setWindowTitle(extract.formula(form))
-  view$setMaximumSize(plot1$size)
+ # view$setMaximumSize(plot1$size)
 
 ######################
 # add some listeners #
