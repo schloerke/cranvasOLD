@@ -7,7 +7,6 @@ library(qtpaint)
 library(plumbr)
 
 ## options(verbose = TRUE)
-source("qparallel.R")
 
 ## color palette
 library(RColorBrewer)

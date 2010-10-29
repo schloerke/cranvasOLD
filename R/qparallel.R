@@ -1,7 +1,3 @@
-source("../utilities/interaction.R")
-source("../utilities/optimization.R")
-source("../utilities/data.R")
-
 ##' Parallel Coordinates Plot
 ##' Create a parallel coordinates plot from a data frame or matrix, with each line representing a row
 ##'
