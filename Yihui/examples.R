@@ -51,6 +51,7 @@ qparallel(qiris, glyph = 'triangle')
 
 ## order variables by MDS
 qparallel(qiris, order = TRUE)
+qparallel(qiris, scale = 'I', order = TRUE)
 
 ## set color and print verbose timing
 qiris$.color = rgb(1, 0, 0, 0.5)
@@ -85,6 +86,7 @@ rownames(qiris) = paste(abbreviate(iris$Species), 1:50, sep = '')
 qmtcars = qmutaframe(mtcars)
 qparallel(qmtcars)
 qparallel(qmtcars, center = median)
+qparallel(qmtcars, order = TRUE)
 
 ## test speed
 test.mat1 = qmutaframe(matrix(rnorm(1000 * 10), ncol = 10),
@@ -117,6 +119,9 @@ testdata = qmutaframe(as.data.frame(matrix(rnorm(2000 * 10), ncol = 10)))
 qparallel(testdata, vars = sprintf("V%d", 1:6))
 qparallel(testdata, vars = sprintf("V%d", 4:10))
 
+library(ggplot2)
+qdiamonds = qmutaframe(diamonds, .color = rgb(1, 0, 0, .01))
+qparallel(qdiamonds, vars = 1:7, order = TRUE, glyph = 'line', jitter = ~ cut + color + clarity)
 
 ## for large data, glyphs (short ticks) are automatically used instead of segments
 
