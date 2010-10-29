@@ -3,12 +3,18 @@
 source("helper.r")
 source("axes.r")
 source("shared.r")
-#source("../utilities/interaction.R")
-rm(hbar)
-rm(vbar)
+source("../utilities/interaction.R")
+#rm(hbar)
+#rm(vbar)
 
- 
-qscatter <- function (data, na.rm = F, form, main = NULL, labeled = TRUE) {
+#' Draw a scatterplot
+#' 
+#' @param data data.frame source
+#' @param form formula in format y ~x which designates the axis
+#' @param main main title for the plot
+#' @param labeled whether axes should be labeled
+
+qscatter <- function (data, form, main = NULL, labeled = TRUE) {
 #############################
 # internal helper functions #
 #############################
@@ -156,9 +162,6 @@ scatter.all <- function(item, painter, exposed) {
     
 }
 
-
-
-
 brush.draw <- function(item, painter, exposed) {
   df <- as.data.frame(odata)
   if(!.brush) {
@@ -175,45 +178,32 @@ brush.draw <- function(item, painter, exposed) {
     qdrawCircle( painter, x = x, y = y, r = radius, fill = fill, stroke = stroke)
   }
 }
+########## end layers
 
-  keyPressFun <- function(item, event, ...) {
-    # print(event$key())
+####################
+## event handlers ##
+####################
+
+keyPressFun <- function(item, event, ...) {
     key <- event$key()
 
     if (key == Qt$Qt$Key_Up) {        # arrow up
-	  .radius <<- .radius+1
-
-#  	  for (i in length(datalayer)) qupdate(datalayer[[i]])
-	  qupdate(datalayer[[1]])
-    } else 
-    if (key == Qt$Qt$Key_Down) {        # arrow down
-      if (.radius > 0) {
+	      .radius <<- .radius+1
+        qupdate(datalayer[[1]])
+    } else if (key == Qt$Qt$Key_Down & .radius > 0) {        # arrow down
         .radius <<- .radius - 1
-
-#  	  for (i in length(datalayer)) qupdate(datalayer[[i]])
-	  qupdate(datalayer[[1]])
-      }
-    } else 
-    if (key == Qt$Qt$Key_Right) {        # arrow right
+        qupdate(datalayer[[1]])
+    } else if (key == Qt$Qt$Key_Right & .alpha < 1) {        # arrow right
 	# increase alpha blending
-      if (.alpha < 1) {
         .alpha <<- .alpha+0.01
-
-#  	  for (i in length(datalayer)) qupdate(datalayer[[i]])
-	  qupdate(datalayer[[1]])
-      }
-    } else 
-    if (key == Qt$Qt$Key_Left) {        # arrow left
+    	  qupdate(datalayer[[1]])
+    } else if (key == Qt$Qt$Key_Left & .alpha > 0) {        # arrow left
 	# decrease alpha blending
-      if (.alpha > 0) {
         .alpha <<- .alpha-0.01
-
-#  	  for (i in length(datalayer)) qupdate(datalayer[[i]])
-	  qupdate(datalayer[[1]])
-      }
-	}
+        qupdate(datalayer[[1]])
+    }
   }  
-########## end layers
+########## end event handlers
 
 ###################
 # draw the canvas #
