@@ -1,7 +1,3 @@
-#qtbase v 0.8-4
-#qtpaint v 0.7.9
-#svn 425
-library(qtpaint)
 
 #####################################################################
 ###In-progress Example###
