@@ -18,5 +18,5 @@ Description: Experiments with interactive graphics based on the pipeline
 License: ??? BSD? MIT? 
 LazyLoad: yes
 URL: http://www.github.com/bigbear/cranvas
-Imports: qtpaint, reshape, plyr, plumbr
+Imports: qtpaint, reshape, plyr, plumbr (>= 0.0-3)
 Suggests: productplots
