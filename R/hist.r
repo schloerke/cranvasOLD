@@ -2,20 +2,6 @@ has_column <- function(data, col) {
 	col %in% names(data)
 }
 
-is_mutaframe <- function(data) {
-	"mutaframe" %in% class(data)
-}
-
-muta_coerce <- function(data) {
-	
-	if (!is_mutaframe(data)) {
-		message("Making data into a 'Mutaframe'.")
-		qmutaframe(data)
-	} else {
-		data
-	}
-}
-
 column_coerce <- function(data, column, defaultVal) {
 	
 	if (!has_column(data, column)) {
@@ -85,7 +71,7 @@ qhist <- function(
 	}
 	
 	mf_data <- data
-	mf_data <- muta_coerce(mf_data)
+	mf_data <- as.mutaframe(mf_data)
 	# mf_data <- column_coerce(mf_data, ".brushed", FALSE)
 	n_data <- data.frame(mf_data)
 	
