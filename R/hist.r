@@ -2,20 +2,6 @@ has_column <- function(data, col) {
 	col %in% names(data)
 }
 
-is_mutaframe <- function(data) {
-	"mutaframe" %in% class(data)
-}
-
-muta_coerce <- function(data) {
-	
-	if (!is_mutaframe(data)) {
-		message("Making data into a 'Mutaframe'.")
-		qmutaframe(data)
-	} else {
-		data
-	}
-}
-
 column_coerce <- function(data, column, defaultVal) {
 	
 	if (!has_column(data, column)) {
@@ -33,8 +19,7 @@ column_coerce <- function(data, column, defaultVal) {
 #' @param ... arguments supplied to hist() or the hist layer
 #' @author Barret Schloerke \email{bigbear@@iastate.edu}
 #' @keywords hplot
-#' @examples
-#'	# toture
+#' @examples # toture
 #'		rows <- 1000000
 #'		bigData <- qmutaframe(data.frame(x = rnorm(rows), y = floor(rnorm(rows) * 7)))
 #'		qhist(bigData)
@@ -49,21 +34,22 @@ column_coerce <- function(data, column, defaultVal) {
 #'		# range from 0 to 1
 #'		qhist(bigData, splitByCol = "y", title = "Toture - relative", position = "relative") 
 #'
+#'
 #'  # color tests
 #'		# all color is defined
 #'		qhist(mtcars, "disp", horizontal = TRUE, fill = "gold", stroke = "red4")
 #'
 #'		# stacked items
-#'		qhist(mtcars, "disp", "cyl", stroke = "black", position = "stack", title = "mtcars - stack")
+#'		qhist(mtcars, "disp", "cyl", horizontal = FALSE, stroke = "black", position = "stack", title = "mtcars - stack")
 #'
 #'		# raw value items
-#'		qhist(mtcars, "disp", "cyl", stroke = "black", position = "identity", title = "mtcars - identity")
+#'		qhist(mtcars, "disp", "cyl", horizontal = FALSE, stroke = "black", position = "identity", title = "mtcars - identity")
 #'
 #'		# dodged items
-#'		qhist(mtcars, "disp", "cyl", stroke = "black", position = "dodge", title = "mtcars - dodge")
+#'		qhist(mtcars, "disp", "cyl", horizontal = FALSE, stroke = "black", position = "dodge", title = "mtcars - dodge")
 #'
 #'		# range from 0 to 1
-#'		qhist(mtcars, "disp", "cyl", stroke = "black", position = "relative", title = "mtcars - relative")
+#'		qhist(mtcars, "disp", "cyl", horizontal = FALSE, stroke = "black", position = "relative", title = "mtcars - relative")
 qhist <- function(
 	data, 
 	xCol = 1,
@@ -85,7 +71,7 @@ qhist <- function(
 	}
 	
 	mf_data <- data
-	mf_data <- muta_coerce(mf_data)
+	mf_data <- as.mutaframe(mf_data)
 	# mf_data <- column_coerce(mf_data, ".brushed", FALSE)
 	n_data <- data.frame(mf_data)
 	
