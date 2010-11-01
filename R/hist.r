@@ -70,7 +70,7 @@ qhist <- function(
 		data[[splitByCol]] <- 1
 	}
 	
-	mf_data <- as.mutaframe(data)
+	mf_data <- qmutaframe(data)
 	n_data <- data.frame(mf_data)
 	print(head(mf_data))
 	print(head(n_data))
@@ -170,10 +170,11 @@ qhist <- function(
 			if (nrow(section) > 0) {
 				#  .brush.attr = attr(odata, '.brush.attr')
 				# brushcolor <- .brush.attr[,".brushed.color"]
+				brushColor <- get_brush_attr(mf_data, ".brushed.color")
 				if (horizontal)
-					qdrawRect(painter, section$bottom, section$right, section$top, section$left, fill = rgb(255/255, 165/255, 0, alpha = 0.3))
+					qdrawRect(painter, section$bottom, section$right, section$top, section$left, fill = brushColor, stroke = brushColor)
 				else
-					qdrawRect(painter, section$left, section$bottom, section$right, section$top, fill = rgb(255/255, 165/255, 0, alpha = 0.3))
+					qdrawRect(painter, section$left, section$bottom, section$right, section$top, fill = brushColor, stroke = brushColor)
 			}
 		}
 		
@@ -328,14 +329,16 @@ qhist <- function(
 			# Nothing under mouse
 			if (nrow(section) == 0) return()
 		
+		
 			# Highlight the rect
+			brushColor <- get_brush_attr(mf_data, ".brushed.color")
 			if (horizontal) {
 				qdrawRect(painter,
 					xleft = c(section$bottom), #left
 					ybottom = c(section$right), # bottom 
 					xright = c(section$top), # right
 					ytop = c(section$left), # top
-					stroke = c("orange"),
+					stroke = brushColor,
 					fill = c(NA)# fill
 				)
 			} else {
@@ -344,7 +347,7 @@ qhist <- function(
 					ybottom = c(section$bottom), # bottom 
 					xright = c(section$right), # right
 					ytop = c(section$top), # top
-					stroke = c("orange"),
+					stroke = brushColor,
 					fill = c(NA)# fill
 				)
 			}

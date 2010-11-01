@@ -17,7 +17,13 @@
   BUSY - dot plot 
   density plot
   ?(ash)
-  
 
+
+1 highlight the whole column
+2 add arrow keys for functionality
+  up/down = change bin width
+  left right = change start pos
+3 Spinogram, Density, Ash, Hist, dOt(jitter)
+  change between by key command
 
 
