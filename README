@@ -1,4 +1,5 @@
-These are the installation instructions in order to get up and running with qtplot.
+These are the installation instructions in order to get up and running
+with cranvas.
 
 MacOSX
 
@@ -12,18 +13,19 @@ Need to ensure that it makes the command line scripts
 
 4. Might need to set PATH so that both are visible.
 
-5. Change into the directory where you want to keep the libraries, and get a copy of qtbase and qtpaint (qtinterfaces) from  https://r-forge.r-project.org/scm/?group_id=454
+5. Change into the directory where you want to keep the libraries, and
+   get a copy of qtbase and qtpaint (qtinterfaces) from
+   http://github.com/ggobi/.
 
 6. Install the libraries:
 
 R CMD INSTALL qtbase --preclean
 R CMD INSTALL qtpaint --preclean
 
-7. Similarly, install plumbr from https://r-forge.r-project.org/projects/plumbr/
+7. Similarly, install plumbr from http://github.com/ggobi/plumbr
 
-8. The local code for qparallel, qscatterplot, qmosaic, ... cranvas code in http://github.com/bigbear/cranvas
-
-9. For qmosaic you'll also need to install the productplots package from  http://github.com/hadley/productplots
+8. For qmosaic you'll also need to install the productplots package
+   from http://github.com/hadley/productplots
 
 
 
