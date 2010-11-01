@@ -72,10 +72,13 @@ qhist <- function(
 	
 	mf_data <- qmutaframe(data)
 	n_data <- data.frame(mf_data)
-	print(head(mf_data))
-	print(head(n_data))
+	# print(head(mf_data))
+	# print(head(n_data))
+	.type <- "hist"
+	.binwidth <- range(n_data[,xCol]) / 30
+	.data_start_pos <- 0
 	
-	bars_info <- continuous_to_bars(n_data[,xCol], n_data[, splitByCol], position, color, fill, stroke, ...)
+	bars_info <- continuous_to_bars(data = n_data[,xCol], splitBy = n_data[, splitByCol], type = .type, position = position, color = color, fill = fill, stroke = stroke, ...)
 	# bars <- bars_info$data
 	# color <- bars$color  
 	
@@ -140,6 +143,36 @@ qhist <- function(
 		}
 	}	
 	
+	
+	#######################################################
+	# Key Functions
+	keyPressFun <- function(item, event, ...) {
+		# print(event$key())
+		key <- event$key()
+		
+		datachanged <- FALSE
+		formulachanged <- FALSE
+		form <- parse_product_formula(formula)
+		
+		altered <- FALSE
+		if (key == Qt$Qt$Key_Up) {						# arrow up
+			.binwidth <<- .binwidth * 1.10
+		} else if (key == Qt$Qt$Key_Down) {		# arrow down
+			.binwidth <<- .binwidth / 1.10
+		} else if (key == Qt$Qt$Key_Left) {		# arrow left
+			.data_start_pos <<- .data_start_pos + range(n_data[,xCol]) / 60
+		} else if (key == Qt$Qt$Key_Right) {	# arrow left
+			.data_start_pos <<- .data_start_pos - range(n_data[,xCol]) / 60
+		} else if (key == Qt$Qt$Key_A) {			# 'c' or 'C' for 'condition'
+			.type <<- "ash"
+		} else if (key == Qt$Qt$Key_D) {			# 'c' or 'C' for 'condition'
+			.type <<- "density"
+		} else if (key == Qt$Qt$Key_O) {			# 'c' or 'C' for 'condition'
+			.type <<- "dot"
+		} else if (key == Qt$Qt$Key_H) {			# 'c' or 'C' for 'condition'
+			.type <<- "hist"
+		}
+	}
 	#######################################################
 	# Brushing 
 	.startBrush <- NULL
@@ -314,8 +347,6 @@ qhist <- function(
 	.bar_queryPos <- NULL
 	.bar_hover_section <- list(top = -1, bottom = 1, right = -1, left = 1)
 	bar_hover_draw <- function(item, painter, exposed, ...) {
-		# Don't draw when brushing
-		# if (.brush) return()
 		cat("\nBar Hover Draw\n")
 		# Don't draw when brushing
 		if (is.null(.bar_queryPos)) return()
@@ -328,46 +359,68 @@ qhist <- function(
 			y <- .bar_queryPos[2]			
 		}
 		
-			section <- subset(bars_info$data, (y <= top) & (y >= bottom) & (x <= right) & (x >=left))
-			# print(head(section))
+		section <- subset(bars_info$data, (y <= top) & (y >= bottom) & (x <= right) & (x >=left))
+		# print(head(section))
+	
+		# Nothing under mouse
+		if (nrow(section) == 0){
+			.bar_hover_section <<- list(top = -1, bottom = 1, right = -1, left = 1)
+			return()
+		} 
+	
+	
+		# Highlight the rect
+		brushColor <- get_brush_attr(mf_data, ".brushed.color")
+		if (horizontal) {
+			qdrawRect(painter,
+				xleft = c(section$bottom), #left
+				ybottom = c(section$right), # bottom 
+				xright = c(section$top), # right
+				ytop = c(section$left), # top
+				stroke = brushColor,
+				fill = c(NA)# fill
+			)
+		} else {
+			qdrawRect(painter,
+				xleft = c(section$left), #left
+				ybottom = c(section$bottom), # bottom 
+				xright = c(section$right), # right
+				ytop = c(section$top), # top
+				stroke = brushColor,
+				fill = c(NA)# fill
+			)
+		}
+	
+		# Work out label text
+		infostring <- paste("\nbin:", section[1,"label"], sep = " ")
+		if (splitByCol != "qbar_split_column") {
+			infostring <- paste(infostring, "group:", section[1,"group"], sep = " ")
+		}
 		
-			# Nothing under mouse
-			if (nrow(section) == 0) return()
+		count <- section$top - section$bottom
+		infostring <- paste(infostring, "count:", count, sep = " ")
+		if (splitByCol != "qbar_split_column") {
+			# nrow(section[]
+			infostring <- paste(infostring, "column proportion:", count / 1, sep = " ")
+		} else {
+			infostring <- paste(infostring, "proportion:", count / nrow(n_data), sep = " ")
+		}
 		
 		
-			# Highlight the rect
-			brushColor <- get_brush_attr(mf_data, ".brushed.color")
-			if (horizontal) {
-				qdrawRect(painter,
-					xleft = c(section$bottom), #left
-					ybottom = c(section$right), # bottom 
-					xright = c(section$top), # right
-					ytop = c(section$left), # top
-					stroke = brushColor,
-					fill = c(NA)# fill
-				)
-			} else {
-				qdrawRect(painter,
-					xleft = c(section$left), #left
-					ybottom = c(section$bottom), # bottom 
-					xright = c(section$right), # right
-					ytop = c(section$top), # top
-					stroke = brushColor,
-					fill = c(NA)# fill
-				)
-			}
+		# Label -> bin
+		# count
+		# proportion
+		# 
+		# when split...
+		# Label -> bin
+		# count
+		# column proportion
+		# section proportion of column
 		
-			# Work out label text
-			infostring <- paste("\nlabel:", section[1,"label"], sep=" ")
-			if (splitByCol != "qbar_split_column") {
-				infostring <- paste(infostring, "group:", section[1,"group"], sep=" ")
-			}
+		qstrokeColor(painter) <- "white"
+		qdrawText(painter, infostring, .bar_queryPos[1], .bar_queryPos[2], valign="top", halign="left")
 		
-			qstrokeColor(painter) <- "white"
-			cat("\nDraw 'label: ", section[1,"label"],"\nx: ", .bar_queryPos[1], "  y: ", .bar_queryPos[2], "\n")
-			qdrawText(painter, infostring, .bar_queryPos[1], .bar_queryPos[2], valign="top", halign="left")
-			
-			.bar_hover_section <<- list(top = section$top, bottom = section$bottom, left = section$left, right = section$right)
+		.bar_hover_section <<- list(top = section$top, bottom = section$bottom, left = section$left, right = section$right)
 	}
 	
 	bar_hover <- function(item, event, ...) {
@@ -411,26 +464,20 @@ qhist <- function(
 	
 	scene = qscene()
 	
-	bglayer = qlayer(scene, coords, limits = lims, clip = FALSE
-		# , keyPressFun=keyPressFun
-	)
+	bglayer = qlayer(scene, coords, limits = lims, clip = FALSE, keyPressFun=keyPressFun)
 	
 	datalayer = qlayer(scene, hist.all, limits = lims, clip = FALSE)
-
-
-  hoverlayer = qlayer(scene, bar_hover_draw, limits = lims, clip = FALSE,
-    hoverMoveFun = bar_hover, hoverLeaveFun = bar_leave)
-
+	
+	hoverlayer = qlayer(scene, bar_hover_draw, limits = lims, clip = FALSE,
+		hoverMoveFun = bar_hover, hoverLeaveFun = bar_leave)
+	
 	brushing_layer = qlayer(scene, brushing_draw, 
 		mousePressFun = brushing_mouse_press, mouseMoveFun = brushing_mouse_move,  
 		mouseReleaseFun = brushing_mouse_release, 
 		limits = lims, clip = FALSE
 	)
-
-	# querylayer = qlayer(scene, query_draw, limits = lims, clip = FALSE,
-	# 	# hoverMoveFun = query_hover, hoverLeaveFun = query_hover_leave
-	# )
-
+	
+	
 	# # update the brush layer in case of any modifications to the mutaframe
 	# if (is.mutaframe(odata)) {
 	# 	add_listener(odata, function(i,j) {

@@ -87,11 +87,11 @@ zero_then_top_by_order <- function(vec) {
 #'
 #' @param data data to be used
 #' @param splitBy vect to split by
+#' @param type ENUM of "hist", "ash", "dot", "spine", "density"
 #' @param position enum{"none", "stack", "dodge", "relative", "identity"}
 #' @param color vect to color by
 #' @param fill vect to fill by
 #' @param stroke vect to outline by
-#' @param ash whether to use ash or hist
 #' @param ... other params passed to \code{\link[graphics]{hist}}
 #' @author Barret Schloerke \email{bigbear@@iastate.edu}
 #' @keywords internal
@@ -101,7 +101,7 @@ zero_then_top_by_order <- function(vec) {
 #' 	continuous_to_bars(mtcars$disp, mtcars$cyl, position = "identity", stroke = "black")
 #' 	continuous_to_bars(mtcars$disp, mtcars$cyl, position = "relative", stroke = "black")
 #' 	continuous_to_bars(mtcars$disp, mtcars$cyl, position = "stack", stroke = "black")
-continuous_to_bars <- function(data = NULL, splitBy = NULL, position = "none", color = NULL, fill = NULL, stroke = NULL, ash = FALSE, ...) {
+continuous_to_bars <- function(data = NULL, splitBy = NULL, type = "hist", position = "none", color = NULL, fill = NULL, stroke = NULL, ...) {
   
   original = list(
       data = data, 
@@ -112,73 +112,82 @@ continuous_to_bars <- function(data = NULL, splitBy = NULL, position = "none", c
       position = position
     ) 
 	
-  if(identical(ash, FALSE))
+  if(identical(type, "hist"))
   	breaks <- suppressWarnings(hist(data,plot=FALSE,...))$breaks
-	else
+	else if(identical(type, "ash"))
 		stop("ash not defined yet")
-  break_len <- length(breaks)
-
-  bar_top <- table(cut(data, breaks = breaks), splitBy)  
-  
-  data_pos <- melt(bar_top)
-  names(data_pos) <- c("label", "group", "top")
-
-  label_names <- unique(data_pos$label)
-  group_names <- unique(data_pos$group)
-
-  data_pos$bottom <- rep(0, nrow(data_pos))
-
-  if(is.null(color)) {
-    if(length(group_names) == 1) {
-      data_pos$color <- rep("grey20", nrow(data_pos))      
-    } else {    
-      data_pos$color <- rep(rainbow(length(group_names)), each = length(label_names))
-    }
-  }
-    
-  if (position == "dodge") {
-    
-    pos <- make_dodge_pos( breaks, length(group_names))
-    data_pos$left <- pos$start
-    data_pos$right <- pos$end
-  } else  {
-    # (position == "stack" || position == "relative")
-
-    data_pos$left <- rep(breaks[1:(break_len-1)], length(group_names))
-    data_pos$right <- rep(breaks[2:break_len] , length(group_names))
-    
-    if(position != "identity") {
-      # make the bar_top be stacked (cumulative)
-      for (i in 1:nrow(bar_top)) {
-        bar_top[i,] <- cumsum(bar_top[i,])
-      }
-      data_pos <- ddply(data_pos, c("label"), transform, top = cumsum(top))
-    }
-    
-    #make the bar_bottom "stack"
-    data_pos <- data_pos[order(data_pos$top),]
-    data_pos <- ddply(data_pos, "label", transform, bottom = zero_then_top_by_order(top))
-
-    # relative      
-    if (position == "relative") {
-      data_pos <- ddply(data_pos, c("label"), transform, bottom = divide_by_maximum(bottom, top))
-      data_pos <- ddply(data_pos, c("label"), transform, top = divide_by_maximum(top))
-    }
-  }
-  
-  # Color Management
-  f_and_s <- fill_and_stroke(data_pos$color, fill = fill, stroke = stroke)
-  data_pos$fill = f_and_s$fill
-  data_pos$stroke = f_and_s$stroke
-  data_pos$color = NULL
+	else if(identical(type, "dot"))
+		stop("dot not defined yet")
+	else if(identical(type, "spine"))
+		stop("spine-o-gram not defined yet")
+	else if(identical(type, "dot"))
+		stop("dot not defined yet")
+	else
+		stop("Please make type one of the following: \"hist\", \"ash\", \"dot\", \"spine\", \"dot\"")
+	
+	break_len <- length(breaks)
+	
+	bar_top <- table(cut(data, breaks = breaks), splitBy)  
+	
+	data_pos <- melt(bar_top)
+	names(data_pos) <- c("label", "group", "top")
+	
+	label_names <- unique(data_pos$label)
+	group_names <- unique(data_pos$group)
+	
+	data_pos$bottom <- rep(0, nrow(data_pos))
+	
+	if(is.null(color)) {
+		if(length(group_names) == 1) {
+			data_pos$color <- rep("grey20", nrow(data_pos))      
+		} else {    
+			data_pos$color <- rep(rainbow(length(group_names)), each = length(label_names))
+		}
+	}
+	
+	if (position == "dodge") {
+		
+		pos <- make_dodge_pos( breaks, length(group_names))
+		data_pos$left <- pos$start
+		data_pos$right <- pos$end
+	} else  {
+		# (position == "stack" || position == "relative")
+		
+		data_pos$left <- rep(breaks[1:(break_len-1)], length(group_names))
+		data_pos$right <- rep(breaks[2:break_len] , length(group_names))
+		
+		if(position != "identity") {
+			# make the bar_top be stacked (cumulative)
+			for (i in 1:nrow(bar_top)) {
+				bar_top[i,] <- cumsum(bar_top[i,])
+			}
+			data_pos <- ddply(data_pos, c("label"), transform, top = cumsum(top))
+		}
+		
+		#make the bar_bottom "stack"
+		data_pos <- data_pos[order(data_pos$top),]
+		data_pos <- ddply(data_pos, "label", transform, bottom = zero_then_top_by_order(top))
+		
+		# relative      
+		if (position == "relative") {
+			data_pos <- ddply(data_pos, c("label"), transform, bottom = divide_by_maximum(bottom, top))
+			data_pos <- ddply(data_pos, c("label"), transform, top = divide_by_maximum(top))
+		}
+	}
+	
+	# Color Management
+	f_and_s <- fill_and_stroke(data_pos$color, fill = fill, stroke = stroke)
+	data_pos$fill = f_and_s$fill
+	data_pos$stroke = f_and_s$stroke
+	data_pos$color = NULL
 	data_pos$.brushed = FALSE
-
-  list(
-    data = data_pos,
-    breaks = breaks,
-    label_names = label_names,
-    group_names = group_names,
-    original = original
-  )
-
+	
+	list(
+		data = data_pos,
+		breaks = breaks,
+		label_names = label_names,
+		group_names = group_names,
+		original = original
+	)
+	
 }
