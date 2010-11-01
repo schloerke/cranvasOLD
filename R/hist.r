@@ -172,9 +172,9 @@ qhist <- function(
 				# brushcolor <- .brush.attr[,".brushed.color"]
 				brushColor <- get_brush_attr(mf_data, ".brushed.color")
 				if (horizontal)
-					qdrawRect(painter, section$bottom, section$right, section$top, section$left, fill = brushColor, stroke = brushColor)
+					qdrawRect(painter, section$bottom, section$right, section$top, section$left, fill = brushColor, stroke = "black")
 				else
-					qdrawRect(painter, section$left, section$bottom, section$right, section$top, fill = brushColor, stroke = brushColor)
+					qdrawRect(painter, section$left, section$bottom, section$right, section$top, fill = brushColor, stroke = "black")
 			}
 		}
 		
@@ -221,36 +221,41 @@ qhist <- function(
 	setHiliting <- function() {
 		cat("\nsetHiliting\n")
 		
-		left = min(.startBrush[1], .endBrush[1])
-		right = max(.startBrush[1], .endBrush[1])
-		top = max(.startBrush[2], .endBrush[2])
-		bottom = min(.startBrush[2], .endBrush[2])
+		leftMouse = min(.startBrush[1], .endBrush[1])
+		rightMouse = max(.startBrush[1], .endBrush[1])
+		topMouse = max(.startBrush[2], .endBrush[2])
+		bottomMouse = min(.startBrush[2], .endBrush[2])
 		
 		if (horizontal) {
-			left = min(.startBrush[2], .endBrush[2])
-			right = max(.startBrush[2], .endBrush[2])
-			top = max(.startBrush[1], .endBrush[1])
-			bottom = min(.startBrush[1], .endBrush[1])
+			leftMouse = min(.startBrush[2], .endBrush[2])
+			rightMouse = max(.startBrush[2], .endBrush[2])
+			topMouse = max(.startBrush[1], .endBrush[1])
+			bottomMouse = min(.startBrush[1], .endBrush[1])
 		}
 		
-		rows <<- (bars_info$data$left <= right) & (bars_info$data$right >= left) &
-			(bars_info$data$bottom <= top) & (bars_info$data$top >= bottom)  
-
-		bars_info$data$.brushed <<- rows
-
+		# rows <<- (bars_info$data$left <= right) & (bars_info$data$right >= left) &
+		# 	(bars_info$data$bottom <= top) & (bars_info$data$top >= bottom)  
+		# bars_info$data$.brushed <<- rows
+		
+		valid_bar_row <<- function(left, right, top, bottom) {
+			(left <= rightMouse) & (right >= leftMouse) & (min(bottom) <= topMouse) & (max(top) >= bottomMouse)
+		}
+		
+		bars_info$data <<- ddply(bars_info$data, .(label), transform, .brushed = valid_bar_row(left, right, top, bottom))
+		
 		print(head(subset(bars_info$data, .brushed == TRUE)))
-		cat("count of brushed sections: ", sum(bars_info$data$.brushed), " - ", rows, "\n")
-		cat("count of left(<=", right,"): ", sum(bars_info$data$left <= right), " - ", 
-			# paste(rownames(bars_info$data[bars_info$data$left <= right,]), sep = ", "), 
+		cat("count of brushed sections: ", sum(bars_info$data$.brushed), "\n")
+		cat("count of left(<=", rightMouse,"): ", sum(bars_info$data$left <= rightMouse), " - ", 
+			# paste(rownames(bars_info$data[bars_info$data$left <= rightMouse,]), sep = ", "), 
 			"\n")
-		cat("count of right(>= ", left,"): ", sum(bars_info$data$right >= left), " - ", 
-			# paste(rownames(bars_info$data[bars_info$data$right >= left,]), sep = ", "), 
+		cat("count of right(>= ", leftMouse,"): ", sum(bars_info$data$right >= leftMouse), " - ", 
+			# paste(rownames(bars_info$data[bars_info$data$right >= leftMouse,]), sep = ", "), 
 			"\n")
-		cat("count of bottom(<= ", top,"): ", sum(bars_info$data$bottom <= top), " - ", 
-			# paste(rownames(bars_info$data[bars_info$data$bottom <= top,]), sep = ", "), 
+		cat("count of bottom(<= ", topMouse,"): ", sum(bars_info$data$bottom <= topMouse), " - ", 
+			# paste(rownames(bars_info$data[bars_info$data$bottom <= topMouse,]), sep = ", "), 
 			"\n")
-		cat("count of top(>= ", bottom,"): ", sum(bars_info$data$top >= bottom), " - ", 
-			# paste(rownames(bars_info$data[bars_info$data$top >= bottom,]), sep = ", "), 
+		cat("count of top(>= ", bottomMouse,"): ", sum(bars_info$data$top >= bottomMouse), " - ", 
+			# paste(rownames(bars_info$data[bars_info$data$top >= bottomMouse,]), sep = ", "), 
 			"\n")
 		
 		cat("\nsetHiliting - done\n")

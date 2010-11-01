@@ -96,6 +96,7 @@ zero_then_top_by_order <- function(vec) {
 #' @author Barret Schloerke \email{bigbear@@iastate.edu}
 #' @keywords internal
 #' @examples
+#' 	continuous_to_bars(mtcars$disp, mtcars$cyl, stroke = "black")
 #' 	continuous_to_bars(mtcars$disp, mtcars$cyl, position = "dodge", stroke = "black")
 #' 	continuous_to_bars(mtcars$disp, mtcars$cyl, position = "identity", stroke = "black")
 #' 	continuous_to_bars(mtcars$disp, mtcars$cyl, position = "relative", stroke = "black")
