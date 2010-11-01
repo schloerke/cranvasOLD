@@ -6,11 +6,11 @@ is_mutaframe <- function(data) {
 	"mutaframe" %in% class(data)
 }
 
-muta_coerce <- function(data) {
+muta_coerce <- function(data, ...) {
 	
 	if (!is_mutaframe(data)) {
 		message("Making data into a 'Mutaframe'.")
-		qmutaframe(data)
+		qmutaframe(data, ...)
 	} else {
 		data
 	}
@@ -85,9 +85,11 @@ qhist <- function(
 	}
 	
 	mf_data <- data
-	mf_data <- muta_coerce(mf_data)
+	mf_data <- muta_coerce(mf_data, ".brushed" = FALSE)
 	# mf_data <- column_coerce(mf_data, ".brushed", FALSE)
 	n_data <- data.frame(mf_data)
+	print(head(mf_data))
+	print(head(n_data))
 	
 	bars_info <- continuous_to_bars(n_data[,xCol], n_data[, splitByCol], position, color, fill, stroke, ...)
 	# bars <- bars_info$data
@@ -210,7 +212,7 @@ qhist <- function(
 	brushing_mouse_move <- function(item, event, ...) {  
 		cat("\nbrushing mouse move\n")
 		.endBrush <<- as.numeric(event$pos())
-
+		
 		setHiliting()
 		qupdate(brushing_layer)
 		cat("\nbrushing mouse move - done\n")
@@ -274,17 +276,20 @@ qhist <- function(
 		
 		if (nrow(section) > 0) {
 			
-			pos <- bars_info$label_names == unique(section$label)
-			starts <- bars_info$breaks[pos]
-			ends <- starts[-1]
-			ends[length(ends) + 1] <- bars_info$breaks[max(pos) + 1]
+			starts <- unique(section$left)
+			starts <- starts[order(starts)]
+			ends <- unique(section$right)
+			ends <- ends[order(ends)]
+			
+			n_data <- data.frame(mf_data)
 			
 			for (i in seq_along(starts)) {
-				rows <- mf_data[[xCol]] <= ends[i] & mf_data[[xCol]] > starts[i]
-				
-				mf_data$.brushed <- TRUE
-				
+				rows <- n_data[[xCol]] <= ends[i] & n_data[[xCol]] > starts[i]
+				n_data$.brushed[rows] <- TRUE
 			}
+			
+			print(head(n_data))
+			print(head(subset(n_data, .brushed == TRUE)))
 			
 			# hdata$ID <- 1:nrow(section)
 			# res.melt <- melt(hdata,id.var="ID")
