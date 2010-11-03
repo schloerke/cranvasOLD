@@ -302,6 +302,13 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
     identify_key_release = function(layer, event) {
         ## set brush mode to 'none' when release the key
         set_brush_attr(data, '.brush.mode', 'none')
+        direction = which(event$key() == c(Qt$Qt$Key_PageUp, Qt$Qt$Key_PageDown))
+        if (length(direction)) {
+            .brush.index = .brush.attr$.brush.index + c(-1, 1)[direction]
+            .brush.index = max(1, min(ncol(.brush.attr$.brush.history), .brush.index))
+            .brush.attr$.brush.index = .brush.index
+            data$.brushed = .brush.attr$.brush.history[, .brush.index]
+        }
     }
 
     ## identify segments being brushed when the mouse is moving
@@ -323,6 +330,11 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         hits = ceiling(hits/ifelse(glyph == 'line', p - 1, p))
         .new.brushed[hits] = TRUE
         data$.brushed = mode_selection(data$.brushed, .new.brushed, mode = get_brush_attr(data, '.brush.mode'))
+        ## on mouse release
+        if (event$button() != Qt$Qt$NoButton) {
+            .brush.attr$.brush.history = data.frame(.brush.attr$.brush.history, X = data$.brushed)
+            .brush.attr$.brush.index = ncol(.brush.attr$.brush.history)
+        }
         if (verbose)
             message(format(difftime(Sys.time(), ntime)))
     }
@@ -355,7 +367,7 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
             ## show data labels and row ids
             if (get_brush_attr(data, '.label.show')) {
                 ## retrieve labels from the original data (possibly w/ transformation)
-                .label.fun = get(get_brush_attr(data, '.label.fun'))
+                .label.fun = get_brush_attr(data, '.label.fun')
                 .brush.labels = .label.fun(data[.brushed, vars])
                 .vars = c('case id', vars)
                 ## truncate the id strings if too long

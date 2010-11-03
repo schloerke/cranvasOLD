@@ -46,13 +46,14 @@ qmutaframe = function(data, ...) {
 
     ## prevent converting from characters to factors
     old_opts = options(stringsAsFactors = FALSE)
-    mf = as.mutaframe(data, ...)
+    mf = as.mutaframe(data.frame(data, ...))
 
     ## we need to store some attributes somewhere which are not corresponding to rows
-    ## e.g. attrs related to the brush (scalars)
-    attr(mf, '.brush.attr') = mutaframe(.brush.color = 'yellow', .brush.size = 1,
+    ## e.g. attrs related to the brush (scalars, functions, or data frames)
+    attr(mf, '.brush.attr') = mutalist(.brush.color = 'yellow', .brush.size = 1,
         .brushed.color = 'yellow', .brushed.size = 2, .brush.mode = 'none',
-        .label.show = FALSE, .label.fun = 'summary_one', .label.color = 'red')
+        .label.show = FALSE, .label.fun = summary_one, .label.color = 'red',
+        .brush.history = data.frame(X = logical(nrow(mf))), .brush.index = 1)
     ## here '.brush.mode' is explained in the documentation of mode_selection()
 
     ## and other possible attributes
