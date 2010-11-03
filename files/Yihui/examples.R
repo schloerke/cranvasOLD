@@ -3,9 +3,6 @@
 ## hints for interaction:
 ## drag with the right button to resize the brush; left button to move the brush
 
-library(qtpaint)
-library(plumbr)
-
 ## options(verbose = TRUE)
 
 ## color palette
