@@ -305,9 +305,11 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         direction = which(event$key() == c(Qt$Qt$Key_PageUp, Qt$Qt$Key_PageDown))
         if (length(direction)) {
             .brush.index = .brush.attr$.brush.index + c(-1, 1)[direction]
-            .brush.index = max(1, min(ncol(.brush.attr$.brush.history), .brush.index))
+            .brush.index = max(1, min(length(.brush.attr$.brush.history), .brush.index))
             .brush.attr$.brush.index = .brush.index
-            data$.brushed = .brush.attr$.brush.history[, .brush.index]
+            .brushed = logical(n)
+            .brushed[.brush.attr$.brush.history[[.brush.index]]] = TRUE
+            data$.brushed = .brushed
         }
     }
 
@@ -332,8 +334,8 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         data$.brushed = mode_selection(data$.brushed, .new.brushed, mode = get_brush_attr(data, '.brush.mode'))
         ## on mouse release
         if (event$button() != Qt$Qt$NoButton) {
-            .brush.attr$.brush.history = data.frame(.brush.attr$.brush.history, X = data$.brushed)
-            .brush.attr$.brush.index = ncol(.brush.attr$.brush.history)
+            .brush.attr$.brush.history[[length(.brush.attr$.brush.history) + 1]] = which(data$.brushed)
+            .brush.attr$.brush.index = length(.brush.attr$.brush.history)
         }
         if (verbose)
             message(format(difftime(Sys.time(), ntime)))
