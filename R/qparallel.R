@@ -42,7 +42,7 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
     mar = c(0.04, 0.04, 0.04, 0.04), main, verbose = getOption("verbose")) {
 
     ## parameters for the brush
-    .brush.attr = attr(data, '.brush.attr')
+    .brush.attr = brush_attr(data)
     ## background color
     .bgcolor = "grey80"
     ## .bgcolor = rgb(0,0,0,0)
@@ -297,11 +297,11 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         ## Key X: XOR; O: OR; A: AND; N: NOT
         i = which(event$key() == c(Qt$Qt$Key_A, Qt$Qt$Key_O, Qt$Qt$Key_X, Qt$Qt$Key_N, Qt$Qt$Key_C))
         if (length(i))
-            set_brush_attr(data, '.brush.mode', c('and', 'or', 'xor', 'not', 'complement')[i])
+            brush_attr(data, '.brush.mode') = c('and', 'or', 'xor', 'not', 'complement')[i]
     }
     identify_key_release = function(layer, event) {
         ## set brush mode to 'none' when release the key
-        set_brush_attr(data, '.brush.mode', 'none')
+        brush_attr(data, '.brush.mode') = 'none'
         direction = which(event$key() == c(Qt$Qt$Key_PageUp, Qt$Qt$Key_PageDown))
         if (length(direction)) {
             .brush.index = .brush.attr$.brush.index + c(-1, 1)[direction]
@@ -331,7 +331,7 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         ## ticks and lines are of different numbers!
         hits = ceiling(hits/ifelse(glyph == 'line', p - 1, p))
         .new.brushed[hits] = TRUE
-        data$.brushed = mode_selection(data$.brushed, .new.brushed, mode = get_brush_attr(data, '.brush.mode'))
+        data$.brushed = mode_selection(data$.brushed, .new.brushed, mode = brush_attr(data, '.brush.mode'))
         ## on mouse release
         if (event$button() != Qt$Qt$NoButton) {
             .brush.attr$.brush.history[[length(.brush.attr$.brush.history) + 1]] = which(data$.brushed)
@@ -349,16 +349,16 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         }
 
         if (!any(is.na(.bpos))) {
-            qlineWidth(painter) = get_brush_attr(data, '.brush.size')
+            qlineWidth(painter) = brush_attr(data, '.brush.size')
             ##qdash(painter)=c(1,3,1,3)
             qdrawRect(painter, .bpos[1] - .brange[1], .bpos[2] - .brange[2],
                       .bpos[1] + .brange[1], .bpos[2] + .brange[2],
-                      stroke = get_brush_attr(data, '.brush.color'))
+                      stroke = brush_attr(data, '.brush.color'))
         }
         .brushed = data$.brushed
         if (sum(.brushed, na.rm = TRUE) >= 1) {
-            qlineWidth(painter) = get_brush_attr(data, '.brushed.size')
-            qstrokeColor(painter) = get_brush_attr(data, '.brushed.color')
+            qlineWidth(painter) = brush_attr(data, '.brushed.size')
+            qstrokeColor(painter) = brush_attr(data, '.brushed.color')
             x = x[.brushed, , drop = FALSE]
             y = y[.brushed, , drop = FALSE]
             tmpx = as.vector(t.default(cbind(x, NA)))
@@ -367,9 +367,9 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
             qdrawSegment(painter, tmpx[-nn], tmpy[-nn], tmpx[-1], tmpy[-1])
 
             ## show data labels and row ids
-            if (get_brush_attr(data, '.label.show')) {
+            if (brush_attr(data, '.label.show')) {
                 ## retrieve labels from the original data (possibly w/ transformation)
-                .label.fun = get_brush_attr(data, '.label.fun')
+                .label.fun = brush_attr(data, '.label.fun')
                 .brush.labels = .label.fun(data[.brushed, vars])
                 .vars = c('case id', vars)
                 ## truncate the id strings if too long
@@ -378,7 +378,7 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
                                  max(nchar(c(.brush.labels, .vars)))))
                 .brush.labels = c(.caseid, .brush.labels)
                 .brush.labels = paste(.vars, .brush.labels, sep = ': ', collapse = '\n')
-                qstrokeColor(painter) = get_brush_attr(data, '.label.color')
+                qstrokeColor(painter) = brush_attr(data, '.label.color')
                 qdrawText(painter, .brush.labels, .bpos[1], .bpos[2], valign="top", halign="left")
             }
         }
