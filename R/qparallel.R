@@ -382,6 +382,9 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
                                  max(nchar(c(.brush.labels, .vars)))))
                 .brush.labels = c(.caseid, .brush.labels)
                 .brush.labels = paste(.vars, .brush.labels, sep = ': ', collapse = '\n')
+                bgwidth = qstrWidth(painter, .brush.labels)
+                bgheight = qstrHeight(painter, .brush.labels)
+                qdrawRect(painter, .bpos[1], .bpos[2] - bgheight, .bpos[1] + bgwidth, .bpos[2], stroke = rgb(1, 1, 1, 0.5), fill = rgb(1, 1, 1, 0.5))
                 qstrokeColor(painter) = brush_attr(data, '.label.color')
                 qdrawText(painter, .brush.labels, .bpos[1], .bpos[2], valign="top", halign="left")
             }

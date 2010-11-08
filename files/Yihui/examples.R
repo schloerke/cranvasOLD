@@ -75,7 +75,7 @@ qparallel(qiris, scale = 'I', center = mean)
 qparallel(qiris, center = median, boxplot = TRUE)
 
 ## labeling
-set_brush_attr(qiris, '.label.show', TRUE)
+brush_attr(qiris, '.label.show') = TRUE
 ## we can also change the row names and the labels will change accordingly
 rownames(qiris) = paste(abbreviate(iris$Species), 1:50, sep = '')
 
