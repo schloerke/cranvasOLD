@@ -53,7 +53,7 @@ qmutaframe = function(data, ...) {
     attr(mf, '.brush.attr') = mutalist(.brush.color = 'yellow', .brush.size = 1,
         .brushed.color = 'yellow', .brushed.size = 2, .brush.mode = 'none',
         .label.show = FALSE, .label.fun = summary_one, .label.color = 'red',
-        .brush.history = list(), .brush.index = 0)
+        .brush.history = list(), .brush.index = 0, .history.size = 30)
     ## here '.brush.mode' is explained in the documentation of mode_selection()
 
     ## and other possible attributes

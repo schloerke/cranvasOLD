@@ -334,7 +334,11 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         data$.brushed = mode_selection(data$.brushed, .new.brushed, mode = brush_attr(data, '.brush.mode'))
         ## on mouse release
         if (event$button() != Qt$Qt$NoButton) {
-            .brush.attr$.brush.history[[length(.brush.attr$.brush.history) + 1]] = which(data$.brushed)
+            .brush.attr$.brush.history[[(csize <- length(.brush.attr$.brush.history) + 1)]] = which(data$.brushed)
+            ## remove the first few columns due to the hisotory size limit
+            if (csize > (hsize <- brush_attr(data, '.history.size'))) {
+                .brush.attr$.brush.history[1:(csize - hsize)] = NULL
+            }
             .brush.attr$.brush.index = length(.brush.attr$.brush.history)
         }
         if (verbose)
