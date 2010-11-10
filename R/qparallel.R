@@ -111,17 +111,6 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         ## which columns are numeric? we don't want boxplots for non-numeric vars
         numcol <<- sapply(plot_data, class) %in% c("numeric", "integer")
 
-        ## ordering variables by MDS
-        if (order && any(numcol)) {
-            vars <<- c(vars[numcol][order(cmdscale(1 -
-                           cor(plot_data[, numcol, drop = FALSE]), k = 1))],
-                       vars[!numcol])
-            plot_data = plot_data[, vars]
-            numcol <<- sapply(plot_data, class) == "numeric"
-        }
-
-        ## flip the variables
-
         plot_data = sapply(plot_data, as.numeric)
         ## must make them global; I wish there could be 'mutavectors'
         p <<- ncol(plot_data)
@@ -154,6 +143,16 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
                 xx - ifelse(is.function(center), center(xx), as.numeric(center))
             })
         }
+
+        ## ordering variables by MDS
+        if (order && any(numcol)) {
+            idx = order(cmdscale(1 - cor(plot_data[, numcol, drop = FALSE]), k = 1))
+            vars <<- c(vars[numcol][idx], vars[!numcol])
+            plot_data = plot_data[, vars]
+            numcol <<- rep(c(TRUE, FALSE), table(numcol))
+        }
+
+        ## flip the variables
 
         ## switch x and y according to the direction
         if (horizontal) {
