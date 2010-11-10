@@ -210,12 +210,12 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
                                function(x) boxplot.stats(x, do.conf = FALSE)$stats)
     }
 
+    ## do the transformation now
+    transform_data()
+
     ## automatic box width
     if (missing(boxwex))
         boxwex = max(1/p, 0.2)
-
-    ## do the transformation now
-    transform_data()
 
     ## convention of notation:
     ## *_draw means a drawing function for a layer; *_event is an even callback; *_layer is a layer object
