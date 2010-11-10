@@ -75,7 +75,7 @@ qparallel(qiris, scale = 'I', center = mean)
 qparallel(qiris, center = median, boxplot = TRUE)
 
 ## labeling
-set_brush_attr(qiris, '.label.show', TRUE)
+brush_attr(qiris, '.label.show') = TRUE
 ## we can also change the row names and the labels will change accordingly
 rownames(qiris) = paste(abbreviate(iris$Species), 1:50, sep = '')
 
@@ -155,49 +155,3 @@ library(animation)
 data(pollen)
 qpollen = qmutaframe(pollen, .color = rgb(0, 0, 1, 0.01))
 qparallel(qpollen)
-
-## some speed tests; personal use only
-if (FALSE) {
-    # how fast is the transpose operation?
-    p = 10
-    n = 1e+06
-    y = matrix(runif(n * p), ncol = p)
-    x = col(y)
-
-    system.time({
-        for (i in 1:10) {
-            segx0 = c(t(x[, 1:(p - 1)]))
-            segx1 = c(t(x[, 2:p]))
-            segy0 = c(t(y[, 1:(p - 1)]))
-            segy1 = c(t(y[, 2:p]))
-        }
-    })
-    system.time({
-        for (i in 1:10) {
-            segx0 = as.vector(t(x[, 1:(p - 1)]))
-            segx1 = as.vector(t(x[, 2:p]))
-            segy0 = as.vector(t(y[, 1:(p - 1)]))
-            segy1 = as.vector(t(y[, 2:p]))
-        }
-    })
-    system.time({
-        for (i in 1:10) {
-            segx0 = as.vector(t.default(x[, 1:(p - 1)]))
-            segx1 = as.vector(t.default(x[, 2:p]))
-            segy0 = as.vector(t.default(y[, 1:(p - 1)]))
-            segy1 = as.vector(t.default(y[, 2:p]))
-        }
-    })
-    # indexing for large data can be very slow, so pre-process data
-    segx0 = as.vector(t.default(x))
-    segy0 = as.vector(t.default(y))
-    system.time({
-        for (i in 1:10) {
-            segx0[-p * (1:n)]
-            segy0[-p * (1:n)]
-            segx0[-(p * (0:(n - 1)) + 1)]
-            segy0[-(p * (0:(n - 1)) + 1)]
-        }
-    })
-}
-
