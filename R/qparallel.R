@@ -14,10 +14,15 @@
 ##' @param center the function to calculate where to center all the
 ##' axes (e.g. center at the medians), or a numeric value, or
 ##' \code{NULL} (do not center)
-##' @param order if \code{TRUE}, reorder the variables by classical
-##' multidimensional scaling so that similar variables will be
-##' arranged nearer; besides, categorical variables will be put to the
-##' last if \code{order} is \code{TRUE}
+##' @param order for \code{order = 'MDS'}, reorder the variables by
+##' classical multidimensional scaling so that similar variables will
+##' be arranged nearer to each other (categorical variables will be
+##' put to the last); for \code{order = 'ANOVA'}, reorder the
+##' variables by the p-values associated with the ANOVA based on each
+##' variable versus the \code{data$.color} variable, so that the
+##' variable with largest between-group difference will be put in the
+##' first place, and so on; \code{order = 'none'} means keep the
+##' original order.
 ##' @param horizontal logical: arrange variables in horizontal or
 ##' vertical direction
 ##' @param glyph draw complete segments for all observations or other
@@ -36,13 +41,13 @@
 ##' @return NULL
 ##' @author Yihui Xie <\url{http://yihui.name}>
 qparallel = function(data, vars, scale = "range", na.action = na.impute,
-    center = NULL, order = FALSE, horizontal = TRUE,
+    center = NULL, order = c('none', 'MDS', 'ANOVA'), horizontal = TRUE,
     glyph = c('auto', 'line', 'tick', 'circle', 'square', 'triangle'),
     boxplot = FALSE, boxwex, jitter = NULL, amount = NULL,
     mar = c(0.04, 0.04, 0.04, 0.04), main, verbose = getOption("verbose")) {
 
     ## parameters for the brush
-    .brush.attr = attr(data, '.brush.attr')
+    .brush.attr = brush_attr(data)
     ## background color
     .bgcolor = "grey80"
     ## .bgcolor = rgb(0,0,0,0)
@@ -81,6 +86,7 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
     if (!has_attr('.brushed')) data$.brushed = FALSE
 
     glyph = match.arg(glyph)
+    order = match.arg(order)
 
     ## a long way of transformation
     ## creat some 'global' variables first
@@ -110,17 +116,6 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
 
         ## which columns are numeric? we don't want boxplots for non-numeric vars
         numcol <<- sapply(plot_data, class) %in% c("numeric", "integer")
-
-        ## ordering variables by MDS
-        if (order && any(numcol)) {
-            vars <<- c(vars[numcol][order(cmdscale(1 -
-                           cor(plot_data[, numcol, drop = FALSE]), k = 1))],
-                       vars[!numcol])
-            plot_data = plot_data[, vars]
-            numcol <<- sapply(plot_data, class) == "numeric"
-        }
-
-        ## flip the variables
 
         plot_data = sapply(plot_data, as.numeric)
         ## must make them global; I wish there could be 'mutavectors'
@@ -154,6 +149,30 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
                 xx - ifelse(is.function(center), center(xx), as.numeric(center))
             })
         }
+
+        ## ordering variables by MDS or ANOVA
+        if (any(numcol)) {
+            num_data = plot_data[, numcol, drop = FALSE]
+            switch(order, none = NULL, MDS = {
+                idx = order(cmdscale(1 - cor(num_data), k = 1))
+            }, ANOVA = {
+                if (length(unique(data$.color)) > 1) {
+                    xfactor = factor(data$.color)
+                    idx = order(apply(num_data, 2, function(y) {
+                        summary(aov(y ~ xfactor))[[1]][1, 5]
+                    }))
+                } else {
+                    idx=1:ncol(num_data)
+                }
+            })
+            if (order != 'none') {
+                vars <<- c(vars[numcol][idx], vars[!numcol])
+                plot_data = plot_data[, vars]
+                numcol <<- rep(c(TRUE, FALSE), table(numcol))
+            }
+        }
+
+        ## flip the variables
 
         ## switch x and y according to the direction
         if (horizontal) {
@@ -211,12 +230,12 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
                                function(x) boxplot.stats(x, do.conf = FALSE)$stats)
     }
 
+    ## do the transformation now
+    transform_data()
+
     ## automatic box width
     if (missing(boxwex))
         boxwex = max(1/p, 0.2)
-
-    ## do the transformation now
-    transform_data()
 
     ## convention of notation:
     ## *_draw means a drawing function for a layer; *_event is an even callback; *_layer is a layer object
@@ -297,17 +316,19 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         ## Key X: XOR; O: OR; A: AND; N: NOT
         i = which(event$key() == c(Qt$Qt$Key_A, Qt$Qt$Key_O, Qt$Qt$Key_X, Qt$Qt$Key_N, Qt$Qt$Key_C))
         if (length(i))
-            set_brush_attr(data, '.brush.mode', c('and', 'or', 'xor', 'not', 'complement')[i])
+            brush_attr(data, '.brush.mode') = c('and', 'or', 'xor', 'not', 'complement')[i]
     }
     identify_key_release = function(layer, event) {
         ## set brush mode to 'none' when release the key
-        set_brush_attr(data, '.brush.mode', 'none')
+        brush_attr(data, '.brush.mode') = 'none'
         direction = which(event$key() == c(Qt$Qt$Key_PageUp, Qt$Qt$Key_PageDown))
         if (length(direction)) {
             .brush.index = .brush.attr$.brush.index + c(-1, 1)[direction]
-            .brush.index = max(1, min(ncol(.brush.attr$.brush.history), .brush.index))
+            .brush.index = max(1, min(length(.brush.attr$.brush.history), .brush.index))
             .brush.attr$.brush.index = .brush.index
-            data$.brushed = .brush.attr$.brush.history[, .brush.index]
+            .brushed = logical(n)
+            .brushed[.brush.attr$.brush.history[[.brush.index]]] = TRUE
+            data$.brushed = .brushed
         }
     }
 
@@ -329,11 +350,15 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         ## ticks and lines are of different numbers!
         hits = ceiling(hits/ifelse(glyph == 'line', p - 1, p))
         .new.brushed[hits] = TRUE
-        data$.brushed = mode_selection(data$.brushed, .new.brushed, mode = get_brush_attr(data, '.brush.mode'))
+        data$.brushed = mode_selection(data$.brushed, .new.brushed, mode = brush_attr(data, '.brush.mode'))
         ## on mouse release
         if (event$button() != Qt$Qt$NoButton) {
-            .brush.attr$.brush.history = data.frame(.brush.attr$.brush.history, X = data$.brushed)
-            .brush.attr$.brush.index = ncol(.brush.attr$.brush.history)
+            .brush.attr$.brush.history[[(csize <- length(.brush.attr$.brush.history) + 1)]] = which(data$.brushed)
+            ## remove the first few columns due to the hisotory size limit
+            if (csize > (hsize <- brush_attr(data, '.history.size'))) {
+                .brush.attr$.brush.history[1:(csize - hsize)] = NULL
+            }
+            .brush.attr$.brush.index = length(.brush.attr$.brush.history)
         }
         if (verbose)
             message(format(difftime(Sys.time(), ntime)))
@@ -347,16 +372,16 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         }
 
         if (!any(is.na(.bpos))) {
-            qlineWidth(painter) = get_brush_attr(data, '.brush.size')
+            qlineWidth(painter) = brush_attr(data, '.brush.size')
             ##qdash(painter)=c(1,3,1,3)
             qdrawRect(painter, .bpos[1] - .brange[1], .bpos[2] - .brange[2],
                       .bpos[1] + .brange[1], .bpos[2] + .brange[2],
-                      stroke = get_brush_attr(data, '.brush.color'))
+                      stroke = brush_attr(data, '.brush.color'))
         }
         .brushed = data$.brushed
         if (sum(.brushed, na.rm = TRUE) >= 1) {
-            qlineWidth(painter) = get_brush_attr(data, '.brushed.size')
-            qstrokeColor(painter) = get_brush_attr(data, '.brushed.color')
+            qlineWidth(painter) = brush_attr(data, '.brushed.size')
+            qstrokeColor(painter) = brush_attr(data, '.brushed.color')
             x = x[.brushed, , drop = FALSE]
             y = y[.brushed, , drop = FALSE]
             tmpx = as.vector(t.default(cbind(x, NA)))
@@ -365,9 +390,9 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
             qdrawSegment(painter, tmpx[-nn], tmpy[-nn], tmpx[-1], tmpy[-1])
 
             ## show data labels and row ids
-            if (get_brush_attr(data, '.label.show')) {
+            if (brush_attr(data, '.label.show') && !any(is.na(.bpos))) {
                 ## retrieve labels from the original data (possibly w/ transformation)
-                .label.fun = get_brush_attr(data, '.label.fun')
+                .label.fun = brush_attr(data, '.label.fun')
                 .brush.labels = .label.fun(data[.brushed, vars])
                 .vars = c('case id', vars)
                 ## truncate the id strings if too long
@@ -376,8 +401,19 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
                                  max(nchar(c(.brush.labels, .vars)))))
                 .brush.labels = c(.caseid, .brush.labels)
                 .brush.labels = paste(.vars, .brush.labels, sep = ': ', collapse = '\n')
-                qstrokeColor(painter) = get_brush_attr(data, '.label.color')
-                qdrawText(painter, .brush.labels, .bpos[1], .bpos[2], valign="top", halign="left")
+                bgwidth = qstrWidth(painter, .brush.labels)
+                bgheight = qstrHeight(painter, .brush.labels)
+                ## adjust drawing directions when close to the boundary
+                hflag = lims[2] - .bpos[1] > bgwidth
+                vflag = .bpos[2] - lims[3] > bgheight
+                qdrawRect(painter, .bpos[1], .bpos[2],
+                          .bpos[1] + ifelse(hflag, 1, -1) * bgwidth,
+                          .bpos[2] + ifelse(vflag, -1, 1) * bgheight,
+                          stroke = rgb(1, 1, 1, 0.5), fill = rgb(1, 1, 1, 0.5))
+                qstrokeColor(painter) = brush_attr(data, '.label.color')
+                qdrawText(painter, .brush.labels, .bpos[1], .bpos[2],
+                          halign = ifelse(hflag, "left", "right"),
+                          valign = ifelse(vflag, "top", "bottom"))
             }
         }
         if (verbose)

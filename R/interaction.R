@@ -52,8 +52,8 @@ qmutaframe = function(data, ...) {
     ## e.g. attrs related to the brush (scalars, functions, or data frames)
     attr(mf, '.brush.attr') = mutalist(.brush.color = 'yellow', .brush.size = 1,
         .brushed.color = 'yellow', .brushed.size = 2, .brush.mode = 'none',
-        .label.show = FALSE, .label.fun = summary_one, .label.color = 'red',
-        .brush.history = data.frame(X = logical(nrow(mf))), .brush.index = 1)
+        .label.show = FALSE, .label.fun = summary_one, .label.color = 'gray40',
+        .brush.history = list(), .brush.index = 0, .history.size = 30)
     ## here '.brush.mode' is explained in the documentation of mode_selection()
 
     ## and other possible attributes
@@ -103,9 +103,8 @@ mode_selection = function(x, y, mode = 'none'){
 ##' Get or set brush attributes
 ##'
 ##' Get or set brush attributes
-##' @aliases get_brush_attr set_brush_attr
-##' @usage get_brush_attr(data, attr)
-##' set_brush_attr(data, attr, value)
+##' @usage brush_attr(data, attr)
+##' brush_attr(data, attr) <- value
 ##' @title Get or Set Brush Attributes
 ##' @param data the mutaframe created by \code{\link{qmutaframe}},
 ##' with an attribute '.brush.attr'
@@ -113,23 +112,29 @@ mode_selection = function(x, y, mode = 'none'){
 ##' (the color of the brush), '.brushed.color' (the color of the
 ##' objects selected by the brush), '.brush.size' (the line width of
 ##' the brush), and '.brushed.size' (the size of the selected objects,
-##' e.g. line width or size of points)
-##' @return the brush attribute (or as a side effect, change the attribute)
+##' e.g. line width or size of points); \code{attr} can be a vector to
+##' access multiple attributes when querying brush attributes (but it
+##' is only allowed to set one attribute at a time)
+##' @return the brush attribute(s) (or as a side effect, change the attribute of
+##' \code{data})
 ##' @author Yihui Xie <\url{http://yihui.name}>
-get_brush_attr = function(data, attr) {
-    attr(data, '.brush.attr')[[attr]]
+##' @examples qiris = qmutaframe(head(iris))
+##' brush_attr(qiris)  # all attributes
+##' brush_attr(qiris, '.brush.color')
+##' brush_attr(qiris, c('.brushed.color', '.brushed.size'))
+##' brush_attr(qiris, '.brush.color') = 'green'  # set brush color to green
+brush_attr = function(data, attr) {
+    .brush.attr = base::attr(data, '.brush.attr')
+    if (missing(attr)) {
+        .brush.attr
+    } else {
+        if (length(attr) == 1) .brush.attr[[attr]] else .brush.attr[attr]
+    }
 }
-set_brush_attr = function(data, attr, value) {
+`brush_attr<-` = function(data, attr, value) {
     attr(data, '.brush.attr')[[attr]] = value
+    data
 }
-## a weird issue here: I want to define a function `brush_attr<-` but failed;
-## if I use brush_attr(data, attr) <- value, the 'data' object will be changed to 'value'. Why?
-## brush_attr = function(data, attr) {
-##     attr(data, '.brush.attr')[[attr]]
-## }
-## `brush_attr<-` = function(data, attr, value) {
-##     attr(data, '.brush.attr')[[attr]] = value
-## }
 
 
 

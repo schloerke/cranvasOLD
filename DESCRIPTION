@@ -15,7 +15,7 @@ Maintainer: Yihui Xie <xie@iastate.edu>
 Description: Experiments with interactive graphics based on the pipeline
              design pattern and a layered canvas. Features include coordinated
              multiple views, linked brushing, ...
-License: ??? BSD? MIT? 
+License: GPL
 LazyLoad: yes
 URL: http://www.github.com/bigbear/cranvas
 Imports: qtpaint, reshape, plyr, plumbr (>= 0.0-3)

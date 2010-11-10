@@ -18,10 +18,10 @@ qparallel(qnrc, vars = nms[7:13], main = 'Overview of Rankings', glyph='tick', c
 ## How to find out ISU by intersection and negation? public, midwest, large program
 
 ## show data labels
-set_brush_attr(qnrc, '.label.show', TRUE)
-set_brush_attr(qnrc, '.label.color', 'yellow')
+brush_attr(qnrc, '.label.show') = TRUE
+brush_attr(qnrc, '.label.color') = 'yellow'
 
-set_brush_attr(qnrc, '.label.show', FALSE)
+brush_attr(qnrc, '.label.show') = FALSE
 
 qnrc$.color = 'red'
 
