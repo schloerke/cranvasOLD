@@ -150,28 +150,41 @@ qhist <- function(
 		# print(event$key())
 		key <- event$key()
 		
-		datachanged <- FALSE
-		formulachanged <- FALSE
-		form <- parse_product_formula(formula)
+		# datachanged <- FALSE
+		# formulachanged <- FALSE
+		# form <- parse_product_formula(formula)
 		
 		altered <- FALSE
 		if (key == Qt$Qt$Key_Up) {						# arrow up
 			.binwidth <<- .binwidth * 1.10
+			altered <- TRUE
 		} else if (key == Qt$Qt$Key_Down) {		# arrow down
 			.binwidth <<- .binwidth / 1.10
+			altered <- TRUE
 		} else if (key == Qt$Qt$Key_Left) {		# arrow left
 			.data_start_pos <<- .data_start_pos + range(n_data[,xCol]) / 60
+			altered <- TRUE
 		} else if (key == Qt$Qt$Key_Right) {	# arrow left
 			.data_start_pos <<- .data_start_pos - range(n_data[,xCol]) / 60
+			altered <- TRUE
 		} else if (key == Qt$Qt$Key_A) {			# 'c' or 'C' for 'condition'
 			.type <<- "ash"
+			altered <- TRUE
 		} else if (key == Qt$Qt$Key_D) {			# 'c' or 'C' for 'condition'
 			.type <<- "density"
+			altered <- TRUE
 		} else if (key == Qt$Qt$Key_O) {			# 'c' or 'C' for 'condition'
 			.type <<- "dot"
+			altered <- TRUE
 		} else if (key == Qt$Qt$Key_H) {			# 'c' or 'C' for 'condition'
 			.type <<- "hist"
+			altered <- TRUE
 		}
+		
+		if (altered) {
+			# qupdate()
+		}
+		
 	}
 	#######################################################
 	# Brushing 
