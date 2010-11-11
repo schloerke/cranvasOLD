@@ -17,7 +17,7 @@
 ##' @examples
 ##' iris0 = qmutaframe(iris, .color = 'red', .brushed = FALSE)
 ##' ## the line width >= 2 does not work for me, so use 1
-##' set_brush_attr(iris0, '.brushed.size', 1)
+##' brush_attr(iris0, '.brushed.size') = 1
 ##' qparallel(iris0)
 ##' ## random colors
 ##' iris0$.color = sample(1:8, nrow(iris), replace = TRUE)
@@ -29,9 +29,9 @@
 ##'     Sys.sleep(1)
 ##' }
 ##' ## change the brush color to green
-##' set_brush_attr(iris0, '.brush.color', 'green')
+##' brush_attr(iris0, '.brush.color') = 'green'
 ##' ## change brushed lines to black
-##' set_brush_attr(iris0, '.brushed.color', 'black')
+##' brush_attr(iris0, '.brushed.color') = 'black'
 qmutaframe = function(data, ...) {
     if (!is.data.frame(data)) data = as.data.frame(data)
     ## check if the attribute exists

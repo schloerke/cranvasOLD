@@ -5,8 +5,8 @@ require(plumbr)
 iris.col <- brewer.pal(3, "Set1")[as.integer(iris$Species)]
 qiris <- qmutaframe(iris, .brushed = FALSE, .color = iris.col)
 
-set_brush_attr(qiris, '.brushed.size', 2)
-set_brush_attr(qiris, '.brushed.color', "orange")
+brush_attr(qiris, '.brushed.size') <- 2
+brush_attr(qiris, '.brushed.color') <- "orange"
 
 #### demo 1: qscatter on it's own
 display <- qscatter(data = qiris, form = Petal.Length~Sepal.Width)

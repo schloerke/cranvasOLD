@@ -16,14 +16,14 @@ source("/Users/dicook/cranvas/code/files/Yihui/qparallel.R")
 #  create mutaframes inside the data first
 iris.col = brewer.pal(3, "Set1")[as.integer(iris$Species)]
 qiris = qmutaframe(iris, .brushed = FALSE, .color = iris.col)
- 
-set_brush_attr(qiris, '.brushed.size', 1)
- 
+
+brush_attr(qiris, '.brushed.size') <- 1
+
 qparallel(qiris)
 qparallel(qiris)
 
 # Hadley's tour
-source("/Users/dicook/cranvas/code/files/Hadley/tourr-gui.r") 
+source("/Users/dicook/cranvas/code/files/Hadley/tourr-gui.r")
 # gui_xy(olive)
 
 # Di's modifications
@@ -46,7 +46,7 @@ qparallel(qolive)
 gui_xy(qolive)
 
 qolive$.brushed[1:300]<-TRUE
-  
+
 # Mosaic plots
 require(productplots)
 source("/Users/dicook/cranvas/code/files/Heike/mosaic-hilite.r")
@@ -60,9 +60,9 @@ qmosaic(qiris, ~Species,"hbar")
 qparallel(qiris)
 
 qhappy <- qmutaframe(happy, .brushed = FALSE)
-set_brush_attr(qhappy, '.brushed.color', "yellow")
-qmosaic(qhappy, ~ happy, c("hbar"))  
-qmosaic(qhappy, ~ degree+sex+happy, c("vspine","hspine","hspine"))  
+brush_attr(qhappy, '.brushed.color') <- "yellow"
+qmosaic(qhappy, ~ happy, c("hbar"))
+qmosaic(qhappy, ~ degree+sex+happy, c("vspine","hspine","hspine"))
 
 # Tengfei's code
 source('/Users/dicook/cranvas/code/files/Tengfei/eos/R/qcircle-utils.R')
@@ -76,10 +76,10 @@ rownames(qnrc)=paste(nrcstat$Institution.Name, nrcstat$Program.Name, sep = ' -> 
 nms = names(nrcstat)
 
 ## Overview: type, rankings
-set_brush_attr(qnrc, '.label.show', TRUE)
-set_brush_attr(qnrc, '.label.color', 'black')
+brush_attr(qnrc, '.label.show') <- TRUE
+brush_attr(qnrc, '.label.color') <- 'black'
 
-#set_brush_attr(qnrc, '.label.show', FALSE)
+#brush_attr(qnrc, '.label.show') <- FALSE
 
 qnrc$.color = 'red'
 
@@ -107,14 +107,14 @@ bigData <- qmutaframe(data.frame(x = rnorm(rows), y = floor(rnorm(rows) * 7)))
 qhist(bigData)
 
 # each column is split evenly
-qhist(bigData, splitByCol = "y", title = "Toture - stack") 
-qhist(bigData, splitByCol = "y", title = "Toture - stack", horizontal = FALSE) 
+qhist(bigData, splitByCol = "y", title = "Toture - stack")
+qhist(bigData, splitByCol = "y", title = "Toture - stack", horizontal = FALSE)
 
 # each column has similar height colors
-qhist(bigData, splitByCol = "y", title = "Toture - dodge", position = "dodge") 
+qhist(bigData, splitByCol = "y", title = "Toture - dodge", position = "dodge")
 
 # range from 0 to 1
-qhist(bigData, splitByCol = "y", title = "Toture - relative", position = "relative") 
+qhist(bigData, splitByCol = "y", title = "Toture - relative", position = "relative")
 
 # color tests
 # all color is defined

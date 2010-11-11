@@ -9,8 +9,8 @@ library(qtbase)
 library(qtpaint)
 library(plumbr)
 
-# st<-read.csv("/Users/dicook/cranvas/code/files/Di/map-sample.csv") 
-# st.all<-read.csv("/Users/dicook/cranvas/code/files/Di/cartogram-polygons.csv") 
+# st<-read.csv("/Users/dicook/cranvas/code/files/Di/map-sample.csv")
+# st.all<-read.csv("/Users/dicook/cranvas/code/files/Di/cartogram-polygons.csv")
 # qmap(st)
 # qmap(st.all, id="State", x="Longitude", y="Latitude")
 # qst.all <- qmutaframe(st.all, .brushed=FALSE)
@@ -27,9 +27,9 @@ qmap<-function(data, id="id", x="x", y="y", label="label", vars, ...) {
 #  lims <- qrect(xr[1]-0.1*(xr[2]-xr[1]), yr[1]-0.1*(yr[2]-yr[1]), xr[1]+0.1*(xr[2]-xr[1]),yr[1]+0.1*(yr[2]-yr[1]))
   lims <- qrect(0, 0, 500, 500)
   #cat(xr[1], xr[2], yr[1], yr[2], "\n")
-  
+
   scene = qscene()
-	
+
 #  bglayer = qlayer(scene, coords, limits = lims, clip = FALSE
 #		# , keyPressFun=keyPressFun
 #  )
@@ -42,59 +42,59 @@ qmap<-function(data, id="id", x="x", y="y", label="label", vars, ...) {
      cat("\nMap Hover Draw\n")
      # Don't draw when brushing
 #    if (is.null(.map_queryPos)) return()
-		
+
 #    x <- .map_queryPos[2]
 #    y <- .map_queryPos[1]
-		
+
 #    section <- subset(maps_info$data, (y <= top) & (y >= bottom) & (x <= right) & (x >=left))
-	
+
     # Nothing under mouse
 #    if (nrow(section) == 0) {
 #      .map_hover_section <<- list(top = -1, bottom = 1, right = -1, left = 1)
 #      return()
-#    } 
-	
-	
+#    }
+
+
     # Highlight the polygon
-#    brushColor <- get_brush_attr(mf_data, ".brushed.color")
+#    brushColor <- brush_attr(mf_data, ".brushed.color")
 #    qdrawRect(painter,
 #      xleft = c(section$bottom), #left
-#      ybottom = c(section$right), # bottom 
+#      ybottom = c(section$right), # bottom
 #      xright = c(section$top), # right
 #      ytop = c(section$left), # top
 #      stroke = brushColor,
 #      fill = c(NA)# fill
 #    )
-	
+
     # Work out label text
 #    infostring <- paste("\nbin:", section[1,"label"], sep = " ")
-		
+
 #    qstrokeColor(painter) <- "white"
     qdrawText(painter, infostring, .map_queryPos[1], .map_queryPos[2], valign="top", halign="left")
-  	
+
 #    .map_hover_section <<- list(top = section$top, bottom = section$bottom, left = section$left, right = section$right)
   }
-  
+
   map_hover <- function(item, event, ...) {
-  # if (.brush) return() 
-		
+  # if (.brush) return()
+
   .map_queryPos <<- as.numeric(event$pos())
   # qupdate(querylayer)
-		
+
   cat("\nMap Hover\n")
-	
+
   x <- .map_queryPos[2]
   y <- .map_queryPos[1]
 
   cat("x: ", x, "\ty: ", y, "\n")
-		
+
 #    if ( !((y <= .map_hover_section$top) & (y >= .map_hover_section$bottom) & (x <= .map_hover_section$right) & (x >= .map_hover_section$left))) {
     qupdate(hoverlayer)
   }
-	
+
   polygon_leave <- function(item, event, ...) {
-  # if (.brush) return() 
-  # 
+  # if (.brush) return()
+  #
   # .map_queryPos <<- as.numeric(event$pos())
   # qupdate(querylayer)
     cat("\nMap Leave\n")
@@ -118,7 +118,7 @@ qmap<-function(data, id="id", x="x", y="y", label="label", vars, ...) {
   datalayer = qlayer(scene, mapdraw, limits = lims, clip = FALSE)
   hoverlayer = qlayer(scene, map_hover_draw, limits = lims, clip = FALSE,
     hoverMoveFun = map_hover, hoverLeaveFun = polygon_leave)
-     
+
   qplotView(scene = scene)
 
 }

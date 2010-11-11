@@ -14,10 +14,10 @@
 gui_xy <- function(qdata = qflea, ...) {
 
   data <- data.frame(qdata)
-  
+
   # Get the brush color
-  bcol <<- get_brush_attr(qdata, '.brushed.color')
-  
+  bcol <<- brush_attr(qdata, '.brushed.color')
+
   num <- sapply(data, is.numeric)
 
   cat("Starting the tour...\n")
@@ -33,16 +33,16 @@ gui_xy <- function(qdata = qflea, ...) {
     cat(" Updating tour...",bcol, "\n")
 
     data <- data.frame(qdata)
-    tour <<- create_tour(data, 
-      var_selected = svalue(Variables), 
-      cat_selected = svalue(Class), 
+    tour <<- create_tour(data,
+      var_selected = svalue(Variables),
+      cat_selected = svalue(Class),
       axes_location = svalue(dl),
       tour_type = svalue(TourType),
       aps = svalue(sl),
       cur_proj = cur_proj
     )
     cat("update_tour brush values ", data$.brushed[1], data$.brushed[500], "colours ", tour$colour[1], tour$colour[500], "\n")
-    
+
     tour_anim <<- with(tour, new_tour(data, tour_path, cur_proj))
     TRUE
   }
@@ -58,7 +58,7 @@ gui_xy <- function(qdata = qflea, ...) {
       pause(TRUE)
       return()
     }
-    
+
     cur_time <- proc.time()[3]
     delta <<- (cur_time - last_time)
     if (is.null(delta_sm)) delta_sm <<- delta
@@ -74,7 +74,7 @@ gui_xy <- function(qdata = qflea, ...) {
      }
 
     cur_proj <<- tour_step$proj
-    
+
     data_proj <<- tour$data %*% tour_step$proj
     data_proj <<- scale(data_proj, center = TRUE, scale = FALSE)
     qupdate(points)
@@ -84,36 +84,36 @@ gui_xy <- function(qdata = qflea, ...) {
     col <- alpha(tour$colour, svalue(sl_alpha))
     size <- svalue(sl_size)
     if (size < 0.5) {
-      qdrawPoint(painter, data_proj[, 1], data_proj[,2], stroke = col)      
+      qdrawPoint(painter, data_proj[, 1], data_proj[,2], stroke = col)
     } else {
       circle <- qglyphCircle(size)
       qstrokeColor(painter) <- NA
       qdrawGlyph(painter, circle, data_proj[, 1], data_proj[,2], fill = col)
     }
-    
+
     if (!is.null(delta)) {
       qstrokeColor(painter) <- "black"
-      qdrawText(painter, sprintf("%.1f", 1 / delta_sm), 1, 1, "right", "top")      
+      qdrawText(painter, sprintf("%.1f", 1 / delta_sm), 1, 1, "right", "top")
     }
   }
-  
+
   render_axes  <- function(item, painter, exposed) {
     if (is.null(cur_proj)) return()
 
     pos <- cur_proj
     labels <- abbreviate(colnames(tour$data))
-     
+
     qstrokeColor(painter) <- "grey50"
     qdrawSegment(painter, 0, 0, pos[, 1], pos[, 2])
     theta <- seq(0, 2 * pi, length = 50)
     qdrawLine(painter, cos(theta), sin(theta))
-    
+
     r <- sqrt(rowSums(pos ^ 2))
     qdrawText(painter, labels[r > 0.1], pos[r > 0.1, 1], pos[r > 0.1, 2])
   }
-  
+
   # ==================Controls==========================
-  w <- gwindow("XY tour", visible = FALSE, 
+  w <- gwindow("XY tour", visible = FALSE,
     handler = function(...) {
       pause(TRUE)
       view$close()
@@ -122,16 +122,16 @@ gui_xy <- function(qdata = qflea, ...) {
 
   # Variable selection column
   vbox[1, 1, anchor = c(-1, 0)] <- "Variable Selection"
-  vbox[2, 1] <- Variables <- gcheckboxgroup(names(data[num]), 
+  vbox[2, 1] <- Variables <- gcheckboxgroup(names(data[num]),
     checked = TRUE, horizontal = FALSE, handler = update_tour)
-    
+
   class_box <- ggroup(hor = F)
   add(class_box, glabel("Colour by"))
-  add(class_box, Class <- gtable(c("None", names(data)[!num]), 
+  add(class_box, Class <- gtable(c("None", names(data)[!num]),
     multiple = TRUE), expand = TRUE)
   addhandlerclicked(Class, update_tour)
   vbox[5, 3, expand = TRUE] <- class_box
-  
+
   # Tour selection column
   vbox[1, 2, anchor=c(-1, 0)] <- "Tour Type"
   tour_types <- c("Grand", "Little", "Guided(holes)", "Guided(cm)", "Guided(lda_pp)", "Local")
@@ -140,17 +140,17 @@ gui_xy <- function(qdata = qflea, ...) {
 
   # control aesthetics
   aes_box <- glayout()
-  
+
   aes_box[1,1, anchor = c(1, -1)] <- "Speed"
-  aes_box[1,2, expand = TRUE] <- sl <- 
+  aes_box[1,2, expand = TRUE] <- sl <-
     gslider(from = 0, to = 5, by = 0.1, value = 1)
   aes_box[2,1, anchor = c(1, -1)] <- "Transparency"
-  aes_box[2,2, expand = TRUE] <- sl_alpha <- 
+  aes_box[2,2, expand = TRUE] <- sl_alpha <-
     gslider(from = 0.01, to = 1, by = 0.01, value = 1)
   aes_box[3,1, anchor = c(1, -1)] <- "Size"
-  aes_box[3,2, expand = TRUE] <- sl_size <- 
+  aes_box[3,2, expand = TRUE] <- sl_size <-
     gslider(from = 0, to = 8, by = 0.5, value = 2)
-  
+
   vbox[5, 1:2] <- aes_box
 
   # buttons control
@@ -166,15 +166,15 @@ gui_xy <- function(qdata = qflea, ...) {
   chk_pause <- gcheckbox("Pause",
     handler = function(h, ...) pause(svalue(h$obj)))
   vbox[1, 3] <- chk_pause
-    
-  buttonGroup <- ggroup(horizontal = F, cont=vbox)  
+
+  buttonGroup <- ggroup(horizontal = F, cont=vbox)
   glabel("Optimise for:", cont = buttonGroup)
-  gradio(c("Quality", "Speed"), cont = buttonGroup, 
+  gradio(c("Quality", "Speed"), cont = buttonGroup,
     handler = function(ev, ...) {
       view$setOpenGL(svalue(ev$obj) == "Speed")
     })
   vbox[2, 3, anchor = c(0, 1)] <- buttonGroup
-  
+
   # Create canvas for displaying tour
   scene <- qscene()
   root <- qlayer(scene, geometry=qrect(0, 0, 600, 600))
@@ -201,9 +201,9 @@ gui_xy <- function(qdata = qflea, ...) {
 
   view <- qplotView(scene = scene, opengl = FALSE)
   print(view)
-  
+
   invisible()
-  
+
 }
 
 create_tour <- function(data, var_selected, cat_selected, axes_location, tour_type, aps, cur_proj) {
@@ -213,7 +213,7 @@ create_tour <- function(data, var_selected, cat_selected, axes_location, tour_ty
   }
 
   cat("In create_tour\n")
-  
+
   # Work out point colours
   if (length(cat_selected) > 0  && cat_selected[1] != "None" ) {
     categ <- data[cat_selected]
@@ -236,23 +236,23 @@ create_tour <- function(data, var_selected, cat_selected, axes_location, tour_ty
     cat("Setting brush colors\n")
 #  }
   cat("create_tour brush values ", data$.brushed[1], data$.brushed[500], "colours ", data$.color[1], col[1], data$.color[500], col[500], "\n")
-  
+
   # Work out which type of tour to use
   tour <- switch(tour_type,
-    "Grand" = grand_tour(), 
-    "Little" = little_tour(), 
-    "Guided(holes)" = guided_tour(holes), 
-    "Guided(cm)" = guided_tour(cm), 
+    "Grand" = grand_tour(),
+    "Little" = little_tour(),
+    "Guided(holes)" = guided_tour(holes),
+    "Guided(cm)" = guided_tour(cm),
     "Guided(lda_pp)" = guided_tour(lda_pp(data[,cat_selected])),
     "Local" = local_tour(cur_proj)
   )
-    
+
   sel <- data[var_selected]
   # Sphere the data if we're using a guided tour
   if (length(grep(tour_type, "Guided")) > 0) {
     sel <- sphere(sel)
   }
-  
+
   list(
     data = rescale(sel),
     tour_path = tour,
