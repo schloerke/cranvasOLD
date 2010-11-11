@@ -19,7 +19,7 @@
 ##' ## old iris as the toy example
 ##' qiris = qmutaframe(iris)
 ##' qparallel(qiris)
-##' data_selector(qiris, 'RGtk2')
+##' data_selector(qiris, , 'RGtk2')
 ##'
 ##' ## NRC rankings
 ##' data(nrcstat)
@@ -44,22 +44,20 @@ data_selector = function(data, vars, gui.type = c('qtpaint', 'RGtk2', 'Qt')) {
         if (!require(pkg, character.only = TRUE))
             stop('Please first install.packages(', pkg, ').')
         options('guiToolkit' = gui.type)
-        gg = ggroup(horizontal = FALSE, container = gwindow('Text Viewer'))
+        gg = ggroup(horizontal = FALSE, container = gwindow('Data Selector'))
         gtbl = gtable(xx, multiple = TRUE, container = gg, expand = TRUE)
         addHandlerClicked(gtbl, handler = function(h, ...) {
                    data$.brushed = (x %in% svalue(h$obj))
                })
         gtxt = gedit(container = gg)
-        addHandlerKeystroke(gtxt, handler = function(h, ...) {
-            if (svalue(h$obj) != '') {
-                idx = grep(svalue(h$obj), as.character(x), ignore.case = TRUE)
-                svalue(gtbl) = x[idx]
-                if (h$key == '\r') {
-                    .brushed = logical(length(x))
-                    .brushed[idx] = TRUE
-                    data$.brushed = .brushed
-                }
-            }
+        addHandlerChanged(gtxt, handler = function(h, ...) {
+            idx = if (svalue(h$obj) != '') {
+                grep(svalue(h$obj), as.character(x), ignore.case = TRUE)
+            } else integer(0)
+            svalue(gtbl) = x[idx]
+            .brushed = logical(length(x))
+            .brushed[idx] = TRUE
+            data$.brushed = .brushed
         })
     }
 }
