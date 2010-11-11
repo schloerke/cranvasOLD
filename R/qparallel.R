@@ -36,15 +36,23 @@
 ##' @param amount jitter amount
 ##' @param mar margin (in proportion to the whole canvas)
 ##' @param main the title
+##' @param lab.split the pattern to ``break'' the axis labels by
+##' \code{'\n'}; the default \code{'[^[:alnum:]]'} means any
+##' characters which are not alphanumeric will be replaced by
+##' \code{'\n'}, i.e. the labels will be broken into several lines;
+##' this can be useful when the axis labels are too long (if we do not
+##' break them, they will be squeezed together along the axes)
 ##' @param verbose print some extra information (mainly the time
-##' consumed in each step)
+##' consumed in each step); set \code{lab.split = NULL} to keep the
+##' labels untouched
 ##' @return NULL
 ##' @author Yihui Xie <\url{http://yihui.name}>
 qparallel = function(data, vars, scale = "range", na.action = na.impute,
     center = NULL, order = c('none', 'MDS', 'ANOVA'), horizontal = TRUE,
     glyph = c('auto', 'line', 'tick', 'circle', 'square', 'triangle'),
     boxplot = FALSE, boxwex, jitter = NULL, amount = NULL,
-    mar = c(0.04, 0.04, 0.04, 0.04), main, verbose = getOption("verbose")) {
+    mar = c(0.04, 0.04, 0.04, 0.04), main, lab.split = '[^[:alnum:]]',
+    verbose = getOption("verbose")) {
 
     ## parameters for the brush
     .brush.attr = brush_attr(data)
@@ -209,6 +217,14 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         idx = (ytickloc > lims[1, 2]) & (ytickloc < lims[2, 2])
         ytickloc <<- ytickloc[idx]
         yticklab <<- yticklab[idx]
+        if (!is.null(lab.split)) {
+            if (horizontal) {
+                xticklab <<- gsub(lab.split, '\n', xticklab)
+            } else {
+                ## This crashes R; I don't know why
+                ## yticklab <<- gsub(lab.split, '\n', yticklab)
+            }
+        }
 
         ## 'auto' means 'line's when n*p<=5000*10, and 'tick's otherwise
         if (glyph == 'auto') glyph <<- ifelse(n * p <= 50000, 'line', 'tick')
@@ -476,7 +492,8 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
     ## the y-axis layer needs 'dynamic' width determined by #{characters}
     ## here is a formula by my rule of thumb: 9 * nchar + 5
     layout$setColumnMaximumWidth(0, 9 * max(nchar(yticklab)) + 5)
-    layout$setRowMaximumHeight(2, 30)
+    layout$setRowMaximumHeight(2, 20 + 15 * max(sapply(gregexpr('\\n', xticklab),
+                              function(xx) ifelse(any(xx <0), 0, length(xx)) + 1)))
     layout$setColumnMaximumWidth(2, 10)
 
     view = qplotView(scene = scene)
