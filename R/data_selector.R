@@ -26,6 +26,8 @@
 ##' qnrc = qmutaframe(nrcstat)
 ##' qparallel(qnrc, vars = 7:13, main = 'Overview of Rankings')
 ##' data_selector(qnrc, 'Institution.Name', 'RGtk2')
+##' qparallel(qnrc, vars = 14:19, main = 'Research, Student Support, Diversity')
+##' qparallel(qnrc, vars = 20:26, main = 'Publication, Award, Time to Degree')
 ##' }
 data_selector = function(data, vars, gui.type = c('qtpaint', 'RGtk2', 'Qt')) {
     if (missing(vars)) {
@@ -42,7 +44,7 @@ data_selector = function(data, vars, gui.type = c('qtpaint', 'RGtk2', 'Qt')) {
     } else {
         pkg = paste('gWidgets', gui.type, sep = '')
         if (!require(pkg, character.only = TRUE))
-            stop('Please first install.packages(', pkg, ').')
+            stop("Please first install.packages('", pkg, "').")
         options('guiToolkit' = gui.type)
         gg = ggroup(horizontal = FALSE, container = gwindow('Data Selector'))
         gtbl = gtable(xx, multiple = TRUE, container = gg, expand = TRUE)
