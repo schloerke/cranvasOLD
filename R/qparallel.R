@@ -221,8 +221,7 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
             if (horizontal) {
                 xticklab <<- gsub(lab.split, '\n', xticklab)
             } else {
-                ## This crashes R; I don't know why
-                ## yticklab <<- gsub(lab.split, '\n', yticklab)
+                yticklab <<- gsub(lab.split, '\n', yticklab)
             }
         }
 
@@ -491,9 +490,9 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
     layout$setRowMaximumHeight(0, 30)
     ## the y-axis layer needs 'dynamic' width determined by #{characters}
     ## here is a formula by my rule of thumb: 9 * nchar + 5
-    layout$setColumnMaximumWidth(0, 9 * max(nchar(yticklab)) + 5)
-    layout$setRowMaximumHeight(2, 20 + 15 * max(sapply(gregexpr('\\n', xticklab),
-                              function(xx) ifelse(any(xx <0), 0, length(xx)) + 1)))
+    layout$setColumnMaximumWidth(0, 9 * max(nchar(unlist(strsplit(yticklab, '\n')))) + 5)
+    layout$setRowMaximumHeight(2, 15 * max(sapply(gregexpr('\\n', xticklab),
+                              function(xx) ifelse(any(xx <0), 0, length(xx)) + 2)))
     layout$setColumnMaximumWidth(2, 10)
 
     view = qplotView(scene = scene)
