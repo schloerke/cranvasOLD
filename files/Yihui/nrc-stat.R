@@ -1,7 +1,8 @@
 library(plumbr)
 library(qtpaint)
 
-## nrcstat = read.csv('nrcstat.csv')
+## nrcstat = read.csv('../data/nrcstat.csv')
+## source('../load.r')
 data(nrcstat)
 ## names(nrc)[8]='Regional.Code'
 ## nrc$Regional.Code=factor(nrc$Regional.Code, labels=c('NE','MW','SA','SC', 'W'))
@@ -10,9 +11,9 @@ qnrc = qmutaframe(nrcstat)
 rownames(qnrc)=paste(nrcstat$Institution.Name, nrcstat$Program.Name, sep = ' -> ')
 
 ## Overview: type, rankings
-qparallel(qnrc, vars = 7:13, main = 'Overview of Rankings')
+qparallel(qnrc, vars = 10:13, main = 'Overview of Rankings')
 qnrc$.color = 'red'
-qparallel(qnrc, vars = 7:13, main = 'Overview of Rankings', glyph='tick', center=median, boxplot=TRUE, order = TRUE)
+qparallel(qnrc, vars = 10:13, main = 'Overview of Rankings', glyph='tick', center=median, boxplot=TRUE, order = TRUE)
 
 ## How to find out ISU by intersection and negation? public, midwest, large program
 

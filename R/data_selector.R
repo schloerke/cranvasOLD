@@ -24,7 +24,7 @@
 ##' ## NRC rankings
 ##' data(nrcstat)
 ##' qnrc = qmutaframe(nrcstat)
-##' qparallel(qnrc, vars = 7:13, main = 'Overview of Rankings')
+##' qparallel(qnrc, vars = 10:13, main = 'Overview of Rankings', horizontal=FALSE)
 ##' data_selector(qnrc, 'Institution.Name', 'RGtk2')
 ##' qparallel(qnrc, vars = 14:19, main = 'Research, Student Support, Diversity')
 ##' qparallel(qnrc, vars = 20:26, main = 'Publication, Award, Time to Degree')
