@@ -100,9 +100,9 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
     ## creat some 'global' variables first
     x = y = n = nn = numcol = p = segx0 = segy0 = segx1 = segy1 = segcol =
         xr = yr = xspan = yspan = xticklab = yticklab = xtickloc = ytickloc =
-            .brange = lims = x0 = y0 = NULL
+            .brange = lims = x0 = y0 = plot_data = NULL
 
-    transform_data = function() {
+    data_preprocess = function() {
 
         ## get the plotting data: we don't want to change the original mutaframe
         ##   so get an independent copy here
@@ -140,7 +140,7 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
             if (is.numeric(jitter)) jitter = names(data)[as.integer(jitter)]
             if (is.character(jitter)) {
                 plot_data[, jitter] = apply(plot_data[, jitter, drop = FALSE],
-                         2, base::jitter, amount = amount)
+                                              2, base::jitter, amount = amount)
             }
         }
 
@@ -149,15 +149,17 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
             xna = x[!is.na(x)]
             (x - min(xna))/(max(xna) - min(xna))
         }, var = base:::scale, I = identity, get(scale))
-        plot_data = apply(plot_data, 2, scale)
+        plot_data <<- apply(plot_data, 2, scale)
 
         ## centering
         if (!is.null(center)){
-            plot_data = apply(plot_data, 2, function(xx) {
+            plot_data <<- apply(plot_data, 2, function(xx) {
                 xx - ifelse(is.function(center), center(xx), as.numeric(center))
             })
         }
+    }
 
+    data_calc_order = function() {
         ## ordering variables by MDS or ANOVA
         if (any(numcol)) {
             num_data = plot_data[, numcol, drop = FALSE]
@@ -174,38 +176,39 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
                 }
             })
             if (order != 'none') {
-                vars <<- c(vars[numcol][idx], vars[!numcol])
-                plot_data = plot_data[, vars]
-                numcol <<- rep(c(TRUE, FALSE), table(numcol))
+                return(c(vars[numcol][idx], vars[!numcol]))
             }
         }
+        vars
+    }
 
-        ## flip the variables
+    ## flip the variables
+
+    ## final calculations for graphical primitives, e.g. segments, axis labels
+    data_primitives = function() {
 
         ## switch x and y according to the direction
         if (horizontal) {
             x <<- col(plot_data)
             y <<- plot_data
-            xtickloc = 1:p
-            xticklab = vars
-            ytickloc = pretty(y)
-            yticklab = format(ytickloc)
+            xtickloc <<- 1:p
+            xticklab <<- vars
+            ytickloc <<- pretty(y)
+            yticklab <<- format(ytickloc)
         }
         else {
             x <<- plot_data
             y <<- col(plot_data)
-            xtickloc = pretty(x)
-            xticklab = format(xtickloc)
-            ytickloc = 1:p
-            yticklab = vars
+            xtickloc <<- pretty(x)
+            xticklab <<- format(xtickloc)
+            ytickloc <<- 1:p
+            yticklab <<- vars
         }
         xspan <<- range(x)
         yspan <<- range(y)
         xr <<- diff(xspan)
         yr <<- diff(yspan)
 
-        ## brush range: horizontal and vertical
-        .brange <<- c(xr, yr)/30
         ## margins for the plot region
         mar = rep(mar, length.out = 4)
         lims <<- matrix(c(xspan + c(-1, 1) * xr * mar[c(2, 4)],
@@ -239,14 +242,35 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
             y0 <<- as.vector(t.default(y))
         }
 
+    }
+
+    data_boxplot = function() {
         ## for boxplots
         if (boxplot)
             bxpstats <<- apply(plot_data, 2,
                                function(x) boxplot.stats(x, do.conf = FALSE)$stats)
     }
 
+    ## given orders, rearrange the data
+    ## need to update: numcol, plot_data, vars, boxplot data, primitives data
+    data_reorder = function(vars) {
+        numcol = numcol
+        names(numcol) = colnames(plot_data)
+        numcol <<- numcol[vars]
+        plot_data <<- plot_data[, vars]
+        vars <<- colnames(plot_data)
+        data_boxplot()
+        data_primitives()
+    }
+
     ## do the transformation now
-    transform_data()
+    data_preprocess()
+
+    ## order by MDS or ANOVA
+    data_reorder(data_calc_order())
+
+    ## brush range: horizontal and vertical
+    .brange = c(xr, yr)/30
 
     ## automatic box width
     if (missing(boxwex))
@@ -332,6 +356,47 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         i = which(event$key() == c(Qt$Qt$Key_A, Qt$Qt$Key_O, Qt$Qt$Key_X, Qt$Qt$Key_N, Qt$Qt$Key_C))
         if (length(i))
             brush_attr(data, '.brush.mode') = c('and', 'or', 'xor', 'not', 'complement')[i]
+        i = which(event$key() == c(Qt$Qt$Key_Left, Qt$Qt$Key_Right, Qt$Qt$Key_Down, Qt$Qt$Key_Up))
+        if (length(i) && !any(is.na(.bpos))) {
+            if (horizontal) {
+                j = 1
+                movedir = switch(i, -1, 1, NULL, NULL)
+                flipdir = switch(i, NULL, NULL, -1, 1)
+            } else {
+                j = 2
+                movedir = switch(i, NULL, NULL, -1, 1)
+                flipdir = switch(i, -1, 1, NULL, NULL)
+            }
+            xs = which((1:p) > .bpos[j] - .brange[j] & (1:p) < .bpos[j] + .brange[j])
+            if ((nxs <- length(xs))) {
+                if (!is.null(movedir)) {
+                    vars0 = vars
+                    if (xs[1] > 1 & movedir == -1){
+                        vars0[c(xs[1] - 1, xs)] = vars0[c(xs, xs[1] - 1)]
+                        .bpos[j] <<- .bpos[j] - 1
+                    }
+                    if (xs[nxs] < p & movedir == 1){
+                        vars0[c(xs, xs[nxs] + 1)] = vars0[c(xs[nxs] + 1, xs)]
+                        .bpos[j] <<- .bpos[j] + 1
+                    }
+                    if (any(vars0 != vars)) {
+                        data_reorder(vars0)
+                        qupdate(xaxis_layer)
+                        qupdate(yaxis_layer)
+                        qupdate(main_layer)
+                        qupdate(brush_layer)
+                        if (boxplot) {
+                            data_boxplot()
+                            qupdate(boxplot_layer)
+                        }
+                    }
+                }
+                if (!is.null(flipdir)) {
+                    message('Not implemented yet.')
+                }
+            }
+        }
+        ## data range labels
     }
     identify_key_release = function(layer, event) {
         ## set brush mode to 'none' when release the key
@@ -473,18 +538,22 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
     add_listener(data, function(i, j) {
         switch(j, .brushed = qupdate(brush_layer),
                .color = qupdate(main_layer), {
-                   transform_data()
+                   data_preprocess()
+                   data_primitives()
                    qupdate(grid_layer)
                    qupdate(xaxis_layer)
                    qupdate(yaxis_layer)
                    qupdate(main_layer)
-                   if (boxplot) qupdate(boxplot_layer)
+                   if (boxplot) {
+                       data_boxplot()
+                       qupdate(boxplot_layer)
+                   }
                })
     })
     ## update the brush layer if brush attributes change
     add_listener(.brush.attr, function(i, j) {
         qupdate(brush_layer)
-        })
+    })
 
     layout = root_layer$gridLayout()
     layout$setRowMaximumHeight(0, 30)
