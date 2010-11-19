@@ -1,3 +1,7 @@
+#qtbase v 0.8-4
+#qtpaint v 0.7.9
+#svn 425
+library(qtpaint)
 
 #####################################################################
 ###In-progress Example###
@@ -451,12 +455,13 @@ add_layer<-function(  parent,
                       geometry = qrect(0,0,600,400),
                       clip = F,
                       colspan = 1L,
-                      rowspan = 1L ){
+                      rowspan = 1L,
+                      cache = F ){
 
   if(class(mark)[1]=="function"){
     paintFun<-mark
   }else{
-    paintFun<-function(item, painter, exposed) { draw(mark, painter)}
+    paintFun<-function(item, painter) { draw(mark, painter)}
   }
 
   if(is.null(userlimits)){
@@ -491,7 +496,8 @@ add_layer<-function(  parent,
                    col = col,
                    geometry = geometry,
                    rowSpan = rowspan,
-                   colSpan = colspan)
+                   colSpan = colspan,
+                   cache = cache)
   layer$setLimits(limits)
   self<- structure(list(layer=layer, limits = limits))
   self
