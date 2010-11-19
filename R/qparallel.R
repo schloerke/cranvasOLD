@@ -47,6 +47,8 @@
 ##' labels untouched
 ##' @return NULL
 ##' @author Yihui Xie <\url{http://yihui.name}>
+##' @export
+##' @example cranvas/demo/qparallel-ex.R
 qparallel = function(data, vars, scale = "range", na.action = na.impute,
     center = NULL, order = c('none', 'MDS', 'ANOVA'), horizontal = TRUE,
     glyph = c('auto', 'line', 'tick', 'circle', 'square', 'triangle'),

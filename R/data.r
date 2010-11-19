@@ -22,7 +22,11 @@ na.impute = function(x, method = 'below.min') {
 
 ##' Give a column-wise scalar summary of the data frame or matrix.
 ##'
-##' For numeric columns, the function specified by \code{fun} will be applied (\code{median()} by default); for other types of columns, the mode will be caculated (i.e. the categories that have the maximum frequencies) and the returned value is a single string with the category labels separated by \code{', '}.
+##' For numeric columns, the function specified by \code{fun} will be applied
+##' (\code{median()} by default); for other types of columns, the mode will be
+##' caculated (i.e. the categories that have the maximum frequencies) and the
+##' returned value is a single string with the category labels separated by
+##' \code{', '}.
 ##' @title Give a Column-wise Scalar Summary of the Data Frame or Matrix
 ##' @param x the data frame or matrix to be summarized
 ##' @param fun the function to be applied to numeric columns
