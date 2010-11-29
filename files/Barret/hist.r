@@ -1,35 +1,6 @@
 	require(stringr)
 
-has_column <- function(data, col) {
-	col %in% names(data)
-}
 
-column_coerce <- function(data, column, defaultVal) {
-
-	if (!has_column(data, column)) {
-		data[[column]] <- defaultVal
-	}
-	data
-}
-
-pretty_percent <- function(smallVal) {
-	paste(round(100 * smallVal), "%", sep = "")
-}
-
-data_bin_column <- function(d) {
-
-	dnames <- names(d)
-	locations <- str_detect(dnames, "qhist[1-9]*")
-	if(! any(locations)) {
-		return("qhist1")
-	}
-	histNames <- dnames[locations]
-
-	histNumbers <- str_replace_all(histNames, "qhist", "")
-	histNumbers <- as.numeric(histNumbers)
-
-	str_c("qhist", max(histNumbers) + 1)
-}
 
 
 #' Create a hist plot
@@ -99,6 +70,10 @@ qhist <- function(
 	.lims <- c()
 	.bars_info <- NULL
 	.ranges <- c()
+	.yMin <- 0
+	.yMax <- 0
+	
+	
 
 
 
@@ -117,10 +92,66 @@ qhist <- function(
 	print(head(mf_data))
 	# print(head(n_data))
 
+	
+	dataCol <- function() {
+		mf_data[, xCol]
+	}
 
+	xColRange <- function() {
+		dataRange(dataCol())
+	}
+	
+	maxBinwidthP <- function() {
+		maxBinwidth(dataCol())
+	}
+	
+	baseHistP <- function(...) {
+		baseHist(dataCol(), ...)
+	}	
+	
+	unitShiftP <- function(){ 
+		unitShift(dataCol())
+	}
+	
+	maxShiftP <- function() {
+		maxShift(dataCol())
+	}
+	
+	xMaxStartPosP <- function() {
+		xMaxStartPos(dataCol())
+	}
+	
+	xMinStartPosP <- function() {
+		xMinStartPos(dataCol())
+	}
 
-	temp_breaks <- suppressWarnings(hist(mf_data[,xCol],plot=FALSE,...))$breaks[1:2]
-	.type <- list(type = "hist", binwidth = diff(range(mf_data[, xCol])) / 3, start = temp_breaks[1])
+	xMaxEndPosP <- function() {
+		xMaxEndPos(dataCol())
+	}
+	
+	calcBinPosP <- function(start, binwidth) {
+		calcBinPosition(start, binwidth, xColRange()[2], xMaxEndPosP())
+	}
+	
+	
+	cat(".xMin: ", xMinStartPosP(), ".xMax: ", xMaxEndPosP(), "\n")
+	cat("maxShift(): ", maxShiftP(), "\n")
+	cat("maxBinwidth(): ", maxBinwidthP(), "\n")
+	
+	tmpStartPos <- xMinStartPosP()
+	print(xColRange())
+	while(tmpStartPos <= xMaxStartPosP()) {
+		tB <- calcBinPosP(tmpStartPos, maxBinwidthP())
+		newMax <- max(baseHistP(breaks = tB)$counts)
+		print(newMax)
+		if(newMax > .yMax)
+			.yMax <- newMax
+		tmpStartPos <- tmpStartPos + unitShiftP()
+	}
+	
+	temp_breaks <- baseHistP()$breaks
+	.type <- list(type = "hist", binwidth = diff(temp_breaks[1:2]), start = temp_breaks[1])
+	histOriginalBreaksAndStart <- list(binwidth = .type$binwidth, start = .type$start)
 
 	updateBarsInfo <- function() {
 		.bars_info <<- continuous_to_bars(
@@ -132,16 +163,14 @@ qhist <- function(
 	updateRanges <- function() {
 		# contains c(x_min, x_max, y_min, y_max)
 		if (horizontal) {
-			.ranges <<- c(make_data_ranges(c(0, .bars_info$data$top)), make_data_ranges(.bars_info$breaks))
+			.ranges <<- c(make_data_ranges(c(.yMin, .yMax)), make_data_ranges(c(xMinStartPosP(), xMaxEndPosP())))
 		} else {
-			.ranges <<- c(make_data_ranges(.bars_info$breaks), make_data_ranges( c(0, .bars_info$data$top)))
+			.ranges <<- c(make_data_ranges(c(xMinStartPosP(), xMaxEndPosP())), make_data_ranges(c(.yMin, .yMax)))
 		}
 	}
 	updateRanges()
 
 
-	.type <- list(type = "hist", binwidth = diff(temp_breaks), start = temp_breaks[1])
-	histOriginalBreaksAndStart <- list(binwidth = .type$binwidth, start = .type$start)
 
 	#######################################################
 	# Draw Axes
@@ -211,26 +240,37 @@ qhist <- function(
 		key <- event$key()
 
 		if (key == Qt$Qt$Key_Up) {						# arrow up
-			width <- .type$binwidth * 1.10
-			if(width * 3 + .type$start < max(mf_data[, xCol]))
-			.type$binwidth <<- width
+			.type$binwidth <<- .type$binwidth * 1.10
+			if(.type$binwidth > maxBinwidthP()) .type$binwidth <<- maxBinwidthP()
+			
 		} else if (key == Qt$Qt$Key_Down) {		# arrow down
 			.type$binwidth <<- .type$binwidth / 1.10
+
 		} else if (key == Qt$Qt$Key_Left) {		# arrow left
-			.type$start <<- .type$start - range(mf_data[,xCol]) / 60
+			.type$start <<- .type$start - unitShiftP()
+			# Make sure the start stays close to home
+			if(.type$start < xMinStartPosP()) .type$start <<- xMinStartPosP()
+
 		} else if (key == Qt$Qt$Key_Right) {	# arrow left
-			.type$start <<- .type$start + range(mf_data[,xCol]) / 60
+			.type$start <<- .type$start + unitShiftP()
+			# Make sure the start stays close to home
+			if(.type$start > xMaxStartPosP()) .type$start <<- xMaxStartPosP()
+
 		} else if (key == Qt$Qt$Key_A) {			# 'a' or 'A' for 'condition'
 			.type$type <<- "ash"
 			stop("Ash not implemented")
+
 		} else if (key == Qt$Qt$Key_D) {			# 'd' or 'D' for 'condition'
 			.type$type <<- "density"
 			stop("Ash not implemented")
+
 		} else if (key == Qt$Qt$Key_O) {			# 'o' or 'O' for 'condition'
 			.type$type <<- "dot"
 			stop("Ash not implemented")
+
 		} else if (key == Qt$Qt$Key_H) {			# 'h' or 'H' for 'condition'
 			.type <- list(type = "hist", binwidth = histOriginalBreaksAndStart$binwidth, start = histOriginalBreaksAndStart$start)
+
 		}	else if (key == 82) {			# 'r' or 'R' for 'condition'
 				if(identical(.type$type, "hist")) {
 					print(histOriginalBreaksAndStart)
@@ -238,15 +278,13 @@ qhist <- function(
 					.type$start <<- histOriginalBreaksAndStart$start
 					.type$binwidth <<- histOriginalBreaksAndStart$binwidth
 				}
+
 		} else if (key == 87) {
 			cat("\n\n\nClosing window!!!! - ", qclose(.view), "\n")
 		}
 
 
 
-		# Make sure the start stays close to home
-		if(.type$start < (temp_breaks[1] - 0.1 * diff(range(mf_data[, xCol])))) .type$start <<- temp_breaks[1] - 0.1 * diff(range(mf_data[, xCol]))
-		if(.type$start > (temp_breaks[1] + 0.1 * diff(range(mf_data[, xCol])))) .type$start <<- temp_breaks[1] + 0.1 * diff(range(mf_data[, xCol]))
 
 		if (key %in% c(Qt$Qt$Key_Up, Qt$Qt$Key_Down, Qt$Qt$Key_Left, Qt$Qt$Key_Right, 82
 			# , Qt$Qt$Key_A, Qt$Qt$Key_D, Qt$Qt$Key_O, Qt$Qt$Key_H
@@ -535,9 +573,9 @@ qhist <- function(
 
 	.scene = qscene()
 
-	bglayer = qlayer(.scene, coords, limits = .lims, clip = FALSE, keyPressFun = keyPressFun)
+	bglayer = qlayer(.scene, coords, limits = .lims, clip = FALSE)
 
-	datalayer = qlayer(.scene, hist.all, limits = .lims, clip = FALSE)
+	datalayer = qlayer(.scene, hist.all, limits = .lims, clip = FALSE, keyPressFun = keyPressFun)
 
 	hoverlayer = qlayer(.scene, bar_hover_draw, limits = .lims, clip = FALSE,
 		hoverMoveFun = bar_hover, hoverLeaveFun = bar_leave)

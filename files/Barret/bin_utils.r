@@ -36,12 +36,13 @@ data_bin_column <- function(d) {
 
 # calculate the break positions including start and end
 calcBinPosition <- function(start, width, maxDataPos, maxDrawPos) {
+	cat("start: ", start, "\twidth: ", width, "\tmaxDataPos: ", maxDataPos, "\tmaxDrawPos: ", maxDrawPos, "\n")
 	output <- seq(from = start, to = maxDrawPos, by = width)
-	if(output[length(output)] < maxDataPos){
-		c(output, maxDrawPos)
-	} else {
-		output
+	if(max(output) < maxDataPos){
+		output <- c(output, maxDrawPos)
 	}
+	cat("calcBinPosition: ", str_c(output, collapse = ", "), "\n")
+	output
 }
 
 # find the range of the data

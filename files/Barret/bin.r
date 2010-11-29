@@ -140,7 +140,7 @@ continuous_to_bars <- function(data = NULL, splitBy = NULL, brushed = NULL, type
 	else
 		stop("Please make typeInfo$type one of the following: \"hist\", \"ash\", \"dot\", \"spine\", \"dot\"")
 	
-	breaks <- calcBinPosition(typeInfo$start, typeInfo$binwidth, dataRange(data)[2], xMaxDrawPos(data))
+	breaks <- calcBinPosition(typeInfo$start, typeInfo$binwidth, dataRange(data)[2], xMaxEndPos(data))
 	break_len <- length(breaks)
 
 	bar_top <- table(cut(data, breaks = breaks), splitBy)  
