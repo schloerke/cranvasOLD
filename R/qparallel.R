@@ -394,7 +394,19 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
                     }
                 }
                 if (!is.null(flipdir)) {
-                    message('Not implemented yet.')
+                    plot_data[, xs] <<- apply(plot_data[, xs, drop = FALSE], 2,
+                                              function(xx) {
+                                                  max(xx) + min(xx) - xx
+                                              })
+                    data_primitives()
+                    qupdate(xaxis_layer)
+                    qupdate(yaxis_layer)
+                    qupdate(main_layer)
+                    qupdate(brush_layer)
+                    if (boxplot) {
+                        data_boxplot()
+                        qupdate(boxplot_layer)
+                    }
                 }
             }
         }
