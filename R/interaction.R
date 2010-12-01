@@ -102,10 +102,9 @@ mode_selection = function(x, y, mode = 'none'){
 
 ##' Get or set brush attributes
 ##'
-##' Get or set brush attributes
+##' @aliases brush_attr brush_attr<-
 ##' @usage brush_attr(data, attr)
 ##' brush_attr(data, attr) <- value
-##' @title Get or Set Brush Attributes
 ##' @param data the mutaframe created by \code{\link{qmutaframe}},
 ##' with an attribute '.brush.attr'
 ##' @param attr the name of the brush attribute, e.g. '.brush.color'
