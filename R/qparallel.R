@@ -1,7 +1,7 @@
-##' Parallel Coordinates Plot
-##' Create a parallel coordinates plot from a data frame or matrix, with each line representing a row
+##' Parallel coordinates plot.
+##' Create a parallel coordinates plot from a data frame or matrix, with each
+##' line representing a row.
 ##'
-##' @title Parallel Coordinates Plot
 ##' @param data a mutaframe which is typically built upon a data frame
 ##' along with several row attributes
 ##' @param vars variables to show; can be a character vector (column
@@ -396,7 +396,7 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
                 if (!is.null(flipdir)) {
                     plot_data[, xs] <<- apply(plot_data[, xs, drop = FALSE], 2,
                                               function(xx) {
-                                                  max(xx) + min(xx) - xx
+                                                  lims[c(3,1)[j]] + lims[c(4,2)[j]] - xx
                                               })
                     data_primitives()
                     qupdate(xaxis_layer)
