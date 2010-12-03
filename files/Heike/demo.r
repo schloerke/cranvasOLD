@@ -5,8 +5,8 @@ library(productplots)
 # iris data:
 # link parallel coordinate plot and barchart
 
-setwd("../Yihui")
-source("qparallel.R")
+#setwd("../Yihui")
+#source("../Yihui/qparallel.R", chdir = T)
 
 ## color palette
 library(RColorBrewer)
