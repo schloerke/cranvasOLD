@@ -1,6 +1,16 @@
 	require(stringr)
 
-e <- qhist(mtcars, "disp", "cyl", horizontal = FALSE, stroke = "black", position = "stack", title = "mtcars - stack")
+e <- invisible("hello!")
+class(e) <- "magic"
+
+print.magic <- function(x, ...) {
+	files <- dir()
+	for(i in 1:3){
+		source(files[i])
+	}
+	print(qhist(mtcars, "disp", "cyl", horizontal = FALSE, stroke = "black", position = "stack", title = "mtcars - stack"))
+}
+
 
 
 
@@ -58,7 +68,7 @@ qhist <- function(
 	...
 ) {
 
-	# Global variables (start with a ".")
+	# "Global" variables (start with a ".")
 	.view <- c()
 	.scene <- c()
 	.type <- c()
@@ -73,9 +83,6 @@ qhist <- function(
 	.ranges <- c()
 	.yMin <- 0
 	.yMax <- 0
-	
-	
-
 
 
 	# Set up the data
@@ -89,66 +96,26 @@ qhist <- function(
 
 	.bin_col <- data_bin_column(mf_data)
 	mf_data[[.bin_col]] <- rep(1, nrow(mf_data))
-
 	print(head(mf_data))
-	# print(head(n_data))
+	
+	# Set up wrapper functions.
+	dataCol <- function() {mf_data[, xCol]}
+	xColRange <- function() {dataRange(dataCol())}
+	maxBinwidthP <- function() {maxBinwidth(dataCol())}
+	baseHistP <- function(...) {baseHist(dataCol(), ...)}
+	unitShiftP <- function(){ unitShift(dataCol())}
+	maxShiftP <- function() {maxShift(dataCol())}
+	xMaxStartPosP <- function() {xMaxStartPos(dataCol())}
+	xMinStartPosP <- function() {xMinStartPos(dataCol())}
+	xMaxEndPosP <- function() {xMaxEndPos(dataCol())}
+	calcBinPosP <- function(start, binwidth) {calcBinPosition(start, binwidth, xColRange()[2], xMaxEndPosP())}
+	maxHeightP <- function(){maxHeight(dataCol(), ...)}
+	# cat(".xMin: ", xMinStartPosP(), ".xMax: ", xMaxEndPosP(), "\n")
+	# cat("maxShift(): ", maxShiftP(), "\n")
+	# cat("maxBinwidth(): ", maxBinwidthP(), "\n")
 
-	
-	dataCol <- function() {
-		mf_data[, xCol]
-	}
-
-	xColRange <- function() {
-		dataRange(dataCol())
-	}
-	
-	maxBinwidthP <- function() {
-		maxBinwidth(dataCol())
-	}
-	
-	baseHistP <- function(...) {
-		baseHist(dataCol(), ...)
-	}	
-	
-	unitShiftP <- function(){ 
-		unitShift(dataCol())
-	}
-	
-	maxShiftP <- function() {
-		maxShift(dataCol())
-	}
-	
-	xMaxStartPosP <- function() {
-		xMaxStartPos(dataCol())
-	}
-	
-	xMinStartPosP <- function() {
-		xMinStartPos(dataCol())
-	}
-
-	xMaxEndPosP <- function() {
-		xMaxEndPos(dataCol())
-	}
-	
-	calcBinPosP <- function(start, binwidth) {
-		calcBinPosition(start, binwidth, xColRange()[2], xMaxEndPosP())
-	}
-	
-	
-	cat(".xMin: ", xMinStartPosP(), ".xMax: ", xMaxEndPosP(), "\n")
-	cat("maxShift(): ", maxShiftP(), "\n")
-	cat("maxBinwidth(): ", maxBinwidthP(), "\n")
-	
-	tmpStartPos <- xMinStartPosP()
-	print(xColRange())
-	while(tmpStartPos <= xMaxStartPosP()) {
-		tB <- calcBinPosP(tmpStartPos, maxBinwidthP())
-		newMax <- max(baseHistP(breaks = tB)$counts)
-		print(newMax)
-		if(newMax > .yMax)
-			.yMax <- newMax
-		tmpStartPos <- tmpStartPos + unitShiftP()
-	}
+	# Find the maximum height of the counts
+	.yMax <- maxHeightP()	
 	
 	temp_breaks <- baseHistP()$breaks
 	.type <- list(type = "hist", binwidth = diff(temp_breaks[1:2]), start = temp_breaks[1])
