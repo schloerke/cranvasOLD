@@ -1,5 +1,6 @@
 	require(stringr)
 
+e <- qhist(mtcars, "disp", "cyl", horizontal = FALSE, stroke = "black", position = "stack", title = "mtcars - stack")
 
 
 
@@ -392,7 +393,7 @@ qhist <- function(
 		# .bars_info$data$.brushed <<- rows
 
 		valid_bar_row <<- function(original, left, right, top, bottom) {
-			val <- (left <= rightMouse) & (right >= leftMouse) & (min(bottom) <= topMouse) & (max(top) >= bottomMouse)
+			val <- (left <= rightMouse) && (right >= leftMouse) && (min(bottom) <= topMouse) && (max(top) >= bottomMouse)
 			if(val)
 				1
 			else
