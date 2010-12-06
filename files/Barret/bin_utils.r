@@ -84,7 +84,7 @@ xMinStartPos <- function(d) {
 
 # find the maximum ending position
 xMaxEndPos <- function(d) {
-	dataRange(d)[2] + maxShift(d)
+	dataRange(d)[2] + maxBinwidth(d)
 }
 
 
