@@ -1,4 +1,4 @@
-#LyX 1.6.5 created this file. For more info see http://www.lyx.org/
+#LyX 1.6.7 created this file. For more info see http://www.lyx.org/
 \lyxformat 345
 \begin_document
 \begin_header
@@ -62,11 +62,61 @@
 \begin_body
 
 \begin_layout Title
-Development of Statistical Graphics under Qt
+
+\series bold
+cranvas
+\series default
+: Interactive Statistical Graphics Using Qt
 \end_layout
 
 \begin_layout Author
 ISU Graphics Group
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+%
+\backslash
+VignetteIndexEntry{Development of Statistical Graphics under Qt}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Flex Sweave Options
+status collapsed
+
+\begin_layout Plain Layout
+
+tidy=TRUE
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Scrap
+<<echo=FALSE>>=
+\end_layout
+
+\begin_layout Scrap
+options(keep.blank.line=FALSE)
+\end_layout
+
+\begin_layout Scrap
+@
+\end_layout
+
+\begin_layout Scrap
+
 \end_layout
 
 \begin_layout Section
@@ -75,10 +125,6 @@ Naming conventions
 
 \begin_layout Subsection
 Naming functions and layers
-\end_layout
-
-\begin_layout Standard
-As Hadley suggested:
 \end_layout
 
 \begin_layout Itemize
