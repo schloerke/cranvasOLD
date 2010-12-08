@@ -281,7 +281,7 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
     ## convention of notation:
     ## *_draw means a drawing function for a layer; *_event is an even callback; *_layer is a layer object
 
-    draw.glyph = switch(glyph, tick = qglyphSegment(), circle = qglyphCircle(),
+    draw.glyph = switch(glyph, tick = qglyphSegment(b = ifelse(horizontal, 0, Inf)), circle = qglyphCircle(),
         square = qglyphSquare(), triangle = qglyphTriangle())
 
     ## background grid
