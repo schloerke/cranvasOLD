@@ -1,7 +1,6 @@
 #qtbase v 0.8-4
 #qtpaint v 0.7.9
 #svn 425
-library(qtpaint)
 
 #####################################################################
 ###In-progress Example###
@@ -20,7 +19,7 @@ library(qtpaint)
 #n<-10000
 #x<-rnorm(n,50,25)
 #y<-rnorm(n,50,25)
-#df1<-mutaframe(X=x,Y=y) 
+#df1<-mutaframe(X=x,Y=y)
 #width<-400
 #height<-400
 #rectW<-2
@@ -65,7 +64,7 @@ library(qtpaint)
 ######################################################################
 ######################################################################
 ###Mark Constructors###
-# inspired from protovis 
+# inspired from protovis
 # arguments are in data units unless otherwise specified
 
 #Reference from protovis
@@ -116,7 +115,7 @@ glyph <- function(top = NULL, left = NULL, bottom = NULL, right = NULL, fill = "
 
 #Comments:
 ## Do we really need to modify arguments to support protovis naming conventions only to modify them again to support qtpaint property conventions?
-##   Wouldn't it be easier to have qtpaint support property conventions? Note this question does not address superficial naming conventions, rather 
+##   Wouldn't it be easier to have qtpaint support property conventions? Note this question does not address superficial naming conventions, rather
 ##   observing that protovis defines the shape using width and height properties. qdrawRect explicitly uses left right top bottom.
 
 rect <- function(left = NULL,right=NULL,top=NULL, bottom = NULL, width=NULL, height=NULL,fill = "black", stroke = NULL,parent=NULL) {
@@ -129,7 +128,7 @@ rect <- function(left = NULL,right=NULL,top=NULL, bottom = NULL, width=NULL, hei
       (is.null(bottom) & is.null(height)) |
       (!is.null(top) & !is.null(bottom) & !is.null(height))) {
     print("need 2 of 3 in *left,right,width* and *top,bottom,height*")
-  }  
+  }
   structure(list(left = left, bottom = bottom, right = right, top = top, height =height, width = width, parent = parent, fill = fill, stroke = stroke), class = c("cranvas", "rect"))
 }
 
@@ -141,8 +140,8 @@ rect <- function(left = NULL,right=NULL,top=NULL, bottom = NULL, width=NULL, hei
 # left - the distance from the left edge of the parent panel to the line center.NOTE: see changes below
 # bottom - the distance from the bottom edge of the parent panel to the line center.NOTE: see changes below
 # right - the distance from the right edge of the parent panel to the line center.NOTE: see changes below
-# defining the top property instead of bottom, the line is flipped vertically: 
-# using right instead of left flips horizontally 
+# defining the top property instead of bottom, the line is flipped vertically:
+# using right instead of left flips horizontally
 
 #Changes/Additions from protovis:
 # top,left,bottom,right measure distance to segment endpoints #like specs for provis rule (see below)
@@ -203,7 +202,7 @@ vbar <- function(left = NULL, right = NULL, top = NULL, bottom = NULL, stroke = 
 
 text <- function(top = NULL, left = NULL, bottom = NULL, right = NULL, text = NULL, stroke = "black", valign = "center", halign = "center", rot = 0, margin = NULL, font = "Arial", italic = F, pointsize = 12, parent = NULL){
   if( ( is.null(left) & is.null(right) )   |
-      ( !is.null(left) & !is.null(right) ) | 
+      ( !is.null(left) & !is.null(right) ) |
       ( is.null(top) & is.null(bottom) )   |
       ( !is.null(top) & !is.null(bottom) ) ) {
   print( "need one of {left,right} and {top,bottom}" )
@@ -218,23 +217,23 @@ text <- function(top = NULL, left = NULL, bottom = NULL, right = NULL, text = NU
 ###Draw Wrappers###
 # Thin wrappers around qtpaint drawing functions that basically translate
 # argument names.  (And maybe wrap around any qtpaints that need to be
-# temporarily worked around). 
+# temporarily worked around).
 
 draw <- function(mark, canvas) UseMethod("draw")
 
 draw.glyph <- function(mark, canvas) {
   if (is.null(mark$left) & !is.null(mark$right)) {
-    x <- mark$parent$limits$width() - mark$right 
+    x <- mark$parent$limits$width() - mark$right
   } else {
     x <- mark$left
   }
 
   if (is.null(mark$bottom) & !is.null(mark$top)){
-    y <- mark$parent$limits$height() - mark$top 
+    y <- mark$parent$limits$height() - mark$top
   } else {
     y <- mark$bottom
   }
- 
+
   x<-x + mark$parent$limits$left()
   y<-y + mark$parent$limits$top()
   circle <- qglyphCircle(r=mark$size)
@@ -243,7 +242,7 @@ draw.glyph <- function(mark, canvas) {
 
 draw.rect <- function(mark, canvas) {
   if(!is.null(mark$left) & !is.null(mark$width)) {
-    xleft <- mark$left 
+    xleft <- mark$left
     xright <- mark$left + mark$width
   } else if (!is.null(mark$right) & !is.null(mark$width)) {
     xleft <- mark$parent$limits$width() - mark$right - mark$width
@@ -254,8 +253,8 @@ draw.rect <- function(mark, canvas) {
   }
 
   if(!is.null(mark$bottom) & !is.null(mark$height)) {
-    ybottom <- mark$bottom 
-    ytop <- mark$bottom + mark$height 
+    ybottom <- mark$bottom
+    ytop <- mark$bottom + mark$height
   } else if (!is.null(mark$top) & !is.null(mark$height)) {
     ybottom <-mark$parent$limits$height() - mark$top - mark$height
     ytop<- ybottom + mark$height
@@ -299,7 +298,7 @@ draw.hbar <- function(mark,canvas) {
       temp[3 * i] <- NA
     }
     x <- temp
-    
+
   } else {
     temp <- vector( mode="numeric", length=length(mark$left) * 3 )
     for ( i in 1:length(mark$left) ) {
@@ -314,16 +313,16 @@ draw.hbar <- function(mark,canvas) {
   if( !is.null(mark$bottom) ) {
     temp <- vector( mode = "numeric", length = length(mark$bottom) * 3 )
     for ( i in 1:length(mark$bottom)){
-      temp[3 * i - 2] <- mark$bottom[i] 
-      temp[3 * i - 1] <- mark$bottom[i] 
+      temp[3 * i - 2] <- mark$bottom[i]
+      temp[3 * i - 1] <- mark$bottom[i]
       temp[3 * i] <-NA
     }
     y <- temp + mark$parent$limits$top()
   } else {
     temp <- vector( mode = "numeric", length = length(mark$top) * 3 )
     for ( i in 1:length(mark$top)){
-      temp[3 * i - 2] <-  mark$parent$limits$bottom() - mark$top[i] 
-      temp[3 * i - 1] <- mark$parent$limits$bottom() - mark$top[i] 
+      temp[3 * i - 2] <-  mark$parent$limits$bottom() - mark$top[i]
+      temp[3 * i - 1] <- mark$parent$limits$bottom() - mark$top[i]
       temp[3 * i] <-NA
     }
     y <- temp
@@ -432,25 +431,25 @@ new_plot <- function(width = 600, height = 400, xrange = c(0, 1), yrange = c(0, 
 #add layers to the canvas
 add_layer<-function(  parent,
                       mark,
-                      keyPressFun = NULL, 
-                      keyReleaseFun = NULL, 
-                      mouseDoubleClickFun = NULL, 
-                      mouseMoveFun = NULL, 
-                      mousePressFun = NULL, 
-                      mouseReleaseFun = NULL, 
-                      wheelFun = NULL, 
-                      hoverMoveFun = NULL, 
-                      hoverEnterFun = NULL, 
-                      hoverLeaveFun = NULL, 
-                      contextMenuFun = NULL, 
-                      dragEnterFun = NULL, 
-                      dragLeaveFun = NULL, 
-                      dragMoveFun = NULL, 
-                      dropFun = NULL, 
-                      focusInFun = NULL, 
-                      focusOutFun = NULL, 
+                      keyPressFun = NULL,
+                      keyReleaseFun = NULL,
+                      mouseDoubleClickFun = NULL,
+                      mouseMoveFun = NULL,
+                      mousePressFun = NULL,
+                      mouseReleaseFun = NULL,
+                      wheelFun = NULL,
+                      hoverMoveFun = NULL,
+                      hoverEnterFun = NULL,
+                      hoverLeaveFun = NULL,
+                      contextMenuFun = NULL,
+                      dragEnterFun = NULL,
+                      dragLeaveFun = NULL,
+                      dragMoveFun = NULL,
+                      dropFun = NULL,
+                      focusInFun = NULL,
+                      focusOutFun = NULL,
                       sizeHintFun = NULL,
-                      row=0L,col=0L, 
+                      row=0L,col=0L,
                       userlimits=NULL,
                       geometry = qrect(0,0,600,400),
                       clip = F,
@@ -470,7 +469,7 @@ add_layer<-function(  parent,
     limits<-userlimits
   }
 
-  layer<- qlayer(  parent=parent$root, 
+  layer<- qlayer(  parent=parent$root,
                    paintFun=paintFun,
                    keyPressFun=keyPressFun,
                    keyReleaseFun=keyReleaseFun,
@@ -479,16 +478,16 @@ add_layer<-function(  parent,
                    mousePressFun=mousePressFun,
                    mouseReleaseFun=mouseReleaseFun,
                    wheelFun=wheelFun,
-                   hoverMoveFun = hoverMoveFun, 
-                   hoverEnterFun = hoverEnterFun, 
-                   hoverLeaveFun = hoverLeaveFun, 
-                   contextMenuFun = contextMenuFun, 
-                   dragEnterFun = dragEnterFun, 
-                   dragLeaveFun = dragLeaveFun, 
-                   dragMoveFun = dragMoveFun, 
-                   dropFun = dropFun, 
-                   focusInFun = focusInFun, 
-                   focusOutFun = focusOutFun, 
+                   hoverMoveFun = hoverMoveFun,
+                   hoverEnterFun = hoverEnterFun,
+                   hoverLeaveFun = hoverLeaveFun,
+                   contextMenuFun = contextMenuFun,
+                   dragEnterFun = dragEnterFun,
+                   dragLeaveFun = dragLeaveFun,
+                   dragMoveFun = dragMoveFun,
+                   dropFun = dropFun,
+                   focusInFun = focusInFun,
+                   focusOutFun = focusOutFun,
                    sizeHintFun = sizeHintFun,
                    clip = clip,
                    limits = limits,
@@ -527,7 +526,7 @@ modify_layer<-function(	layerID,
   if(!is.null(alpha)){
     parent$root$childItems()[[layerID]]$setOpacity(alpha)
   }
-  
+
   if(!is.null(shift_right)){
     parent$root$childItems()[[layerID]]$setX(shift_right)
   }
@@ -538,7 +537,7 @@ modify_layer<-function(	layerID,
 }
 # End modify_layer
 
-    
+
 
 
 
