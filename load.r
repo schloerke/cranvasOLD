@@ -1,4 +1,5 @@
 require(productplots)
+require(qtbase)
 require(qtpaint)
 require(reshape)
 require(plyr)

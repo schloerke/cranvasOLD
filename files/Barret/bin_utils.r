@@ -84,10 +84,24 @@ xMinStartPos <- function(d) {
 
 # find the maximum ending position
 xMaxEndPos <- function(d) {
-	dataRange(d)[2] + maxShift(d)
+	dataRange(d)[2] + maxBinwidth(d)
 }
 
-
+maxHeight <- function(d, ...){
+	yMax <- 0
+	tmpStartPos <- xMinStartPos(d)
+	maxStartPos <- xMaxStartPos(d)
+	# print(xColRange())
+	while(tmpStartPos <= maxStartPos) {
+		tB <- calcBinPosition(tmpStartPos, maxBinwidth(d), dataRange(d)[2], xMaxEndPos(d))
+		newMax <- max(baseHist(d, breaks = tB, ...)$counts)
+		# print(newMax)
+		if(newMax > yMax)
+			yMax <- newMax
+		tmpStartPos <- tmpStartPos + unitShift(d)
+	}
+	yMax
+}
 
 
 
