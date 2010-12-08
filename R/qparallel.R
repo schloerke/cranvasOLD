@@ -311,6 +311,20 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
             message(format(difftime(Sys.time(), ntime)))
     }
 
+    ## annotate maximum and minimum values for each axis
+    range_draw = function(item, painter) {
+        if (any(numcol)) {
+            dat = as.data.frame(data)[, vars][, numcol]
+            if (horizontal) {
+                qdrawText(painter, apply(dat, 2, min), which(numcol), yspan[1], valign = 'top')
+                qdrawText(painter, apply(dat, 2, max), which(numcol), yspan[2], valign = 'bottom')
+            } else {
+                qdrawText(painter, apply(dat, 2, min), xspan[1], which(numcol), halign = 'right')
+                qdrawText(painter, apply(dat, 2, max), xspan[2], which(numcol), halign = 'left')
+            }
+        }
+    }
+
     ## (optional) boxplots
     boxplot_draw = function(item, painter) {
         if (verbose) {
@@ -539,6 +553,7 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         keyReleaseFun = identify_key_release,
         limits = qrect(lims), row = 1, col = 1)
 
+    range_layer = qlayer(root_layer, range_draw, limits = qrect(lims), row = 1, col = 1)
     if (boxplot) {
         boxplot_layer = qlayer(root_layer, boxplot_draw, limits = qrect(lims),
         row = 1, col = 1)
