@@ -21,11 +21,12 @@ get_nrowscols <- function(df1) {
 
 
 set_layout <- function (plotObj) {
+	print(plot1$size$height())
   layout <- plotObj$root$gridLayout()
   layout$setColumnPreferredWidth(0, 25)
   layout$setColumnPreferredWidth(1, 15)
   for (i in 1:nrowscols) {
-    layout$setColumnPreferredWidth(i + 1, 525 / nrowscols)
+    layout$setColumnPreferredWidth(i + 1, (plot1$size$width() - 75) / nrowscols)
   } 
   layout$setColumnPreferredWidth(nrowscols + 2,20)
   layout$setColumnPreferredWidth(nrowscols + 3,15)
@@ -33,7 +34,7 @@ set_layout <- function (plotObj) {
   layout$setRowPreferredHeight(0, 15)
   layout$setRowPreferredHeight(1, 20)
   for (i in 1:nrowscols) {
-    layout$setRowPreferredHeight(i + 1, 325/nrowscols)
+    layout$setRowPreferredHeight(i + 1, (plot1$size$height())/nrowscols)
   }
   layout$setRowPreferredHeight(nrowscols + 2, 15)
   layout$setRowPreferredHeight(nrowscols + 3, 25)
@@ -176,7 +177,7 @@ bl <- function(row, col) {
 # draw the canvas #
 ###################
 
-plot1 <- new_plot()
+plot1 <- new_plot(width = 600, height = 600)
 lay<-set_layout(plot1)
   
 #note: this plot is built with the idea that (eventually) user will be able to change x and y selections, but not faceting 
