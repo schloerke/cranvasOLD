@@ -316,11 +316,11 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         if (any(numcol)) {
             dat = as.data.frame(data)[, vars][, numcol]
             if (horizontal) {
-                qdrawText(painter, apply(dat, 2, min), which(numcol), yspan[1], valign = 'top')
-                qdrawText(painter, apply(dat, 2, max), which(numcol), yspan[2], valign = 'bottom')
+                qdrawText(painter, apply(dat, 2, min, na.rm=TRUE), which(numcol), yspan[1], valign = 'top')
+                qdrawText(painter, apply(dat, 2, max, na.rm=TRUE), which(numcol), yspan[2], valign = 'bottom')
             } else {
-                qdrawText(painter, apply(dat, 2, min), xspan[1], which(numcol), halign = 'right')
-                qdrawText(painter, apply(dat, 2, max), xspan[2], which(numcol), halign = 'left')
+                qdrawText(painter, apply(dat, 2, min, na.rm=TRUE), xspan[1], which(numcol), halign = 'right')
+                qdrawText(painter, apply(dat, 2, max, na.rm=TRUE), xspan[2], which(numcol), halign = 'left')
             }
         }
     }
