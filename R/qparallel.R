@@ -102,7 +102,7 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
     ## creat some 'global' variables first
     x = y = n = nn = numcol = p = segx0 = segy0 = segx1 = segy1 = segcol =
         xr = yr = xspan = yspan = xticklab = yticklab = xtickloc = ytickloc =
-            .brange = lims = x0 = y0 = plot_data = NULL
+            .brange = lims = x0 = y0 = plot_data = bxpstats = NULL
 
     data_preprocess = function() {
 
