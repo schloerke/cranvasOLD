@@ -3,8 +3,6 @@
 ##' @importFrom qtbase Qt
 ##' @importFrom qtbase qrect qfont
 ##' @import qtpaint
-##' @import reshape
-##' @import plyr
 ##' @import plumbr
 ##' @exportPattern "^[^\\.]"
 ##' @name cranvas-package
