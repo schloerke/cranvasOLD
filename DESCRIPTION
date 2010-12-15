@@ -1,8 +1,8 @@
 Package: cranvas
 Type: Package
 Title: Interactive plots on a layered canvas
-Version: 0.1
-Date: 2010-10-25
+Version: 0.1-0
+Date: 2010-12-25
 Author: Hadley Wickham <hadley@rice.edu>,
         Michael Lawrence <lawrence.michael@gene.com>,
         Heike Hofmann <hofmann@iastate.edu>,
@@ -18,5 +18,5 @@ Description: Experiments with interactive graphics based on the pipeline
 License: GPL
 LazyLoad: yes
 URL: http://www.github.com/bigbear/cranvas
-Imports: qtpaint, reshape, plyr, plumbr (>= 0.0-3)
+Imports: qtbase, qtpaint, reshape, plyr, plumbr (>= 0.0-3)
 Suggests: productplots
