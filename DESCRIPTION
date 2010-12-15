@@ -19,4 +19,4 @@ License: GPL
 LazyLoad: yes
 URL: http://www.github.com/bigbear/cranvas
 Imports: qtbase, qtpaint, reshape, plyr, plumbr (>= 0.0-3)
-Suggests: productplots
+Suggests: productplots, gWidgetsRGtk2

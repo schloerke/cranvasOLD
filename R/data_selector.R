@@ -29,7 +29,7 @@
 ##' qparallel(qnrc, vars = 14:19, main = 'Research, Student Support, Diversity')
 ##' qparallel(qnrc, vars = 20:26, main = 'Publication, Award, Time to Degree')
 ##' }
-data_selector = function(data, vars, gui.type = c('qtpaint', 'RGtk2', 'Qt')) {
+data_selector = function(data, vars, gui.type = c('RGtk2', 'Qt', 'qtpaint')) {
     if (missing(vars)) {
         vars = names(data)[!(sapply(as.data.frame(data), class)
                %in% c('numeric', 'integer'))][1]
