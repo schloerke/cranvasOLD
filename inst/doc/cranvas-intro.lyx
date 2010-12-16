@@ -81,7 +81,7 @@ status open
 
 %
 \backslash
-VignetteIndexEntry{Development of Statistical Graphics under Qt}
+VignetteIndexEntry{cranvas: Interactive Statistical Graphics Using Qt}
 \end_layout
 
 \end_inset
@@ -91,7 +91,7 @@ VignetteIndexEntry{Development of Statistical Graphics under Qt}
 
 \begin_layout Standard
 \begin_inset Flex Sweave Options
-status collapsed
+status open
 
 \begin_layout Plain Layout
 
@@ -113,6 +113,55 @@ options(keep.blank.line=FALSE)
 
 \begin_layout Scrap
 @
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Part
+The 
+\series medium
+cranvas
+\series default
+ Package
+\end_layout
+
+\begin_layout Section
+Data structure
+\end_layout
+
+\begin_layout Standard
+Mutaframes
+\end_layout
+
+\begin_layout Section
+Plots
+\end_layout
+
+\begin_layout Standard
+various types of plots
+\end_layout
+
+\begin_layout Section
+Interaction
+\end_layout
+
+\begin_layout Standard
+general rules for interaction -- via command line or GUI
+\end_layout
+
+\begin_layout Part
+Development Issues
+\end_layout
+
+\begin_layout Section
+Installation
 \end_layout
 
 \begin_layout Scrap

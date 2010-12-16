@@ -5,6 +5,33 @@
 
 ## options(verbose = TRUE)
 
+library(cranvas)
+
+data(nrcstat)
+qnrc = qmutaframe(nrcstat)
+rownames(qnrc) = paste(nrcstat$Institution.Name, nrcstat$Program.Name, sep = ' -> ')
+
+## Overview: type, rankings
+qparallel(qnrc, vars=10:13, main='Overview of Rankings', glyph='tick', center=median, horizontal=FALSE, boxplot=TRUE)
+qnrc$.color = 'red'
+
+data_selector(qnrc, "Institution.Name", "RGtk2")
+
+## How to find out ISU by intersection and negation? public, midwest, large program
+
+## show data labels
+brush_attr(qnrc, '.label.show') = TRUE
+brush_attr(qnrc, '.label.color') = 'yellow'
+
+brush_attr(qnrc, '.label.show') = FALSE
+
+qnrc$.color = 'red'
+
+qparallel(qnrc, vars=14:19, main='Research, Student Support, Diversity', center=median, horizontal=FALSE, glyph='tick')
+
+qparallel(qnrc, vars=20:68, main='Other Indicators', center=median, horizontal=FALSE, glyph='tick', lab.split=NULL, boxplot=TRUE, boxwex=.8)
+
+
 ## color palette
 library(RColorBrewer)
 

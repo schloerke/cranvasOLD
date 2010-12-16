@@ -48,7 +48,7 @@
 ##' @return NULL
 ##' @author Yihui Xie <\url{http://yihui.name}>
 ##' @export
-##' @example cranvas/demo/qparallel-ex.R
+##' @example cranvas/inst/examples/qparallel-ex.R
 qparallel = function(data, vars, scale = "range", na.action = na.impute,
     center = NULL, order = c('none', 'MDS', 'ANOVA'), horizontal = TRUE,
     glyph = c('auto', 'line', 'tick', 'circle', 'square', 'triangle'),
@@ -102,13 +102,13 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
     ## creat some 'global' variables first
     x = y = n = nn = numcol = p = segx0 = segy0 = segx1 = segy1 = segcol =
         xr = yr = xspan = yspan = xticklab = yticklab = xtickloc = ytickloc =
-            .brange = lims = x0 = y0 = plot_data = NULL
+            .brange = lims = x0 = y0 = plot_data = bxpstats = NULL
 
     data_preprocess = function() {
 
         ## get the plotting data: we don't want to change the original mutaframe
         ##   so get an independent copy here
-        plot_data = as.data.frame(data[, vars], stringsAsFactors = TRUE)
+        plot_data <<- as.data.frame(data[, vars], stringsAsFactors = TRUE)
 
         ## constant columns (or nearly constants -- for safety with floating numbers)
         const.col = sapply(plot_data, function(x) {
@@ -118,7 +118,7 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         })
         ## remove constant columns and give a warning message
         if (any(const.col)) {
-            plot_data = plot_data[, !const.col]
+            plot_data <<- plot_data[, !const.col]
             warning("removed constant column(s) ",
                     paste(vars[const.col], collapse = ","))
             vars <<- vars[!const.col]
@@ -127,13 +127,13 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         ## which columns are numeric? we don't want boxplots for non-numeric vars
         numcol <<- sapply(plot_data, class) %in% c("numeric", "integer")
 
-        plot_data = sapply(plot_data, as.numeric)
+        plot_data <<- sapply(plot_data, as.numeric)
         ## must make them global; I wish there could be 'mutavectors'
         p <<- ncol(plot_data)
         n <<- nrow(plot_data)
 
         ## handle missing values
-        plot_data = na.action(plot_data)
+        plot_data <<- na.action(plot_data)
 
         ## jittering
         if (!is.null(jitter)) {
@@ -141,7 +141,7 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
                 jitter = attr(terms(jitter, data = plot_data), "term.labels")
             if (is.numeric(jitter)) jitter = names(data)[as.integer(jitter)]
             if (is.character(jitter)) {
-                plot_data[, jitter] = apply(plot_data[, jitter, drop = FALSE],
+                plot_data[, jitter] <<- apply(plot_data[, jitter, drop = FALSE],
                                               2, base::jitter, amount = amount)
             }
         }
@@ -316,11 +316,11 @@ qparallel = function(data, vars, scale = "range", na.action = na.impute,
         if (any(numcol)) {
             dat = as.data.frame(data)[, vars][, numcol]
             if (horizontal) {
-                qdrawText(painter, apply(dat, 2, min), which(numcol), yspan[1], valign = 'top')
-                qdrawText(painter, apply(dat, 2, max), which(numcol), yspan[2], valign = 'bottom')
+                qdrawText(painter, apply(dat, 2, min, na.rm=TRUE), which(numcol), yspan[1], valign = 'top')
+                qdrawText(painter, apply(dat, 2, max, na.rm=TRUE), which(numcol), yspan[2], valign = 'bottom')
             } else {
-                qdrawText(painter, apply(dat, 2, min), xspan[1], which(numcol), halign = 'right')
-                qdrawText(painter, apply(dat, 2, max), xspan[2], which(numcol), halign = 'left')
+                qdrawText(painter, apply(dat, 2, min, na.rm=TRUE), xspan[1], which(numcol), halign = 'right')
+                qdrawText(painter, apply(dat, 2, max, na.rm=TRUE), xspan[2], which(numcol), halign = 'left')
             }
         }
     }
