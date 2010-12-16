@@ -84,10 +84,10 @@ zero_then_top_by_order <- function(vec) {
 }
 
 percent_of_brushed <- function(left, right, dataValue, brushVal) {
-	print(left)
-	print(right)
-	print(dataValue)
-	print(brushVal)
+	# print(left)
+	# print(right)
+	# print(dataValue)
+	# print(brushVal)
 	rows <- dataValue < left & dataValue >= right
 	
 	sum(brushVal[rows]) / length(rows)
@@ -140,6 +140,7 @@ continuous_to_bars <- function(data = NULL, splitBy = NULL, brushed = NULL, type
 	else
 		stop("Please make typeInfo$type one of the following: \"hist\", \"ash\", \"dot\", \"spine\", \"dot\"")
 	
+	print(data[brushed == TRUE])
 	breaks <- calcBinPosition(typeInfo$start, typeInfo$binwidth, dataRange(data)[2], xMaxEndPos(data))
 	break_len <- length(breaks)
 

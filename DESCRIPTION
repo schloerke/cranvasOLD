@@ -2,7 +2,6 @@ Package: cranvas
 Type: Package
 Title: Interactive plots on a layered canvas
 Version: 0.1
-Date: 2010-10-25
 Author: Hadley Wickham <hadley@rice.edu>,
         Michael Lawrence <lawrence.michael@gene.com>,
         Heike Hofmann <hofmann@iastate.edu>,

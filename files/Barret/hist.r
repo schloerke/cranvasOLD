@@ -73,6 +73,7 @@ qhist <- function(
 	.scene <- c()
 	.type <- c()
 	.bin_col <- ""
+	.label_col <- ""
 	.startBrush <- NULL
 	.endBrush <- NULL
 	.brush <- FALSE
@@ -95,7 +96,8 @@ qhist <- function(
 	mf_data <- column_coerce(mf_data, ".brushed", FALSE)
 
 	.bin_col <- data_bin_column(mf_data)
-	mf_data[[.bin_col]] <- rep(1, nrow(mf_data))
+	
+	mf_data[[.bin_col]] <- rep(-1, nrow(mf_data))
 	print(head(mf_data))
 	
 	# Set up wrapper functions.
@@ -125,6 +127,13 @@ qhist <- function(
 		.bars_info <<- continuous_to_bars(
 			data = mf_data[, xCol], splitBy = mf_data[, splitByCol], brushed = mf_data[, ".brushed"],
 			typeInfo = .type, position = position, color = color, fill = fill, stroke = stroke, ...)
+		
+		for(i in 1:nrow(.bars_info$data)){
+			rows <- (.bars_info$data$left[i] > dataCol()) & (.bars_info$data$right[i] <= dataCol())
+			if(any(rows))
+				mf_data[rows, .bin_col] <<- .bars_info$data[i, "label"]
+		}
+		print(head(mf_data))
 	}
 	updateBarsInfo()
 
@@ -281,39 +290,32 @@ qhist <- function(
 
 	brushing_draw <- function(item, painter, exposed, ...) {
 		cat("brushing draw\n")
-		if (TRUE) {
-			# if (.brush) {
-				#		if (is.null(data$.brushed))
-				#          data$.brushed <- FALSE
-				# print(str(.bars_info$data))
-				section <- subset(.bars_info$data, (.brushed == TRUE))
-			# }
-
-			if (nrow(section) > 0) {
-				#  .brush.attr = attr(odata, '.brush.attr')
-				# brushcolor <- .brush.attr[,".brushed.color"]
-				brushColor <- brush_attr(mf_data, ".brushed.color")
-				if (horizontal)
-					qdrawRect(painter, section$bottom, section$right, section$top, section$left, fill = brushColor, stroke = "black")
-				else
-					qdrawRect(painter, section$left, section$bottom, section$right, section$top, fill = brushColor, stroke = "black")
-			}
+		section <- subset(.bars_info$data, (.brushed > 0))
+		
+		if (nrow(section) > 0) {
+			#  .brush.attr = attr(odata, '.brush.attr')
+			# brushcolor <- .brush.attr[,".brushed.color"]
+			brushColor <- brush_attr(mf_data, ".brushed.color")
+			if (horizontal)
+				qdrawRect(painter, section$bottom, section$right, section$top, section$left, fill = brushColor, stroke = "black")
+			else
+				qdrawRect(painter, section$left, section$bottom, section$right, section$top, fill = brushColor, stroke = "black")
 		}
-
+		
 		if (!is.null(.endBrush)) {
 			draw_brush_rect(item, painter, exposed)
 		}
-		cat("brushing draw\n")
+		cat("brushing draw - done\n")
 	}
 
 	brushing_mouse_press <- function(item, event, ...) {
-		cat("Brushing mouse press\n")
+		cat("brushing mouse press\n")
 		.brush <<- TRUE
 		if (is.null(.startBrush)) {
 			.startBrush <<- as.numeric(event$pos())
 		}
 		qupdate(brushing_layer)
-		cat("Brushing mouse press - done\n")
+		cat("brushing mouse press - done\n")
 	}
 
 	brushing_mouse_move <- function(item, event, ...) {
@@ -361,15 +363,17 @@ qhist <- function(
 
 		valid_bar_row <<- function(original, left, right, top, bottom) {
 			val <- (left <= rightMouse) && (right >= leftMouse) && (min(bottom) <= topMouse) && (max(top) >= bottomMouse)
-			if(val)
+			if(val) {
 				1
-			else
-				original
+			} else{
+				# original
+				0
+			}
 		}
 
 		.bars_info$data <<- ddply(.bars_info$data, .(label), transform, .brushed = valid_bar_row(.brushed, left, right, top, bottom))
 
-		print(head(subset(.bars_info$data, .brushed == TRUE)))
+		print(head(subset(.bars_info$data, .brushed > 0)))
 		cat("count of brushed sections: ", sum(.bars_info$data$.brushed), "\n")
 		cat("count of left(<=", rightMouse,"): ", sum(.bars_info$data$left <= rightMouse), " - ",
 			# paste(rownames(.bars_info$data[.bars_info$data$left <= rightMouse,]), sep = ", "),
@@ -390,27 +394,9 @@ qhist <- function(
 	setSelected <- function() {
 		section <- subset(.bars_info$data, .brushed == 1)
 
-		if (nrow(section) > 0) {
-			mf_data$.brushed[mf_data[[bin_col]]  %in% uniqueBins] <<- TRUE
-
-			print(head(subset(mf_data, .brushed == TRUE)))
-
-			#
-			# starts <- unique(section$left)
-			# starts <- starts[order(starts)]
-			# ends <- unique(section$right)
-			# ends <- ends[order(ends)]
-			#
-			# for (i in seq_along(starts)) {
-			# 	rows <- mf_data[[xCol]] <= ends[i] & mf_data[[xCol]] > starts[i]
-			# 	mf_data$.brushed[rows] <- TRUE
-			# }
-		} else {
-			mf_data$.brushed <- FALSE
-		}
-
-		#   idx <- with(data.frame(odata), which(eval(parse(text=cond1))))
-		#   return(idx)
+		rows <- mf_data[[.label_col]]  %in% .bars_info$label
+		mf_data$.brushed[rows] <<- 1
+		mf_data$.brushed[[!rows]] <<- 0
 	}
 
 
@@ -539,16 +525,16 @@ qhist <- function(
 	}
 	updateLims()
 
-	.scene = qscene()
+	.scene <- qscene()
 
-	bglayer = qlayer(.scene, coords, limits = .lims, clip = FALSE)
+	bglayer <- qlayer(.scene, coords, limits = .lims, clip = FALSE)
 
-	datalayer = qlayer(.scene, hist.all, limits = .lims, clip = FALSE, keyPressFun = keyPressFun)
+	datalayer <- qlayer(.scene, hist.all, limits = .lims, clip = FALSE, keyPressFun = keyPressFun)
 
-	hoverlayer = qlayer(.scene, bar_hover_draw, limits = .lims, clip = FALSE,
+	hoverlayer <- qlayer(.scene, bar_hover_draw, limits = .lims, clip = FALSE,
 		hoverMoveFun = bar_hover, hoverLeaveFun = bar_leave)
 
-	brushing_layer = qlayer(.scene, brushing_draw,
+	brushing_layer <- qlayer(.scene, brushing_draw,
 		mousePressFun = brushing_mouse_press, mouseMoveFun = brushing_mouse_move,
 		mouseReleaseFun = brushing_mouse_release,
 		limits = .lims, clip = FALSE

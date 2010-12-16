@@ -19,29 +19,34 @@ pretty_percent <- function(smallVal) {
 
 
 # find a column name unique to the plot
+data_hist_column <- function(d) {
+	add_unique_column(d, "qhist")
+}
 data_bin_column <- function(d) {
-
+	add_unique_column(d, "qbin")
+}
+add_unique_column <- function(d, name) {
 	dnames <- names(d)
-	locations <- str_detect(dnames, "qhist[1-9]*")
+	locations <- str_detect(dnames, str_c(name, "[1-9]*"))
 	if(! any(locations)) {
-		return("qhist1")
+		return(str_c(name, "1"))
 	}
 	histNames <- dnames[locations]
 
-	histNumbers <- str_replace_all(histNames, "qhist", "")
+	histNumbers <- str_replace_all(histNames, name, "")
 	histNumbers <- as.numeric(histNumbers)
 
-	str_c("qhist", max(histNumbers) + 1)
+	str_c(name, max(histNumbers) + 1)	
 }
 
 # calculate the break positions including start and end
 calcBinPosition <- function(start, width, maxDataPos, maxDrawPos) {
-	cat("start: ", start, "\twidth: ", width, "\tmaxDataPos: ", maxDataPos, "\tmaxDrawPos: ", maxDrawPos, "\n")
+	# cat("start: ", start, "\twidth: ", width, "\tmaxDataPos: ", maxDataPos, "\tmaxDrawPos: ", maxDrawPos, "\n")
 	output <- seq(from = start, to = maxDrawPos, by = width)
 	if(max(output) < maxDataPos){
 		output <- c(output, maxDrawPos)
 	}
-	cat("calcBinPosition: ", str_c(output, collapse = ", "), "\n")
+	# cat("calcBinPosition: ", str_c(output, collapse = ", "), "\n")
 	output
 }
 
